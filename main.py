@@ -5,7 +5,7 @@ from gui.main_window import MainWindow
 
 
 def main():
-    """Punto di ingresso dell'applicazione"""
+    """Punto di ingresso dell'applicazione modifica"""
     app = MainWindow()
     app.run()
 
