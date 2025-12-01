@@ -62,7 +62,6 @@ class MainWindow:
             child.grid_configure(padx=5)
     
     def on_button_click(self):
-        """Gestisce il click del pulsante"""
         text = self.input_field.get()
         if text and text != "Inserisci del testo...":
             self.result_label.config(text=f"Hai scritto: {text}")
