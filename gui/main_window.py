@@ -3,7 +3,8 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import os
 import sys
-from pathlib import Path
+import logging
+from typing import Dict, Any, Optional, Callable
 
 sys.path.append('assets/style')
 from styles import Style
