@@ -1,0 +1,52 @@
+import os
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+from lxml import etree
+from tkinterweb import HtmlFrame
+import tempfile
+import webbrowser
+import magic
+import subprocess
+import platform
+
+# ... (resto delle classi e funzioni invariate) ...
+
+def verifica_prerequisiti():
+    """Verifica che tutti i file e le cartelle necessarie esistano"""
+    errori = []
+    
+    # Verifica cartella input
+    if not os.path.exists('P7M-CONVERTITO'):
+        errori.append("Cartella 'P7M-CONVERTITO' non trovata")
+    
+    # Verifica file XSL
+    if not os.path.exists('FoglioStileAssoSoftware.xsl'):
+        errori.append("File 'FoglioStileAssoSoftware.xsl' non trovato")
+    
+    return errori
+
+def main():
+    try:
+        # Verifica prerequisiti
+        errori = verifica_prerequisiti()
+        if errori:
+            messagebox.showerror("Errore", "\n".join(errori))
+            return
+
+        # Inizializza l'interfaccia
+        root = tk.Tk()
+        root.protocol("WM_DELETE_WINDOW", root.quit)  # Gestione corretta della chiusura
+        
+        app = FattureXMLViewer(
+            root, 
+            input_folder='P7M-CONVERTITO', 
+            xsl_path='FoglioStileAssoSoftware.xsl'
+        )
+        
+        root.mainloop()
+    except Exception as e:
+        messagebox.showerror("Errore", f"Errore durante l'avvio dell'applicazione:\n{str(e)}")
+
+if __name__ == "__main__":
+    main()
