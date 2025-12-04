@@ -13,8 +13,6 @@ if PROJECT_ROOT not in sys.path:
    
 from assets.style.styles import Style
 
-# Inserimento per testare il commit
-
 # Configurazione logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
