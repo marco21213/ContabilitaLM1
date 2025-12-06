@@ -7,24 +7,58 @@ import time
 from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import messagebox, simpledialog
+import subprocess
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'gui'))
 
 from gui.main_window import MainWindow
 
-class AuthenticationSystem:
-    def __init__(self):
-        pass
-
-    def authenticate(self, username, password):
-        """Autenticazione semplificata - sempre successo"""
-        return True, "Accesso diretto abilitato"
+class GitUpdatesNotifier:
+    """Notifica la disponibilità di aggiornamenti da GitHub"""
+    
+    def __init__(self, repo_path=None):
+        self.repo_path = repo_path or os.path.dirname(os.path.abspath(__file__))
+    
+    def check_updates_available(self):
+        """Controlla se ci sono aggiornamenti disponibili"""
+        try:
+            # Fetch dal repository remoto (senza modificare i file)
+            subprocess.run(
+                ["git", "fetch", "origin"],
+                cwd=self.repo_path,
+                capture_output=True,
+                timeout=10
+            )
+            
+            # Controlla se ci sono commit non scaricati
+            result = subprocess.run(
+                ["git", "rev-list", "--count", "HEAD..origin/main"],
+                cwd=self.repo_path,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode == 0:
+                commits_behind = int(result.stdout.strip())
+                return commits_behind > 0, commits_behind
+            
+            return False, 0
+            
+        except Exception as e:
+            print(f"[WARNING] Errore nella verifica degli aggiornamenti: {e}")
+            return False, 0
 
 def show_login_window():
     """Mostra una finestra di benvenuto semplificata"""
+    
+    # Controlla se ci sono aggiornamenti disponibili
+    notifier = GitUpdatesNotifier()
+    updates_available, count = notifier.check_updates_available()
+    
     root = tk.Tk()
     root.title("Contabilità 3b")
-    root.geometry("300x200")
+    root.geometry("300x250" if updates_available else "300x200")
     root.resizable(False, False)
     
     # Centra la finestra
@@ -37,6 +71,24 @@ def show_login_window():
     # Titolo
     title_label = tk.Label(main_frame, text="Benvenuto", font=("Arial", 16, "bold"))
     title_label.pack(pady=(20, 30))
+    
+    # Messaggio di aggiornamenti disponibili
+    if updates_available:
+        update_label = tk.Label(
+            main_frame,
+            text=f"⚠️ Sono disponibili {count} aggiornamento/i",
+            font=("Arial", 10, "bold"),
+            fg="#ff9800"
+        )
+        update_label.pack(pady=(0, 10))
+        
+        info_label = tk.Label(
+            main_frame,
+            text="Esegui: git pull origin main",
+            font=("Arial", 9),
+            fg="#666"
+        )
+        info_label.pack(pady=(0, 15))
     
     # Messaggio di benvenuto
     welcome_label = tk.Label(main_frame, text="Accesso diretto al sistema", 
