@@ -423,11 +423,11 @@ class VistaScadenzeApp(tk.Frame):
         if field_name == "soggetto":
             win.geometry("400x350")
         else:
-        win.geometry("320x200")
-        win.configure(bg=Style.WHITE)
-        win.resizable(False, False)
-        win.transient(self)
-        win.grab_set()
+            win.geometry("320x200")
+            win.configure(bg=Style.WHITE)
+            win.resizable(False, False)
+            win.transient(self)
+            win.grab_set()
         
         frame = tk.Frame(win, bg=Style.WHITE, padx=20, pady=20)
         frame.pack(fill="both", expand=True)
@@ -616,20 +616,19 @@ class VistaScadenzeApp(tk.Frame):
                     win.destroy()
             else:
                 # Per tipo_pag e stato, mantieni la combobox normale
-            combo = ttk.Combobox(frame, values=[""] + vals, state="readonly", width=25)
-            combo.pack(pady=(0, 15))
-            def apply_combo():
-                self.active_filters[field_name] = combo.get().lower()
-                self.apply_filters()
-                win.destroy()
-            
-            tk.Button(frame, text="Applica", bg="#4CAF50", fg="white",
-                      width=10, command=apply_combo, cursor="hand2").pack(side="left", padx=5)
-            tk.Button(frame, text="Chiudi", bg="#f44336", fg="white",
-                      width=10, command=win.destroy, cursor="hand2").pack(side="left")
-            
-            # Bind Enter per applicare anche per tipo_pag e stato
-            if field_name != "soggetto":
+                combo = ttk.Combobox(frame, values=[""] + vals, state="readonly", width=25)
+                combo.pack(pady=(0, 15))
+                
+                def apply_combo():
+                    self.active_filters[field_name] = combo.get().lower()
+                    self.apply_filters()
+                    win.destroy()
+                
+                tk.Button(frame, text="Applica", bg="#4CAF50", fg="white",
+                          width=10, command=apply_combo, cursor="hand2").pack(side="left", padx=5)
+                tk.Button(frame, text="Chiudi", bg="#f44336", fg="white",
+                          width=10, command=win.destroy, cursor="hand2").pack(side="left")
+                
                 combo.bind('<Return>', lambda e: apply_combo())
         else:
             entry = tk.Entry(frame, font=("Arial", 10), width=25)
