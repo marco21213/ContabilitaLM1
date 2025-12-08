@@ -61,18 +61,9 @@ try:
     r = s.post('https://ivaservizi.agenziaentrate.gov.it/portale/home?p_p_id=58&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=3&p_p_col_count=4&_58_struts_action=%2Flogin%2Flogin', data=payload)
     cookieJar = s.cookies
 
-    # Debug: stampa la risposta per capire il formato
-    print("DEBUG - Contenuto risposta login:")
-    print(r.text[:1000])  # Stampa i primi 1000 caratteri
-
-    liferay_matches = re.findall(r"Liferay\.authToken\s*=\s*['\"]([^'\"]+)['\"]", r.text)
-
-    if not liferay_matches:
-        puts(colored.red('Token Liferay non trovato nella risposta: uscita.'))
-        sys.exit()
-
-    p_auth = liferay_matches[0]
-    puts(colored.yellow(f'Token ottenuto: {p_auth}'))
+    liferay = re.findall(r"Liferay.authToken = '.*';", r.text)[0]
+    p_auth = liferay.replace("Liferay.authToken = '","")
+    p_auth = p_auth.replace("';", "")
 
     r = s.get('https://ivaservizi.agenziaentrate.gov.it/dp/api?v=' + unixTime())
 # controlla fase di login 

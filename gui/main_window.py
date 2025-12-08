@@ -236,7 +236,7 @@ class MainWindow:
 
         # Sezione Laboratorio
         tk.Label(parent, text="CONTABILITA'", **Style.MENU_HEADER_CONFIG).pack(fill='x', pady=(20, 0))
-        menu_items_laboratorio = ["Soggetti", "Documenti", "Pagamenti", "Libro Mastro", "Controllo Prezzi"]
+        menu_items_laboratorio = ["Soggetti", "Documenti", "Pagamenti", "Libro Mastro","Dichiarazioni Intento", "Controllo Prezzi"]
 
         for item in menu_items_laboratorio:
             tk.Button(
@@ -260,6 +260,7 @@ class MainWindow:
             "Documenti": {"module": "documenti_page", "class": "VistaScadenzeApp"},
             "Pagamenti": {"module": "pagamenti_page", "class": "PagamentiUnificatiApp"},
             "Libro Mastro": {"module": "libromastro_page", "class": "LibroMastroWindow"},
+            "Dichiarazioni Intento": {"module": "dichiarazioni_page", "class": "DichiarazioniIntentoPage"},
             "Controllo Prezzi": {"module": "controllo_prezzi_page", "class": "ControlloPrezziPage"},
         }
 
