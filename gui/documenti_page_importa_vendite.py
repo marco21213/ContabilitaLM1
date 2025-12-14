@@ -96,6 +96,47 @@ class ImportaFattureVenditaXML:
             return self.config.get('Pagamenti', codice_pagamento).upper()
         except Exception:
             return codice_pagamento.upper()
+    
+    def estrai_tipo_fattura(self, root):
+        """Estrae e normalizza il tipo di fattura dal XML.
+        Restituisce TD01, TD24 o None se non valido.
+        """
+        tipo_doc_raw = self.estrai_testo(root, './/DatiGenerali/DatiGeneraliDocumento/TipoDocumento', '')
+        
+        if not tipo_doc_raw:
+            return None
+        
+        # Normalizza: rimuovi spazi e converti in maiuscolo
+        tipo_doc = tipo_doc_raw.strip().upper()
+        
+        # Se inizia con TD24 (anche con testo dopo), normalizza a TD24
+        if tipo_doc.startswith('TD24'):
+            return 'TD24'
+        elif tipo_doc == 'TD01':
+            return 'TD01'
+        else:
+            # Tipo documento non supportato
+            return None
+    
+    def get_tipo_pagamento_id(self, codice_pagamento):
+        """Ottiene l'id del tipo_pagamento dalla tabella tipo_pagamento usando il codice.
+        Restituisce l'id se trovato, None altrimenti.
+        """
+        if not codice_pagamento:
+            return None
+        
+        try:
+            query = """
+                SELECT id FROM tipo_pagamento
+                WHERE codice = ?
+            """
+            self.cursor.execute(query, (codice_pagamento.upper(),))
+            result = self.cursor.fetchone()
+            return result[0] if result else None
+        except Exception as e:
+            # Se la tabella non esiste o c'è un errore, logga e restituisci None
+            self.log(f"  ⚠ Errore nel recupero tipo_pagamento: {str(e)}")
+            return None
 
     def estrai_testo(self, root, xpath, default=''):
         """Estrae testo da un nodo XML e converte in maiuscolo"""
@@ -203,6 +244,13 @@ class ImportaFattureVenditaXML:
         partita_iva = partita_iva if partita_iva else None
         codice_fiscale = codice_fiscale if codice_fiscale else None
 
+        # Estrai tipo_fattura e tipo_pagamento
+        tipo_fattura = self.estrai_tipo_fattura(root)
+        
+        # Estrai modalità pagamento dal primo DettaglioPagamento
+        modalita_pagamento_xml = self.estrai_testo(root, './/DatiPagamento/DettaglioPagamento/ModalitaPagamento', '')
+        tipo_pagamento_id = self.get_tipo_pagamento_id(modalita_pagamento_xml) if modalita_pagamento_xml else None
+
         soggetto_id, tipo_soggetto_esistente = self.verifica_soggetto_esistente(partita_iva, codice_fiscale)
     
         # Se non trovato con partita IVA/codice fiscale E è un cliente estero (entrambi NULL),
@@ -233,6 +281,11 @@ class ImportaFattureVenditaXML:
             elif tipo_soggetto_esistente == 'ENTRAMBI':
                 # Se era già entrambi, non facciamo nulla
                 pass
+            
+            # Aggiorna tipo_fattura e tipo_pagamento se disponibili
+            if tipo_fattura or tipo_pagamento_id:
+                self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id)
+            
             return soggetto_id, False
 
         denominazione = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/Anagrafica/Denominazione')
@@ -254,19 +307,96 @@ class ImportaFattureVenditaXML:
 
         codice_soggetto = self.get_prossimo_codice_soggetto(tipo='cliente')
 
-        query = """
-            INSERT INTO soggetti
-            (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
-             partita_iva, citta, cap, provincia, email)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
+        # Costruisci la query INSERT includendo tipo_fattura e tipo_pagamento
+        # Verifica se le colonne esistono nella tabella
+        try:
+            self.cursor.execute("PRAGMA table_info(soggetti)")
+            colonne = [col[1] for col in self.cursor.fetchall()]
+            has_tipo_fattura = 'tipo_fattura' in colonne
+            has_tipo_pagamento = 'tipo_pagamento' in colonne
+        except Exception:
+            has_tipo_fattura = False
+            has_tipo_pagamento = False
 
-        self.cursor.execute(query, (
-            codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
-            partita_iva, citta, cap, provincia, email
-        ))
+        if has_tipo_fattura and has_tipo_pagamento:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento_id
+            ))
+        elif has_tipo_fattura:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, tipo_fattura)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_fattura
+            ))
+        elif has_tipo_pagamento:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, tipo_pagamento)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_pagamento_id
+            ))
+        else:
+            # Fallback alla query originale se le colonne non esistono
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email
+            ))
 
         return self.cursor.lastrowid, False
+    
+    def aggiorna_tipo_fattura_pagamento(self, soggetto_id, tipo_fattura, tipo_pagamento_id):
+        """Aggiorna tipo_fattura e tipo_pagamento per un soggetto esistente."""
+        try:
+            # Verifica se le colonne esistono
+            self.cursor.execute("PRAGMA table_info(soggetti)")
+            colonne = [col[1] for col in self.cursor.fetchall()]
+            has_tipo_fattura = 'tipo_fattura' in colonne
+            has_tipo_pagamento = 'tipo_pagamento' in colonne
+            
+            if not has_tipo_fattura and not has_tipo_pagamento:
+                return
+            
+            # Costruisci la query UPDATE dinamicamente
+            updates = []
+            params = []
+            
+            if has_tipo_fattura and tipo_fattura:
+                updates.append("tipo_fattura = ?")
+                params.append(tipo_fattura)
+            
+            if has_tipo_pagamento and tipo_pagamento_id:
+                updates.append("tipo_pagamento = ?")
+                params.append(tipo_pagamento_id)
+            
+            if updates:
+                params.append(soggetto_id)
+                query = f"UPDATE soggetti SET {', '.join(updates)} WHERE id = ?"
+                self.cursor.execute(query, params)
+        except Exception as e:
+            # Ignora errori se le colonne non esistono o altri problemi
+            self.log(f"  ⚠ Errore aggiornamento tipo_fattura/pagamento: {str(e)}")
 
     def inserisci_documento(self, root, soggetto_id):
         """Inserisce un nuovo documento (fattura vendita)"""
@@ -380,6 +510,12 @@ class ImportaFattureVenditaXML:
         try:
             tree = ET.parse(file_path)
             root = tree.getroot()
+
+            # Verifica il tipo di fattura - salta se non è TD01 o TD24
+            tipo_fattura = self.estrai_tipo_fattura(root)
+            if tipo_fattura is None:
+                self.log(f"  ⚠ Tipo documento non supportato - File saltato: {os.path.basename(file_path)}")
+                return True  # Restituisce True perché non è un errore, solo un file da saltare
 
             # Verifica se è una fattura estera (prima di inserire il soggetto)
             id_paese = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/IdFiscaleIVA/IdPaese', 'IT')
