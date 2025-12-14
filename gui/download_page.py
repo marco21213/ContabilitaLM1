@@ -112,20 +112,49 @@ class DownloadPage(tk.Frame):
         self.xml_parser = XMLParser()
         self.current_html = None
         self.xsl_path = None
+        self.current_xml_file = None  # Memorizza il file XML corrente
+        self.xsl_files = []  # Lista dei file XSL disponibili
         
+        # Carica i file XSL prima di creare l'UI per avere i valori disponibili nel combobox
+        self.setup_xsl_path()
         self.setup_ui()
         self.populate_list()
-        self.setup_xsl_path()
 
     def setup_xsl_path(self):
-        """Configura il percorso del foglio di stile XSL."""
+        """Configura il percorso del foglio di stile XSL e carica tutti i file disponibili."""
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            self.xsl_path = os.path.join(current_dir, '../documents/css_fatture', 'FoglioStileConDatiTrasmissione.xsl')
+            css_folder = os.path.join(current_dir, '../documents/css_fatture')
             
-            if not os.path.exists(self.xsl_path):
-                messagebox.showwarning("Attenzione", f"Foglio di stile XSL non trovato: {self.xsl_path}")
+            # Carica tutti i file .xsl dalla cartella
+            if os.path.exists(css_folder):
+                self.xsl_files = [f for f in os.listdir(css_folder) if f.endswith('.xsl')]
+                self.xsl_files.sort()  # Ordina alfabeticamente
+                
+                if not self.xsl_files:
+                    messagebox.showwarning("Attenzione", f"Nessun file XSL trovato nella cartella: {css_folder}")
+                    self.xsl_path = None
+                    return
+                
+                # Imposta il file di default (se esiste)
+                default_file = 'FoglioStileConDatiTrasmissione.xsl'
+                if default_file in self.xsl_files:
+                    self.xsl_path = os.path.join(css_folder, default_file)
+                else:
+                    # Usa il primo file disponibile
+                    self.xsl_path = os.path.join(css_folder, self.xsl_files[0])
+                
+                # Aggiorna il menu a tendina se esiste già
+                if hasattr(self, 'xsl_combo'):
+                    self.xsl_combo['values'] = self.xsl_files
+                    # Imposta il valore corrente
+                    current_file = os.path.basename(self.xsl_path) if self.xsl_path else ''
+                    if current_file in self.xsl_files:
+                        self.xsl_combo.set(current_file)
+            else:
+                messagebox.showwarning("Attenzione", f"Cartella CSS non trovata: {css_folder}")
                 self.xsl_path = None
+                
         except Exception as e:
             messagebox.showerror("Errore", f"Errore nel caricamento del foglio di stile: {e}")
             self.xsl_path = None
@@ -207,10 +236,32 @@ class DownloadPage(tk.Frame):
         html_frame = tk.Frame(parent, bg=Style.WHITE, relief="solid", bd=1)
         html_frame.pack(fill="both", expand=True)
         
-        # Barra superiore con pulsante stampa
+        # Barra superiore con pulsante stampa e menu foglio di stile
         toolbar = tk.Frame(html_frame, bg=Style.WHITE, height=35)
         toolbar.pack(fill="x", padx=5, pady=(5, 0))
         toolbar.pack_propagate(False)
+        
+        # Frame per i controlli a sinistra (foglio di stile)
+        left_controls = tk.Frame(toolbar, bg=Style.WHITE)
+        left_controls.pack(side="left", pady=5)
+        
+        # Label e menu a tendina per il foglio di stile
+        ttk.Label(left_controls, text="Foglio di stile:", font=("Arial", 9), background=Style.WHITE).pack(side="left", padx=(0, 5))
+        self.xsl_combo = ttk.Combobox(
+            left_controls,
+            values=self.xsl_files,
+            state="readonly",
+            width=35,
+            font=("Arial", 9)
+        )
+        self.xsl_combo.pack(side="left")
+        self.xsl_combo.bind("<<ComboboxSelected>>", self.on_xsl_changed)
+        
+        # Imposta il valore corrente se disponibile
+        if self.xsl_path:
+            current_file = os.path.basename(self.xsl_path)
+            if current_file in self.xsl_files:
+                self.xsl_combo.set(current_file)
         
         # Pulsante stampa allineato a destra
         self.print_button = tk.Button(
@@ -281,6 +332,7 @@ class DownloadPage(tk.Frame):
         if selected_index < len(self.invoice_files) and self.invoice_files[selected_index]:
             file_path = self.invoice_files[selected_index]
             if file_path and os.path.exists(file_path):
+                self.current_xml_file = file_path  # Memorizza il file corrente
                 self.display_formatted_xml(file_path)
                 # Abilita il pulsante stampa quando una fattura è selezionata
                 self.print_button.config(state="normal")
@@ -306,6 +358,29 @@ class DownloadPage(tk.Frame):
             error_html = f"<html><body><h1>Errore</h1><p>{str(e)}</p></body></html>"
             self.html_frame.load_html(error_html)
             self.current_html = None
+    
+    def on_xsl_changed(self, event=None):
+        """Gestisce il cambio del foglio di stile XSL."""
+        try:
+            selected_file = self.xsl_combo.get()
+            if not selected_file:
+                return
+            
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            css_folder = os.path.join(current_dir, '../documents/css_fatture')
+            new_xsl_path = os.path.join(css_folder, selected_file)
+            
+            if os.path.exists(new_xsl_path):
+                self.xsl_path = new_xsl_path
+                
+                # Ricarica la fattura corrente se c'è una selezione
+                if self.current_xml_file and os.path.exists(self.current_xml_file):
+                    self.display_formatted_xml(self.current_xml_file)
+            else:
+                messagebox.showerror("Errore", f"File XSL non trovato: {new_xsl_path}")
+                
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante il cambio del foglio di stile: {e}")
 
     def print_invoice(self):
         """Stampa la fattura corrente."""
