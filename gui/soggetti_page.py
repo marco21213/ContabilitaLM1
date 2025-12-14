@@ -267,6 +267,8 @@ class SoggettiApp(tk.Frame):
             'codice_fiscale': '',
             'partita_iva': '',
             'citta': '',
+            'tipo_fattura': '',
+            'tipo_pagamento': '',
             'email': '',
             'codice_univoco': ''
         }
@@ -496,8 +498,8 @@ class SoggettiApp(tk.Frame):
             self.delete_btn.pack(side="left")
 
     def create_table(self):
-        """Crea la tabella con le 7 colonne richieste e filtri integrati nelle intestazioni"""
-        columns = ("RAGIONE SOCIALE", "TIPO", "COD. FISCALE", "PARTITA IVA", "CITTÀ", "EMAIL", "CODICE UNIVOCO")
+        """Crea la tabella con le colonne richieste e filtri integrati nelle intestazioni"""
+        columns = ("RAGIONE SOCIALE", "TIPO", "COD. FISCALE", "PARTITA IVA", "CITTÀ", "T.FATT", "PAGAMENTO", "EMAIL", "CODICE UNIVOCO")
         
         table_frame = tk.Frame(self.content_frame, bg=Style.BACKGROUND_COLOR)
         table_frame.pack(fill="both", expand=True, padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
@@ -509,6 +511,8 @@ class SoggettiApp(tk.Frame):
         self.tree.heading("COD. FISCALE", text="COD. FISCALE ⧗", command=lambda: self.show_filter_menu("codice_fiscale", "COD. FISCALE"))
         self.tree.heading("PARTITA IVA", text="PARTITA IVA ⧗", command=lambda: self.show_filter_menu("partita_iva", "PARTITA IVA"))
         self.tree.heading("CITTÀ", text="CITTÀ ⧗", command=lambda: self.show_filter_menu("citta", "CITTÀ"))
+        self.tree.heading("T.FATT", text="T.FATT ⧗", command=lambda: self.show_filter_menu("tipo_fattura", "T.FATT"))
+        self.tree.heading("PAGAMENTO", text="PAGAMENTO ⧗", command=lambda: self.show_filter_menu("tipo_pagamento", "PAGAMENTO"))
         self.tree.heading("EMAIL", text="EMAIL ⧗", command=lambda: self.show_filter_menu("email", "EMAIL"))
         self.tree.heading("CODICE UNIVOCO", text="CODICE UNIVOCO ⧗", command=lambda: self.show_filter_menu("codice_univoco", "CODICE UNIVOCO"))
         
@@ -517,6 +521,8 @@ class SoggettiApp(tk.Frame):
         self.tree.column("COD. FISCALE", width=130, anchor="center", minwidth=120, stretch=False)
         self.tree.column("PARTITA IVA", width=130, anchor="center", minwidth=120, stretch=False)
         self.tree.column("CITTÀ", width=120, anchor="w", minwidth=100, stretch=False)
+        self.tree.column("T.FATT", width=80, anchor="center", minwidth=70, stretch=False)
+        self.tree.column("PAGAMENTO", width=120, anchor="center", minwidth=100, stretch=False)
         self.tree.column("EMAIL", width=180, anchor="w", minwidth=150, stretch=True)
         self.tree.column("CODICE UNIVOCO", width=130, anchor="center", minwidth=120, stretch=False)
         
@@ -557,6 +563,12 @@ class SoggettiApp(tk.Frame):
         if field_name == "tipo_soggetto":
             filter_entry = ttk.Combobox(main_frame, 
                                       values=["", "CLIENTE", "FORNITORE", "ENTRAMBI"],
+                                      font=("Arial", 10),
+                                      width=25)
+            filter_entry.set(self.active_filters[field_name].upper())
+        elif field_name == "tipo_fattura":
+            filter_entry = ttk.Combobox(main_frame, 
+                                      values=["", "TD01", "TD24"],
                                       font=("Arial", 10),
                                       width=25)
             filter_entry.set(self.active_filters[field_name].upper())
@@ -646,13 +658,51 @@ class SoggettiApp(tk.Frame):
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            cursor.execute("""
-                SELECT ragione_sociale, tipo_soggetto, codice_fiscale, 
-                       partita_iva, citta, email, codice_univoco,
-                       codice_soggetto
-                FROM soggetti
-                ORDER BY ragione_sociale
-            """)
+            # Verifica se le colonne tipo_fattura e tipo_pagamento esistono
+            cursor.execute("PRAGMA table_info(soggetti)")
+            colonne = [col[1] for col in cursor.fetchall()]
+            has_tipo_fattura = 'tipo_fattura' in colonne
+            has_tipo_pagamento = 'tipo_pagamento' in colonne
+            
+            # Costruisci la query con LEFT JOIN per tipo_pagamento
+            if has_tipo_fattura and has_tipo_pagamento:
+                cursor.execute("""
+                    SELECT s.ragione_sociale, s.tipo_soggetto, s.codice_fiscale, 
+                           s.partita_iva, s.citta, s.tipo_fattura, 
+                           COALESCE(tp.tipo, '') AS tipo_pagamento,
+                           s.email, s.codice_univoco, s.codice_soggetto
+                    FROM soggetti s
+                    LEFT JOIN tipo_pagamento tp ON s.tipo_pagamento = tp.id
+                    ORDER BY s.ragione_sociale
+                """)
+            elif has_tipo_fattura:
+                cursor.execute("""
+                    SELECT ragione_sociale, tipo_soggetto, codice_fiscale, 
+                           partita_iva, citta, tipo_fattura, 
+                           '' AS tipo_pagamento,
+                           email, codice_univoco, codice_soggetto
+                    FROM soggetti
+                    ORDER BY ragione_sociale
+                """)
+            elif has_tipo_pagamento:
+                cursor.execute("""
+                    SELECT s.ragione_sociale, s.tipo_soggetto, s.codice_fiscale, 
+                           s.partita_iva, s.citta, '' AS tipo_fattura,
+                           COALESCE(tp.tipo, '') AS tipo_pagamento,
+                           s.email, s.codice_univoco, s.codice_soggetto
+                    FROM soggetti s
+                    LEFT JOIN tipo_pagamento tp ON s.tipo_pagamento = tp.id
+                    ORDER BY s.ragione_sociale
+                """)
+            else:
+                cursor.execute("""
+                    SELECT ragione_sociale, tipo_soggetto, codice_fiscale, 
+                           partita_iva, citta, '' AS tipo_fattura, '' AS tipo_pagamento,
+                           email, codice_univoco, codice_soggetto
+                    FROM soggetti
+                    ORDER BY ragione_sociale
+                """)
+            
             rows = cursor.fetchall()
             conn.close()
 
@@ -664,9 +714,11 @@ class SoggettiApp(tk.Frame):
                     'codice_fiscale': str(row[2]) if row[2] is not None else "",
                     'partita_iva': str(row[3]) if row[3] is not None else "",
                     'citta': str(row[4]) if row[4] is not None else "",
-                    'email': str(row[5]) if row[5] is not None else "",
-                    'codice_univoco': str(row[6]) if row[6] is not None else "",
-                    'codice_soggetto': str(row[7]) if row[7] is not None else ""
+                    'tipo_fattura': str(row[5]) if row[5] is not None else "",
+                    'tipo_pagamento': str(row[6]) if row[6] is not None else "",
+                    'email': str(row[7]) if row[7] is not None else "",
+                    'codice_univoco': str(row[8]) if row[8] is not None else "",
+                    'codice_soggetto': str(row[9]) if row[9] is not None else ""
                 }
                 self.original_data.append(data_row)
 
@@ -721,6 +773,8 @@ class SoggettiApp(tk.Frame):
                 row_data['codice_fiscale'].upper(),
                 row_data['partita_iva'].upper(),
                 row_data['citta'].upper(),
+                row_data['tipo_fattura'].upper(),
+                row_data['tipo_pagamento'].upper(),
                 row_data['email'],
                 row_data['codice_univoco'].upper()
             ]
