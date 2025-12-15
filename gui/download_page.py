@@ -387,28 +387,13 @@ class DownloadPage(tk.Frame):
         if not self.current_html:
             messagebox.showwarning("Attenzione", "Nessuna fattura selezionata per la stampa.")
             return
-        
+
         try:
             # Crea un file HTML temporaneo
             with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as temp_file:
-                # Aggiungi CSS per la stampa
-                print_css = """
-                <style>
-                    @media print {
-                        body { margin: 0; padding: 10px; font-size: 12px; }
-                        table { border-collapse: collapse; width: 100%; }
-                        th, td { border: 1px solid #000; padding: 4px; text-align: left; }
-                        .no-print { display: none; }
-                    }
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-                    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; }
-                </style>
-                """
-                
-                # Combina CSS e HTML
-                full_html = f"<html><head>{print_css}</head><body>{self.current_html}</body></html>"
+                # Usa direttamente l'HTML generato dal foglio di stile XSL,
+                # lasciando la gestione degli stili alla trasformazione XSL scelta dall'utente
+                full_html = self.current_html
                 temp_file.write(full_html)
                 temp_file_path = temp_file.name
             
