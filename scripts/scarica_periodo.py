@@ -15,6 +15,6 @@ if not os.path.exists(scripts_path):
 
 # Esegui gli script
 subprocess.run(["python", os.path.join(scripts_path, "scarfec32.py")])
-subprocess.run(["python", os.path.join(scripts_path, "rinomina.py")])
+subprocess.run(["python", os.path.join(scripts_path, "rinomina.py"), "--no-stampa"])
 
 print("PORCA BESTIA, IL DOWNLOAD E ANDATO A BUON FINE.")

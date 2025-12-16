@@ -359,8 +359,14 @@ class DownloadPeriodoWindow(tk.Toplevel):
             self.aggiungi_messaggio(f"✗ ERRORE aggiornamento config: {str(e)}")
             return False
     
-    def esegui_script(self, nome_script, descrizione):
-        """Esegue uno script Python e cattura l'output"""
+    def esegui_script(self, nome_script, descrizione, args=None):
+        """Esegue uno script Python e cattura l'output
+        
+        Args:
+            nome_script: Nome dello script da eseguire
+            descrizione: Descrizione dell'operazione
+            args: Lista di argomenti opzionali da passare allo script (default: None)
+        """
         self.aggiungi_messaggio(f"{'='*60}")
         self.aggiungi_messaggio(f"🔄 {descrizione}")
         self.aggiungi_messaggio(f"{'='*60}")
@@ -376,6 +382,8 @@ class DownloadPeriodoWindow(tk.Toplevel):
                 return False
             
             self.aggiungi_messaggio(f"📂 Esecuzione: {nome_script}")
+            if args:
+                self.aggiungi_messaggio(f"📋 Argomenti: {' '.join(args)}")
             self.aggiungi_messaggio("")
             
             # Cambia directory di lavoro
@@ -387,9 +395,14 @@ class DownloadPeriodoWindow(tk.Toplevel):
             env['PYTHONUNBUFFERED'] = '1'
             env['PYTHONIOENCODING'] = 'utf-8'
             
+            # Prepara il comando con eventuali argomenti
+            cmd = [sys.executable, '-u', script_path]
+            if args:
+                cmd.extend(args)
+            
             # Esegui lo script
             process = subprocess.Popen(
-                [sys.executable, '-u', script_path],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -498,9 +511,9 @@ class DownloadPeriodoWindow(tk.Toplevel):
                 if not self.esegui_script("scarfec32.py", "Download e elaborazione fatture"):
                     raise Exception("Errore durante il download delle fatture")
                 
-                # Step 2: Rinomina
+                # Step 2: Rinomina (senza copia in Stampa per download periodo)
                 self.aggiorna_progress("⏳ Fase 2/2: Organizzazione documenti...")
-                if not self.esegui_script("rinomina.py", "Rinomina e organizzazione documenti"):
+                if not self.esegui_script("rinomina.py", "Rinomina e organizzazione documenti", ["--no-stampa"]):
                     raise Exception("Errore durante la rinomina dei file")
                 
                 # Completato

@@ -137,8 +137,14 @@ class DownloadRapidoWindow(tk.Toplevel):
         self.progress_label.config(text=testo)
         self.update_idletasks()
     
-    def esegui_script(self, nome_script, descrizione):
-        """Esegue uno script Python e cattura l'output"""
+    def esegui_script(self, nome_script, descrizione, args=None):
+        """Esegue uno script Python e cattura l'output
+        
+        Args:
+            nome_script: Nome dello script da eseguire
+            descrizione: Descrizione dell'operazione
+            args: Lista di argomenti opzionali da passare allo script (default: None)
+        """
         self.aggiungi_messaggio(f"\n{'='*60}")
         self.aggiungi_messaggio(f"🔄 {descrizione}")
         self.aggiungi_messaggio(f"{'='*60}")
@@ -154,6 +160,8 @@ class DownloadRapidoWindow(tk.Toplevel):
                 return False
             
             self.aggiungi_messaggio(f"📂 Esecuzione: {nome_script}")
+            if args:
+                self.aggiungi_messaggio(f"📋 Argomenti: {' '.join(args)}")
             self.aggiungi_messaggio("")
             
             # Cambia directory di lavoro alla root del progetto
@@ -165,9 +173,14 @@ class DownloadRapidoWindow(tk.Toplevel):
             env['PYTHONUNBUFFERED'] = '1'  # Disabilita il buffering
             env['PYTHONIOENCODING'] = 'utf-8'  # Forza encoding UTF-8
             
+            # Prepara il comando con eventuali argomenti
+            cmd = [sys.executable, '-u', script_path]
+            if args:
+                cmd.extend(args)
+            
             # Esegui lo script con output in tempo reale
             process = subprocess.Popen(
-                [sys.executable, '-u', script_path],  # -u per unbuffered
+                cmd,  # -u per unbuffered
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,

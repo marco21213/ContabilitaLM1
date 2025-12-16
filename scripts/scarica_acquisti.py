@@ -267,9 +267,9 @@ try:
         print('Totale fatture TRANSFRONTALIERE RICEVUTE scaricate: ', numero_fatture)
 
 
-    # Esegui lo script Rinomina.py alla fine
+    # Esegui lo script Rinomina.py alla fine (senza copia in Stampa per questo tipo di download)
     sys.path.append('scripts')
-    subprocess.run(['python', 'scripts/rinomina.py'], check=True)
+    subprocess.run(['python', 'scripts/rinomina.py', '--no-stampa'], check=True)
 
 except KeyboardInterrupt:
     print("Programma interrotto manualmente!")

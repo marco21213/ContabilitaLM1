@@ -3,6 +3,8 @@ import shutil
 import configparser
 import xml.etree.ElementTree as ET
 from datetime import datetime
+import sys
+import argparse
 
 class XMLRenamer:
     def __init__(self):
@@ -91,8 +93,15 @@ class XMLRenamer:
             self.log_message(f"Errore nell'estrazione dei dati dal file {xml_path}: {str(e)}")
             return None
 
-    def process_xml_files(self, source_dir, archive_dir, print_dir):
-        """Processa i file XML: rinomina e archivia."""
+    def process_xml_files(self, source_dir, archive_dir, print_dir, copy_to_stampa=True):
+        """Processa i file XML: rinomina e archivia.
+        
+        Args:
+            source_dir: Directory sorgente dei file XML
+            archive_dir: Directory di destinazione per l'archiviazione
+            print_dir: Directory per la stampa (opzionale)
+            copy_to_stampa: Se True, copia i file nella cartella stampa (default: True)
+        """
         if not os.path.isdir(source_dir):
             self.log_message(f"La directory {source_dir} non esiste")
             print(f"La directory {source_dir} non esiste")
@@ -135,8 +144,8 @@ class XMLRenamer:
                         processed_count += 1
                         print(f"✓ Archiviato: {filename} -> {nuovo_nome}")
                         
-                        # Copia nella cartella stampa
-                        if print_dir:
+                        # Copia nella cartella stampa solo se richiesto
+                        if copy_to_stampa and print_dir:
                             print_path = os.path.join(print_dir, nuovo_nome)
                             shutil.copy2(archive_path, print_path)
                             self.log_message(f"File {nuovo_nome} copiato in cartella stampa")
@@ -154,6 +163,15 @@ class XMLRenamer:
 
 def main():
     try:
+        # Parser per gli argomenti da riga di comando
+        parser = argparse.ArgumentParser(description='Rinomina e archivia file XML fatture')
+        parser.add_argument('--no-stampa', action='store_true', 
+                          help='Non copiare i file nella cartella stampa (solo per download periodo/mensile)')
+        args = parser.parse_args()
+        
+        # Determina se copiare in Stampa (default: True, False solo se --no-stampa è passato)
+        copy_to_stampa = not args.no_stampa
+        
         # Leggi il file di configurazione
         config = configparser.ConfigParser()
         config.read('config.ini')
@@ -164,6 +182,10 @@ def main():
         cartella_stampa = config['Parametri']['cartellastampa']
         
         print("\nArchivazione file XML Fatture")
+        if copy_to_stampa:
+            print("Modalità: Download Rapido (copia in Stampa abilitata)")
+        else:
+            print("Modalità: Download Periodo/Mensile (copia in Stampa disabilitata)")
         print("-" * 50)
         
         renamer = XMLRenamer()
@@ -171,12 +193,13 @@ def main():
         # Assicurati che le cartelle esistano
         os.makedirs(cartella_stampa, exist_ok=True)
         
-        # Pulisci la cartella stampa
-        for file in os.listdir(cartella_stampa):
-            file_path = os.path.join(cartella_stampa, file)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-                print(f"Rimosso file esistente da cartella stampa: {file}")
+        # Pulisci la cartella stampa solo se dobbiamo copiare i file
+        if copy_to_stampa:
+            for file in os.listdir(cartella_stampa):
+                file_path = os.path.join(cartella_stampa, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    print(f"Rimosso file esistente da cartella stampa: {file}")
         
         # Processa le cartelle
         source_dirs = {
@@ -191,7 +214,8 @@ def main():
                 processed, errors = renamer.process_xml_files(
                     dirs['source'], 
                     dirs['archive'],
-                    cartella_stampa
+                    cartella_stampa if copy_to_stampa else None,  # Passa None se non dobbiamo copiare
+                    copy_to_stampa=copy_to_stampa
                 )
                 print(f"\nRiepilogo {name}:")
                 print(f"File archiviati con successo: {processed}")

@@ -68,7 +68,7 @@ def esegui_download_mensile(mese, anno, tipo_documento='acquisti'):
         subprocess.run(["python", os.path.join(scripts_path, "scarfec32.py")], check=True)
         
         print("Esecuzione rinomina.py...")
-        subprocess.run(["python", os.path.join(scripts_path, "rinomina.py")], check=True)
+        subprocess.run(["python", os.path.join(scripts_path, "rinomina.py"), "--no-stampa"], check=True)
         
         print("Operazioni completate con successo!")
         
