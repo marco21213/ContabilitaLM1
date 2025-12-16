@@ -732,22 +732,56 @@ class ImportaDocumentoWindow(tk.Toplevel):
         self.aggiungi_messaggio("Pronto per l'importazione.")
         self.aggiungi_messaggio("Seleziona anno e mese, poi clicca su 'Avvia Importazione'.\n")
     
-    def get_percorso_completo(self):
-        """Costruisce il percorso completo in base a anno e mese selezionati"""
+    def get_percorso_base(self):
+        """Ottiene il percorso base, verificando se esiste e usando fallback se necessario"""
         try:
+            # Prova prima a leggere dal config
             percorso_base = self.config.get('Parametri', 'importacquisti')
-            # Rimuovi gli ultimi due livelli (anno e mese)
             parti = percorso_base.replace('\\', '/').split('/')
             if len(parti) >= 2:
                 base = '/'.join(parti[:-2])
             else:
                 base = percorso_base
             
+            # Verifica se il percorso base esiste
+            if base and os.path.exists(base):
+                return base
+            
+            # Se non esiste, prova a usare cartella_base come fallback
+            if self.cartella_base and os.path.exists(self.cartella_base):
+                return self.cartella_base
+            
+            # Prova anche a leggere cartellaricevute dal config come fallback
+            try:
+                cartella_ricevute = self.config.get('Parametri', 'cartellaricevute')
+                if cartella_ricevute and os.path.exists(cartella_ricevute):
+                    return cartella_ricevute
+            except Exception:
+                pass
+            
+            # Se tutto fallisce, restituisci comunque il percorso dal config
+            # (l'utente vedrà l'errore quando proverà a importare)
+            return base if base else None
+            
+        except Exception:
+            # Fallback a cartella_base se disponibile
+            if self.cartella_base and os.path.exists(self.cartella_base):
+                return self.cartella_base
+            return None
+
+    def get_percorso_completo(self):
+        """Costruisce il percorso completo in base a anno e mese selezionati"""
+        try:
+            base = self.get_percorso_base()
+            if not base:
+                return "Percorso non disponibile"
+
             anno = self.anno_var.get()
             mese = self.mese_var.get().split(' - ')[0] if ' - ' in self.mese_var.get() else self.mese_var.get()
-            
-            return f"{base}/{anno}/{mese}".replace('/', '\\')
-        except:
+
+            percorso_completo = os.path.join(base, anno, mese)
+            return percorso_completo
+        except Exception:
             return "Percorso non disponibile"
     
     def aggiorna_percorso(self):
