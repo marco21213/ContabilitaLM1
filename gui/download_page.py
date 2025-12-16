@@ -227,6 +227,10 @@ class DownloadPage(tk.Frame):
         
         # Bind per la selezione
         self.invoice_listbox.bind('<<ListboxSelect>>', self.on_invoice_select)
+        # Bind per le frecce per gestire la navigazione intelligente
+        self.invoice_listbox.bind('<Up>', self.on_key_navigation)
+        self.invoice_listbox.bind('<Down>', self.on_key_navigation)
+        self.invoice_listbox.bind('<Button-1>', self.on_mouse_click)
         
         # Lista per memorizzare i percorsi dei file
         self.invoice_files = []
@@ -266,7 +270,7 @@ class DownloadPage(tk.Frame):
         # Pulsante stampa allineato a destra
         self.print_button = tk.Button(
             toolbar,
-            text="🖨 Stampa",
+            text="🖨 Stampa (Ctrl+P)",
             font=("Arial", 9),
             bg=getattr(Style, 'PRIMARY_COLOR', '#007ACC'),
             fg="white",
@@ -278,6 +282,10 @@ class DownloadPage(tk.Frame):
             state="disabled"  # Inizialmente disabilitato
         )
         self.print_button.pack(side="right", pady=5)
+        
+        # Bind per la combinazione di tasti CTRL+P
+        self.bind_all('<Control-p>', lambda event: self.print_invoice())
+        self.bind_all('<Control-P>', lambda event: self.print_invoice())
         
         # Container principale per l'HTML viewer
         container = tk.Frame(html_frame, bg=Style.WHITE)
@@ -300,16 +308,16 @@ class DownloadPage(tk.Frame):
                 return
 
             for i, data in enumerate(xml_data):
-                # Prima riga: Data e Numero
+                # Prima riga: Data e Numero (selezionabile)
                 line1 = f"{data['data']} - N. {data['numero']}"
-                # Seconda riga: Soggetto (con indentazione per distinguerla)
+                # Seconda riga: Soggetto (non selezionabile, solo visualizzazione)
                 line2 = f"   {data['soggetto']}"
                 
-                # Inserisci entrambe le rigas
+                # Inserisci entrambe le righe
                 self.invoice_listbox.insert(tk.END, line1)
                 self.invoice_listbox.insert(tk.END, line2)
                 
-                # Memorizza il percorso del file solo per le righe dispari (prima riga di ogni fattura)
+                # Memorizza il percorso del file per entrambe le righe
                 self.invoice_files.extend([data['file_path'], data['file_path']])
                 
                 # Aggiungi una riga vuota per separare le fatture (opzionale)
@@ -320,6 +328,101 @@ class DownloadPage(tk.Frame):
         except Exception as e:
             messagebox.showerror("Errore", f"Errore durante il caricamento dei dati: {e}")
 
+    def is_selectable_row(self, index):
+        """Verifica se una riga è selezionabile (solo le righe con data/numero)."""
+        if index < 0 or index >= len(self.invoice_files):
+            return False
+        # Le righe selezionabili sono quelle con un file_path (non None)
+        # e che corrispondono alla prima riga di ogni fattura (indici pari: 0, 2, 4, ...)
+        # Escludiamo anche le righe vuote (None)
+        if self.invoice_files[index] is None:
+            return False
+        # Controlla se è la prima riga di una fattura (indice pari o dopo una riga vuota)
+        # Per semplicità, consideriamo selezionabili solo le righe con file_path
+        return self.invoice_files[index] is not None
+    
+    def find_previous_selectable(self, current_index):
+        """Trova la riga selezionabile precedente."""
+        for i in range(current_index - 1, -1, -1):
+            if self.is_selectable_row(i):
+                return i
+        return None
+    
+    def find_next_selectable(self, current_index):
+        """Trova la riga selezionabile successiva."""
+        for i in range(current_index + 1, len(self.invoice_files)):
+            if self.is_selectable_row(i):
+                return i
+        return None
+    
+    def on_key_navigation(self, event):
+        """Gestisce la navigazione con le frecce per saltare le righe non selezionabili."""
+        selection = self.invoice_listbox.curselection()
+        if not selection:
+            return
+        
+        current_index = selection[0]
+        
+        # Se la riga corrente non è selezionabile, trova quella corretta
+        if not self.is_selectable_row(current_index):
+            if event.keysym == 'Up':
+                target_index = self.find_previous_selectable(current_index)
+            else:  # Down
+                target_index = self.find_next_selectable(current_index)
+            
+            if target_index is not None:
+                # Seleziona la riga corretta dopo un breve ritardo
+                self.after_idle(lambda: self.invoice_listbox.selection_clear(0, tk.END))
+                self.after_idle(lambda idx=target_index: self.invoice_listbox.selection_set(idx))
+                self.after_idle(lambda idx=target_index: self.invoice_listbox.see(idx))
+                # Triggera l'evento di selezione
+                self.after_idle(lambda: self.on_invoice_select(None))
+                return "break"
+        
+        # Se la riga è selezionabile, controlla se la prossima riga è selezionabile
+        # Se non lo è, salta direttamente alla prossima fattura
+        if event.keysym == 'Down':
+            next_index = current_index + 1
+            if next_index < len(self.invoice_files) and not self.is_selectable_row(next_index):
+                # Salta alla prossima riga selezionabile
+                target_index = self.find_next_selectable(next_index)
+                if target_index is not None:
+                    self.after_idle(lambda: self.invoice_listbox.selection_clear(0, tk.END))
+                    self.after_idle(lambda idx=target_index: self.invoice_listbox.selection_set(idx))
+                    self.after_idle(lambda idx=target_index: self.invoice_listbox.see(idx))
+                    self.after_idle(lambda: self.on_invoice_select(None))
+                    return "break"
+        elif event.keysym == 'Up':
+            prev_index = current_index - 1
+            if prev_index >= 0 and not self.is_selectable_row(prev_index):
+                # Salta alla riga selezionabile precedente
+                target_index = self.find_previous_selectable(prev_index)
+                if target_index is not None:
+                    self.after_idle(lambda: self.invoice_listbox.selection_clear(0, tk.END))
+                    self.after_idle(lambda idx=target_index: self.invoice_listbox.selection_set(idx))
+                    self.after_idle(lambda idx=target_index: self.invoice_listbox.see(idx))
+                    self.after_idle(lambda: self.on_invoice_select(None))
+                    return "break"
+    
+    def on_mouse_click(self, event):
+        """Gestisce il click del mouse per selezionare solo le righe selezionabili."""
+        # Trova quale riga è stata cliccata
+        clicked_index = self.invoice_listbox.nearest(event.y)
+        
+        # Se la riga cliccata non è selezionabile, trova la riga selezionabile più vicina
+        if not self.is_selectable_row(clicked_index):
+            # Cerca la riga selezionabile più vicina (preferibilmente quella sopra)
+            target_index = self.find_previous_selectable(clicked_index)
+            if target_index is None:
+                target_index = self.find_next_selectable(clicked_index)
+            
+            if target_index is not None:
+                self.invoice_listbox.selection_clear(0, tk.END)
+                self.invoice_listbox.selection_set(target_index)
+                self.invoice_listbox.see(target_index)
+                self.on_invoice_select(None)
+                return "break"
+    
     def on_invoice_select(self, event):
         """Mostra la fattura formattata quando viene selezionato un elemento."""
         selection = self.invoice_listbox.curselection()
@@ -328,7 +431,17 @@ class DownloadPage(tk.Frame):
             
         selected_index = selection[0]
         
-        # Controlla che l'indice sia valido e que ci sia un file associato
+        # Se la riga selezionata non è selezionabile, trova quella corretta
+        if not self.is_selectable_row(selected_index):
+            target_index = self.find_previous_selectable(selected_index)
+            if target_index is None:
+                target_index = self.find_next_selectable(selected_index)
+            if target_index is not None:
+                self.invoice_listbox.selection_clear(0, tk.END)
+                self.invoice_listbox.selection_set(target_index)
+                selected_index = target_index
+        
+        # Controlla che l'indice sia valido e che ci sia un file associato
         if selected_index < len(self.invoice_files) and self.invoice_files[selected_index]:
             file_path = self.invoice_files[selected_index]
             if file_path and os.path.exists(file_path):
@@ -403,8 +516,6 @@ class DownloadPage(tk.Frame):
             # Programma la rimozione del file temporaneo dopo un ritardo
             self.after(10000, lambda: self._cleanup_temp_file(temp_file_path))
             
-            messagebox.showinfo("Stampa", "La fattura è stata aperta nel browser per la stampa.")
-            
         except Exception as e:
             messagebox.showerror("Errore", f"Errore durante la preparazione per la stampa: {e}")
 
@@ -417,10 +528,31 @@ class DownloadPage(tk.Frame):
             pass  # Ignora errori di pulizia
 
     def on_fast_download(self):
-
+        """Gestisce il click sul pulsante download rapido con conferma."""
+        # Chiedi conferma all'utente
+        if not messagebox.askyesno("Conferma Download Rapido", 
+                                   "Sei sicuro di voler procedere con il download rapido?"):
+            return
+        
         try:
-         # Apri la finestra di download rapido con log
-         download_window = DownloadRapidoWindow(self)
+            # Apri la finestra di download rapido con log
+            download_window = DownloadRapidoWindow(self)
+            
+            # Intercetta la chiusura della finestra per aggiornare la lista
+            def on_close():
+                download_window.destroy()
+                # Aggiorna la lista delle fatture dopo il download
+                self.populate_list()
+            
+            # Sostituisci il metodo destroy per intercettare la chiusura
+            original_destroy = download_window.destroy
+            def destroy_with_callback():
+                original_destroy()
+                # Aggiorna la lista dopo un breve ritardo per assicurarsi che la finestra sia chiusa
+                self.after(100, self.populate_list)
+            
+            download_window.destroy = destroy_with_callback
+            download_window.protocol("WM_DELETE_WINDOW", destroy_with_callback)
         
         except Exception as e:
             messagebox.showerror("Errore", f"Errore durante l'apertura della finestra di download: {e}")

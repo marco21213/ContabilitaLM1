@@ -64,3 +64,53 @@
 [2025-12-08 16:33:49] File 2025-11-01015700444-202.xml copiato in cartella stampa
 [2025-12-08 16:33:50] File SM03473_FADB9.xml.xml archiviato come 2025-11-02073640472-13382.xml
 [2025-12-08 16:33:50] File 2025-11-02073640472-13382.xml copiato in cartella stampa
+[2025-12-16 22:12:33] File IT00488410010_qQzhq.xml.xml archiviato come 2025-12-00488410010-7X05872702.xml
+[2025-12-16 22:12:33] File 2025-12-00488410010-7X05872702.xml copiato in cartella stampa
+[2025-12-16 22:12:33] File IT00791910151_01EVC.xml.xml archiviato come 2025-12-00791910151-4660IT.xml
+[2025-12-16 22:12:33] File 2025-12-00791910151-4660IT.xml copiato in cartella stampa
+[2025-12-16 22:12:33] File 2025-11-00806250254-5023IT.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:33] File 2025-11-01162630444-695.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:34] File IT01378570350_nU26z.xml archiviato come 2025-12-01651461202-0001531A.xml
+[2025-12-16 22:12:34] File 2025-12-01651461202-0001531A.xml copiato in cartella stampa
+[2025-12-16 22:12:34] File 2025-11-02581230121-797FI.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:34] File 2025-11-02581230121-798FI.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:34] File 2025-12-13155970018-80.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:34] File IT016417907022025d_0cEdH.xml archiviato come 2025-12-00837870963-1025.xml
+[2025-12-16 22:12:34] File 2025-12-00837870963-1025.xml copiato in cartella stampa
+[2025-12-16 22:12:34] File IT016417907022025F_0cJ7f.xml archiviato come 2025-12-04157330756-4932.xml
+[2025-12-16 22:12:34] File 2025-12-04157330756-4932.xml copiato in cartella stampa
+[2025-12-16 22:12:35] File 2025-11-13122640157-V1-27227.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:35] File IT016417907022025P_0cC24.xml archiviato come 2025-11-02870600752-2212025.xml
+[2025-12-16 22:12:35] File 2025-11-02870600752-2212025.xml copiato in cartella stampa
+[2025-12-16 22:12:35] File IT016417907022025Z_0cyX0.xml archiviato come 2025-12-03685340402-FV2500598.xml
+[2025-12-16 22:12:35] File 2025-12-03685340402-FV2500598.xml copiato in cartella stampa
+[2025-12-16 22:12:35] File 2025-12-05189010753-1425R.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:35] File IT01879020517A2025_hTqPT.xml.xml archiviato come 2025-12-04029800754-FPR61825.xml
+[2025-12-16 22:12:35] File 2025-12-04029800754-FPR61825.xml copiato in cartella stampa
+[2025-12-16 22:12:35] File IT01879020517A2025_hXIcI.xml.xml archiviato come 2025-11-01840920431-1289.xml
+[2025-12-16 22:12:35] File 2025-11-01840920431-1289.xml copiato in cartella stampa
+[2025-12-16 22:12:35] File IT01879020517A2025_iaAv0.xml.xml archiviato come 2025-12-01938300751-130.xml
+[2025-12-16 22:12:35] File 2025-12-01938300751-130.xml copiato in cartella stampa
+[2025-12-16 22:12:35] File 2025-11-03370590758-D09768.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File IT02046570426_dBGCJ.xml.xml archiviato come 2025-11-00172190449-005688A.xml
+[2025-12-16 22:12:37] File 2025-11-00172190449-005688A.xml copiato in cartella stampa
+[2025-12-16 22:12:37] File IT02067660411_004FO.xml archiviato come 2025-12-02067660411-301839.xml
+[2025-12-16 22:12:37] File 2025-12-02067660411-301839.xml copiato in cartella stampa
+[2025-12-16 22:12:37] File 2025-11-02229290750-0116712025.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File 2025-11-02277500183-251799.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File 2025-11-04816870481-15748.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File 2025-11-02497150751-D25375.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File IT02628170751BNXBB_000D2.xml.xml archiviato come 2025-12-02628170751-65.xml
+[2025-12-16 22:12:37] File 2025-12-02628170751-65.xml copiato in cartella stampa
+[2025-12-16 22:12:37] File IT03237470236_dPjZq.xml archiviato come 2025-12-01664630223-9100059546.xml
+[2025-12-16 22:12:37] File 2025-12-01664630223-9100059546.xml copiato in cartella stampa
+[2025-12-16 22:12:37] File IT04204200135_04hWH.xml archiviato come 2025-12-04822060754-9.xml
+[2025-12-16 22:12:37] File 2025-12-04822060754-9.xml copiato in cartella stampa
+[2025-12-16 22:12:37] File 2025-12-04076240961-2592625.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File 2025-11-04590200756-119.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:37] File 2025-12-03087090753-85.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:38] File IT06655971007_w9qyO.xml.xml archiviato come 2025-12-15844561009-005298085086.xml
+[2025-12-16 22:12:38] File 2025-12-15844561009-005298085086.xml copiato in cartella stampa
+[2025-12-16 22:12:38] File 2025-11-01015700444-202.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-16 22:12:38] File NL10209790152_LI5Wt.xml archiviato come 2025-12-05595420653-2364.xml
+[2025-12-16 22:12:38] File 2025-12-05595420653-2364.xml copiato in cartella stampa
