@@ -1,0 +1,26 @@
+{
+  "downloads": [
+    {
+      "data": "2025-12-17",
+      "ora": "22:05:30",
+      "fatture": [
+        {
+          "numero": "8S00439038",
+          "soggetto": "TIM  S.p.A.",
+          "data": "13/12/2025"
+        },
+        {
+          "numero": "8S00442393",
+          "soggetto": "TIM  S.p.A.",
+          "data": "13/12/2025"
+        },
+        {
+          "numero": "1251049430",
+          "soggetto": "DIADORA S.p.A. Società a socio Unico",
+          "data": "12/12/2025"
+        }
+      ]
+    }
+  ],
+  "last_updated": "2025-12-17T22:05:30.581330"
+}

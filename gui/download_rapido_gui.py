@@ -6,6 +6,7 @@ import os
 from configparser import ConfigParser
 from datetime import datetime
 import sys
+import json
 
 
 class DownloadRapidoWindow(tk.Toplevel):
@@ -344,6 +345,9 @@ class DownloadRapidoWindow(tk.Toplevel):
                 self.aggiungi_messaggio("="*60)
                 self.aggiorna_progress("✅ Tutte le operazioni completate con successo!")
                 
+                # Salva lo storico dei download
+                self.salva_storico_download()
+                
                 # Mostra messaggio di successo
                 self.after(0, lambda: messagebox.showinfo(
                     "Successo",
@@ -373,6 +377,59 @@ class DownloadRapidoWindow(tk.Toplevel):
         # Esegui in un thread separato
         thread = threading.Thread(target=esegui, daemon=True)
         thread.start()
+    
+    def salva_storico_download(self):
+        """Salva lo storico del download rapido nel file JSON."""
+        try:
+            # Ottieni il percorso del file temporaneo creato da rinomina.py
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            temp_history_file = os.path.join(project_root, "temp_download_fatture.json")
+            
+            # Verifica se il file temporaneo esiste
+            if not os.path.exists(temp_history_file):
+                self.aggiungi_messaggio("ℹ️ Nessun dato da salvare nello storico")
+                return
+            
+            # Leggi le fatture processate dal file temporaneo
+            try:
+                with open(temp_history_file, 'r', encoding='utf-8') as f:
+                    fatture = json.load(f)
+            except json.JSONDecodeError as e:
+                self.aggiungi_messaggio(f"⚠️ Errore nella lettura dello storico: {e}")
+                return
+            
+            # Importa e usa il modulo download_history
+            scripts_dir = os.path.join(project_root, 'scripts')
+            if scripts_dir not in sys.path:
+                sys.path.insert(0, scripts_dir)
+            
+            try:
+                from download_history import DownloadHistory
+                
+                # Crea il percorso del file storico nella root del progetto
+                history_file = os.path.join(project_root, "download_history.json")
+                history = DownloadHistory(history_file)
+                
+                # Aggiungi il download allo storico
+                if history.add_download(fatture):
+                    self.aggiungi_messaggio(f"📝 Storico aggiornato: {len(fatture)} fatture salvate")
+                else:
+                    self.aggiungi_messaggio("⚠️ Errore nel salvataggio dello storico")
+            except ImportError as e:
+                self.aggiungi_messaggio(f"⚠️ Impossibile importare download_history: {e}")
+            except Exception as e:
+                self.aggiungi_messaggio(f"⚠️ Errore nel salvataggio dello storico: {e}")
+            finally:
+                # Rimuovi il file temporaneo
+                try:
+                    if os.path.exists(temp_history_file):
+                        os.remove(temp_history_file)
+                except Exception as e:
+                    self.aggiungi_messaggio(f"⚠️ Impossibile rimuovere file temporaneo: {e}")
+                    
+        except Exception as e:
+            self.aggiungi_messaggio(f"⚠️ Errore generale nel salvataggio dello storico: {e}")
     
     def destroy(self):
         """Override del destroy per gestire la chiusura"""

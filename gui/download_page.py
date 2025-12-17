@@ -267,9 +267,28 @@ class DownloadPage(tk.Frame):
             if current_file in self.xsl_files:
                 self.xsl_combo.set(current_file)
         
-        # Pulsante stampa allineato a destra
+        # Frame per i pulsanti a destra
+        right_buttons = tk.Frame(toolbar, bg=Style.WHITE)
+        right_buttons.pack(side="right", pady=5)
+        
+        # Pulsante storico
+        self.history_button = tk.Button(
+            right_buttons,
+            text="📋 Storico",
+            font=("Arial", 9),
+            bg=getattr(Style, 'SECONDARY_COLOR', '#607D8B'),
+            fg="white",
+            relief="flat",
+            padx=15,
+            pady=3,
+            cursor="hand2",
+            command=self.show_download_history
+        )
+        self.history_button.pack(side="right", padx=(0, 15))
+        
+        # Pulsante stampa
         self.print_button = tk.Button(
-            toolbar,
+            right_buttons,
             text="🖨 Stampa (Ctrl+P)",
             font=("Arial", 9),
             bg=getattr(Style, 'PRIMARY_COLOR', '#007ACC'),
@@ -281,7 +300,7 @@ class DownloadPage(tk.Frame):
             command=self.print_invoice,
             state="disabled"  # Inizialmente disabilitato
         )
-        self.print_button.pack(side="right", pady=5)
+        self.print_button.pack(side="right")
         
         # Bind per la combinazione di tasti CTRL+P
         self.bind_all('<Control-p>', lambda event: self.print_invoice())
@@ -641,6 +660,212 @@ class DownloadPage(tk.Frame):
             save_config(self.config, start_date, end_date, date_option, venoacq)
         except Exception as e:
             messagebox.showerror("Errore", str(e))
+    
+    def show_download_history(self):
+        """Mostra la finestra con lo storico dei download rapidi."""
+        try:
+            # Importa il modulo download_history
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(current_dir)
+            scripts_dir = os.path.join(project_root, 'scripts')
+            
+            if scripts_dir not in sys.path:
+                sys.path.insert(0, scripts_dir)
+            
+            from download_history import DownloadHistory
+            
+            # Crea il percorso del file storico
+            history_file = os.path.join(project_root, "download_history.json")
+            history = DownloadHistory(history_file)
+            
+            # Carica lo storico
+            downloads = history.get_recent_downloads()
+            
+            # Crea la finestra
+            history_window = DownloadHistoryWindow(self, downloads)
+            
+        except ImportError as e:
+            messagebox.showerror("Errore", f"Impossibile importare il modulo download_history: {e}")
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante il caricamento dello storico: {e}")
+
+
+class DownloadHistoryWindow(tk.Toplevel):
+    """Finestra per visualizzare lo storico dei download rapidi."""
+    
+    def __init__(self, parent, downloads):
+        super().__init__(parent)
+        
+        self.parent = parent
+        self.downloads = downloads
+        
+        self.title("📋 Storico Download Rapidi")
+        self.geometry("900x600")
+        self.resizable(True, True)
+        self.transient(parent)
+        
+        self.create_widgets()
+        self.center_window()
+    
+    def center_window(self):
+        """Centra la finestra sullo schermo."""
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f'{width}x{height}+{x}+{y}')
+    
+    def create_widgets(self):
+        """Crea i widget della finestra."""
+        # Frame principale
+        main_frame = tk.Frame(self, bg="#FFFFFF", padx=20, pady=20)
+        main_frame.pack(fill="both", expand=True)
+        
+        # Titolo
+        title_label = tk.Label(
+            main_frame,
+            text="📋 Storico Download Rapidi",
+            font=('Arial', 14, 'bold'),
+            bg="#FFFFFF",
+            fg="#333333"
+        )
+        title_label.pack(pady=(0, 15))
+        
+        # Info se non ci sono download
+        if not self.downloads:
+            no_data_label = tk.Label(
+                main_frame,
+                text="Nessun download registrato nello storico.",
+                font=('Arial', 11),
+                bg="#FFFFFF",
+                fg="#666666"
+            )
+            no_data_label.pack(pady=50)
+            
+            # Pulsante chiudi
+            btn_chiudi = tk.Button(
+                main_frame,
+                text="Chiudi",
+                command=self.destroy,
+                bg="#607D8B",
+                fg="white",
+                font=('Arial', 10, 'bold'),
+                cursor="hand2",
+                padx=20,
+                pady=5
+            )
+            btn_chiudi.pack(pady=20)
+            return
+        
+        # Frame per la lista con scrollbar
+        list_frame = tk.Frame(main_frame, bg="#FFFFFF")
+        list_frame.pack(fill="both", expand=True, pady=(0, 15))
+        
+        # Treeview per mostrare i download
+        columns = ('data', 'ora', 'fatture_count')
+        self.tree = ttk.Treeview(
+            list_frame,
+            columns=columns,
+            show='tree headings',
+            height=15
+        )
+        
+        # Configura le colonne
+        self.tree.heading('#0', text='Download', anchor='w')
+        self.tree.heading('data', text='Data', anchor='center')
+        self.tree.heading('ora', text='Ora', anchor='center')
+        self.tree.heading('fatture_count', text='N. Fatture', anchor='center')
+        
+        self.tree.column('#0', width=300, minwidth=200)
+        self.tree.column('data', width=120, minwidth=100, anchor='center')
+        self.tree.column('ora', width=100, minwidth=80, anchor='center')
+        self.tree.column('fatture_count', width=100, minwidth=80, anchor='center')
+        
+        # Scrollbar verticale
+        scrollbar_y = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar_y.set)
+        
+        # Scrollbar orizzontale
+        scrollbar_x = ttk.Scrollbar(list_frame, orient="horizontal", command=self.tree.xview)
+        self.tree.configure(xscrollcommand=scrollbar_x.set)
+        
+        # Pack del treeview e scrollbar
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
+        
+        list_frame.grid_rowconfigure(0, weight=1)
+        list_frame.grid_columnconfigure(0, weight=1)
+        
+        # Popola il treeview
+        self.populate_tree()
+        
+        # Bind per espandere/contrarre i nodi
+        self.tree.bind('<Double-Button-1>', self.on_item_double_click)
+        
+        # Frame pulsanti
+        button_frame = tk.Frame(main_frame, bg="#FFFFFF")
+        button_frame.pack(fill="x")
+        
+        # Pulsante chiudi
+        btn_chiudi = tk.Button(
+            button_frame,
+            text="Chiudi",
+            command=self.destroy,
+            bg="#607D8B",
+            fg="white",
+            font=('Arial', 10, 'bold'),
+            cursor="hand2",
+            padx=20,
+            pady=5
+        )
+        btn_chiudi.pack(side="right")
+    
+    def populate_tree(self):
+        """Popola il treeview con i dati dello storico."""
+        for i, download in enumerate(self.downloads):
+            # Formatta la data in formato italiano
+            try:
+                data_obj = datetime.strptime(download['data'], '%Y-%m-%d')
+                data_formattata = data_obj.strftime('%d/%m/%Y')
+            except:
+                data_formattata = download['data']
+            
+            # Crea il nodo principale
+            num_fatture = len(download.get('fatture', []))
+            download_id = self.tree.insert(
+                '',
+                'end',
+                text=f"Download #{i+1}",
+                values=(data_formattata, download['ora'], num_fatture),
+                tags=('download',)
+            )
+            
+            # Aggiungi le fatture come nodi figli
+            for fattura in download.get('fatture', []):
+                self.tree.insert(
+                    download_id,
+                    'end',
+                    text=f"N. {fattura['numero']} - {fattura['soggetto']}",
+                    values=('', '', fattura['data']),
+                    tags=('fattura',)
+                )
+        
+        # Configura i tag per lo stile
+        self.tree.tag_configure('download', background='#E3F2FD')
+        self.tree.tag_configure('fattura', background='#FFFFFF')
+    
+    def on_item_double_click(self, event):
+        """Gestisce il doppio click su un elemento per espandere/contrarre."""
+        item = self.tree.selection()[0] if self.tree.selection() else None
+        if item:
+            # Espandi o contrai il nodo
+            if self.tree.get_children(item):
+                if self.tree.item(item, 'open'):
+                    self.tree.item(item, open=False)
+                else:
+                    self.tree.item(item, open=True)
 
 # Esegui l'app solo per test
 if __name__ == "__main__":

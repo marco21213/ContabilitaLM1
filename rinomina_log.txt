@@ -226,3 +226,21 @@
 [2025-12-16 22:34:29] File SM03473_ExcEN.xml.xml archiviato come 2025-10-02073640472-13015.xml
 [2025-12-16 22:34:29] File SM03473_F7Sdy.xml archiviato come 2025-11-05130631210-12695.xml
 [2025-12-16 22:34:29] File SM03473_F7XYZ.xml.xml archiviato come 2025-11-00649651205-3328.xml
+[2025-12-17 22:05:28] File 2025-12-00488410010-7X05872702.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:28] File IT00488410010_qUBC3.xml.xml archiviato come 2025-12-00488410010-8S00439038.xml
+[2025-12-17 22:05:28] File 2025-12-00488410010-8S00439038.xml copiato in cartella stampa
+[2025-12-17 22:05:29] File IT00488410010_qUCIk.xml.xml archiviato come 2025-12-00488410010-8S00442393.xml
+[2025-12-17 22:05:29] File 2025-12-00488410010-8S00442393.xml copiato in cartella stampa
+[2025-12-17 22:05:29] File 2025-12-00791910151-4660IT.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-00837870963-1025.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-04157330756-4932.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File IT016417907022025M_0cR2r.xml archiviato come 2025-12-04308510264-1251049430.xml
+[2025-12-17 22:05:29] File 2025-12-04308510264-1251049430.xml copiato in cartella stampa
+[2025-12-17 22:05:29] File 2025-11-01840920431-1289.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-01938300751-130.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-02067660411-301839.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-02628170751-65.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-04822060754-9.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] File 2025-12-15844561009-005298085086.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-17 22:05:29] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
+[2025-12-17 22:05:29] File 2025-12-05595420653-2364.xml già presente in archivio - rimuovo il file sorgente
