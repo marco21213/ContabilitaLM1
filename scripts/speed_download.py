@@ -6,9 +6,9 @@ def ottieni_date_da_config(file_config):
     config = configparser.ConfigParser()
     config.read(file_config)
 
-    # Leggi la data di aggiornamento dalla sezione [Profilo]
-    if 'Profilo' in config and 'aggiornamento' in config['Profilo']:
-        data_aggiornamento_str = config['Profilo']['aggiornamento']
+    # Leggi la data di aggiornamento dalla sezione [Parametri]
+    if 'Parametri' in config and 'aggiornamento' in config['Parametri']:
+        data_aggiornamento_str = config['Parametri']['aggiornamento']
         try:
             # Converte la stringa in oggetto datetime
             data_aggiornamento = datetime.strptime(data_aggiornamento_str, '%d/%m/%Y')
@@ -28,7 +28,7 @@ def ottieni_date_da_config(file_config):
 
         return dal_value, al_value
     else:
-        print("Errore: La sezione [Profilo] o il parametro 'aggiornamento' non esistono nel file config.ini.")
+        print("Errore: La sezione [Parametri] o il parametro 'aggiornamento' non esistono nel file config.ini.")
         return None, None
 
 # Funzione per aggiornare i parametri 'dal', 'al', 'tipo' e 'venoacq'

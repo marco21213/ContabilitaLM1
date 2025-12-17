@@ -24,9 +24,9 @@ config = ConfigParser()
 config.read(config_path)
 
 data_odierna = datetime.now().strftime("%d/%m/%Y")
-if 'Profilo' not in config:
-    config.add_section('Profilo')
-config['Profilo']['aggiornamento'] = data_odierna
+if 'Parametri' not in config:
+    config.add_section('Parametri')
+config['Parametri']['aggiornamento'] = data_odierna
 
 with open(config_path, "w") as config_file:
     config.write(config_file)

@@ -24,17 +24,16 @@ try:
     config.read('config.ini')
 
     # Recupera i parametri dal file config.ini
-    CF = config['Credenziali']['codicefiscale']
-    PIN = config['Credenziali']['pin']
-    Password = config['Credenziali']['password']
-    cfstudio = config['Parametri']['cfstudio']
+    CF = config['Parametri']['codicefiscale']
+    PIN = config['Parametri']['pin']
+    Password = config['Parametri']['password']
     Dal = config['Parametri']['dal']
     Al = config['Parametri']['al']
-    cfcliente = config['Parametri']['cfcliente']
     pivadiretta = config['Parametri']['pivadiretta']
     tipo = int(config['Parametri']['tipo'])
     VenOAcq = config['Parametri']['venoacq']
-    profilo = int(config['Profilo']['profilo'])
+    # profilo è sempre 1 (delega diretta), non più configurabile
+    profilo = 1
     
     s = requests.Session()
     s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'})
@@ -76,9 +75,9 @@ try:
     print('Seleziono il tipo di incarico')
     if profilo == 1:
     # Delega Diretta
-                payload = {'cf_inserito': cfcliente};
+                payload = {'cf_inserito': CF};
                 r = s.post('https://ivaservizi.agenziaentrate.gov.it/portale/scelta-utenza-lavoro?p_auth='+ p_auth + '&p_p_id=SceltaUtenzaLavoro_WAR_SceltaUtenzaLavoroportlet&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=1&_SceltaUtenzaLavoro_WAR_SceltaUtenzaLavoroportlet_javax.portlet.action=delegaDirettaAction', data=payload);
-                payload = {'cf_inserito': cfcliente, 'sceltapiva' : pivadiretta};    
+                payload = {'cf_inserito': CF, 'sceltapiva' : pivadiretta};    
                 r = s.post('https://ivaservizi.agenziaentrate.gov.it/portale/scelta-utenza-lavoro?p_auth='+ p_auth + '&p_p_id=SceltaUtenzaLavoro_WAR_SceltaUtenzaLavoroportlet&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=1&_SceltaUtenzaLavoro_WAR_SceltaUtenzaLavoroportlet_javax.portlet.action=delegaDirettaAction', data=payload);
     
     else:
@@ -147,7 +146,7 @@ try:
         #===============================================================================================
         # FATTURE MESSE A DISPOSIZIONE
         #===============================================================================================
-        print('Scarico il json delle fatture ricevute e messe a disposizione per la partita IVA ' + cfcliente)
+        print('Scarico il json delle fatture ricevute e messe a disposizione per la partita IVA ' + CF)
         r = s.get('https://ivaservizi.agenziaentrate.gov.it/cons/cons-services/rs/fe/mc/dal/'+Dal+'/al/'+Al+'?v=' + unixTime(), headers = headers)
         if r.status_code == 200:
             puts(colored.yellow('Lista ottenuta FATTURE A DISPOSIZIONE. Potrebbe essere vuota!'))
@@ -156,13 +155,13 @@ try:
             sys.exit()
 
 
-        with open('fe_ricevute_disposizione_' + cfcliente + '.json', 'wb') as f:
+        with open('fe_ricevute_disposizione_' + CF + '.json', 'wb') as f:
             f.write(r.content)
             print('Inizio a scaricare le fatture ricevute e messe a disposizione!')
-        path = r'FatturePassive_' + cfcliente
+        path = r'FatturePassive_' + CF
         if not os.path.exists(path):
             os.makedirs(path)
-        with open('fe_ricevute_disposizione_'+ cfcliente +'.json') as data_file:    
+        with open('fe_ricevute_disposizione_'+ CF +'.json') as data_file:    
             data = json.load(data_file)
             #print('Inizio a scaricare ' + str(data['totaleFatture']) + ' fatture dal ' + data['dataRicercaDa'] + ' al ' + data['dataRicercaA'] + ' per un massimo di ' + str(data['limiteBloccoTotaleFatture']) + ' fatture scaricabili.')#
             numero_fatture_disposizione = 0
@@ -185,24 +184,24 @@ try:
         #===============================================================================================
         if tipo == 1:
         # r = s.get('https://ivaservizi.agenziaentrate.gov.it/ser/api/monitoraggio/v1/monitoraggio/fatture/?v='+unixTime()+'&idFiscCedente=&idFiscDestinatario=&idFiscEmittente=&idFiscTrasmittente=&idSdi=&perPage=10&start=1&statoFile=&tipoFattura=EMESSA')
-             print('Scarico il json delle fatture ricevute per data ricezione per la partita IVA ' + cfcliente)
+             print('Scarico il json delle fatture ricevute per data ricezione per la partita IVA ' + CF)
              r = s.get('https://ivaservizi.agenziaentrate.gov.it/cons/cons-services/rs/fe/ricevute/dal/'+Dal+'/al/'+Al+'/ricerca/ricezione?v=' + unixTime(), headers = headers)
         else:     
-             print('Scarico il json delle fatture ricevute per data di emissione per la partita IVA ' + cfcliente)
+             print('Scarico il json delle fatture ricevute per data di emissione per la partita IVA ' + CF)
              r = s.get('https://ivaservizi.agenziaentrate.gov.it/cons/cons-services/rs/fe/ricevute/dal/'+Dal+'/al/'+Al+'/ricerca/emissione?v=' + unixTime(), headers = headers)
 
-        with open('fe_ricevute_'+ cfcliente +'.json', 'wb') as f:
+        with open('fe_ricevute_'+ CF +'.json', 'wb') as f:
             f.write(r.content)
             
         print('Inizio a scaricare le fatture PASSIVE ricevute')
-        path = r'FatturePassive_' + cfcliente
+        path = r'FatturePassive_' + CF
         pathp7m = path + '_p7m'
         if not os.path.exists(path):
             os.makedirs(path)
         if not os.path.exists(path):
             os.makedirs(pathp7m)
 
-        with open('fe_ricevute_'+ cfcliente +'.json') as data_file:    
+        with open('fe_ricevute_'+ CF +'.json') as data_file:    
             data = json.load(data_file)
             numero_fatture_ricevute = 0
             numero_notifiche_ricevute = 0
@@ -233,17 +232,17 @@ try:
 
 
     #=============# FATTURE TRANSFRONTALIERE RICEVUTE=======#
-        print('Scarico il json delle fatture  Transfrontaliere Ricevute per la Partita IVA ' + cfcliente)
+        print('Scarico il json delle fatture  Transfrontaliere Ricevute per la Partita IVA ' + CF)
         r = s.get('https://ivaservizi.agenziaentrate.gov.it/cons/cons-services/rs/ft/ricevute/dal/'+Dal+'/al/'+Al+'?v=' + unixTime(), headers = headers)
 
-        with open('fe_ricevutetr_'+ cfcliente +'.json', 'wb') as f:
+        with open('fe_ricevutetr_'+ CF +'.json', 'wb') as f:
             f.write(r.content)
             
         print('Inizio a scaricare le fatture transfrontaliere ricevute')
-        path = r'FatturePassive_' + cfcliente
+        path = r'FatturePassive_' + CF
         if not os.path.exists(path):
             os.makedirs(path)
-        with open('fe_ricevutetr_'+ cfcliente +'.json') as data_file:    
+        with open('fe_ricevutetr_'+ CF +'.json') as data_file:    
             data = json.load(data_file)
             numero_fatture = 0
             numero_notifiche = 0
@@ -263,7 +262,7 @@ try:
         print('Totale fatture Ricevute TRAN ricevute scaricate: ', numero_fatture)
         print('Totale notifiche scaricate fatture TRAN ricevute: ', numero_notifiche)
 
-        print('Per il cliente: ', cfcliente)
+        print('Per il cliente: ', CF)
         print('Totale fatture TRANSFRONTALIERE RICEVUTE scaricate: ', numero_fatture)
 
 

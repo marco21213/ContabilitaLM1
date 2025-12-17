@@ -12,13 +12,13 @@ def aggiorna_credenziali(codice_fiscale, pin, password):
     # Leggi il file config.ini esistente
     config.read(config_path)
     
-    # Aggiorna la sezione Credenziali
-    if 'Credenziali' not in config:
-        config.add_section('Credenziali')
+    # Aggiorna la sezione Parametri (dove ora teniamo anche le credenziali)
+    if 'Parametri' not in config:
+        config.add_section('Parametri')
         
-    config['Credenziali']['codicefiscale'] = codice_fiscale
-    config['Credenziali']['pin'] = pin 
-    config['Credenziali']['password'] = password
+    config['Parametri']['codicefiscale'] = codice_fiscale
+    config['Parametri']['pin'] = pin 
+    config['Parametri']['password'] = password
     
     # Salva le modifiche nel file
     with open(config_path, 'w') as configfile:
