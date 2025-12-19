@@ -1,8 +1,9 @@
 import subprocess
 import os
-from configparser import ConfigParser
 from datetime import datetime, timedelta
 import calendar
+
+from parametri_db import aggiorna_parametri
 
 def calcola_date_mese(mese, anno):
     """Calcola il primo e ultimo giorno del mese specificato."""
@@ -12,34 +13,27 @@ def calcola_date_mese(mese, anno):
     
     return primo_giorno.strftime("%d/%m/%Y"), ultimo_giorno.strftime("%d/%m/%Y")
 
-def aggiorna_config_mensile(mese, anno, tipo_documento):
-    """Aggiorna il file config.ini con i parametri per il download mensile."""
-    config_path = "config.ini"
-    config = ConfigParser()
-    config.read(config_path)
-    
+def aggiorna_parametri_mensili(mese, anno, tipo_documento):
+    """Aggiorna i parametri nel database per il download mensile."""
     # Calcola le date del mese
     data_inizio, data_fine = calcola_date_mese(mese, anno)
     
-    # Aggiorna i parametri
-    if 'Parametri' not in config:
-        config.add_section('Parametri')
-    
-    config['Parametri']['dal'] = data_inizio.replace('/', '')
-    config['Parametri']['al'] = data_fine.replace('/', '')
-    config['Parametri']['tipo'] = '2'  # MODIFICATO: Data di emissione (invece di 1 - Data di ricezione)
-    config['Parametri']['venoacq'] = 'A' if tipo_documento == 'acquisti' else 'V'
-    
-    # Aggiorna timestamp
+    dal_value = data_inizio.replace('/', '')
+    al_value = data_fine.replace('/', '')
+    tipo_value = 2  # Data di emissione
+    venoacq_value = 'A' if tipo_documento == 'acquisti' else 'V'
+
     data_odierna = datetime.now().strftime("%d/%m/%Y")
-    if 'Parametri' not in config:
-        config.add_section('Parametri')
-    config['Parametri']['aggiornamento'] = data_odierna
-    
-    with open(config_path, "w") as config_file:
-        config.write(config_file)
-    
-    print(f"Config aggiornato per {calendar.month_name[mese]} {anno} ({tipo_documento})")
+
+    aggiorna_parametri(
+        dal=dal_value,
+        al=al_value,
+        tipo=tipo_value,
+        venoacq=venoacq_value,
+        aggiornamento=data_odierna,
+    )
+
+    print(f"Parametri aggiornati per {calendar.month_name[mese]} {anno} ({tipo_documento})")
     print(f"Periodo: {data_inizio} - {data_fine}")
 
 def esegui_download_mensile(mese, anno, tipo_documento='acquisti'):
@@ -56,8 +50,8 @@ def esegui_download_mensile(mese, anno, tipo_documento='acquisti'):
         scripts_path = os.path.join(script_dir, "scripts")
     
     try:
-        # 1. Aggiorna configurazione con i parametri mensili
-        aggiorna_config_mensile(mese, anno, tipo_documento)
+        # 1. Aggiorna parametri nel database per il mese selezionato
+        aggiorna_parametri_mensili(mese, anno, tipo_documento)
         
         print("Inizio download mensile...")
         

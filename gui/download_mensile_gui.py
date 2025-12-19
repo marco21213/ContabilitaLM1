@@ -3,11 +3,12 @@ from tkinter import ttk, scrolledtext, messagebox
 import threading
 import subprocess
 import os
-from configparser import ConfigParser
 from datetime import datetime
 import calendar
 import sys
 import re
+
+from scripts.parametri_db import aggiorna_parametri
 
 
 class DownloadMensileWindow(tk.Toplevel):
@@ -25,11 +26,6 @@ class DownloadMensileWindow(tk.Toplevel):
         self.geometry("700x480")
         self.resizable(True, True)
         self.transient(parent)
-        
-        # Leggi config.ini
-        self.config_path = "config.ini"
-        self.config = ConfigParser()
-        self.config.read(self.config_path)
         
         self.create_widgets()
         self.center_window()
@@ -246,17 +242,9 @@ class DownloadMensileWindow(tk.Toplevel):
         return data_inizio, data_fine
     
     def aggiorna_config(self):
-        """Aggiorna il file config.ini con i parametri del mese selezionato"""
+        """Aggiorna nel database i parametri del mese selezionato"""
         try:
-            self.aggiungi_messaggio("📝 Aggiornamento parametri config.ini...")
-            
-            # Leggi config
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(current_dir)
-            config_path = os.path.join(project_root, "config.ini")
-            
-            config = ConfigParser()
-            config.read(config_path)
+            self.aggiungi_messaggio("📝 Aggiornamento parametri nel database...")
             
             # Ottieni anno e mese
             anno = int(self.anno_var.get())
@@ -276,18 +264,13 @@ class DownloadMensileWindow(tk.Toplevel):
             venoacq_value = 'A' if self.tipo_documento == 'acquisti' else 'V'
             venoacq_text = 'Acquisti' if venoacq_value == 'A' else 'Vendite'
             
-            # Aggiorna i parametri
-            if 'Parametri' not in config:
-                config.add_section('Parametri')
-            
-            config['Parametri']['dal'] = dal_value
-            config['Parametri']['al'] = al_value
-            config['Parametri']['tipo'] = tipo_value
-            config['Parametri']['venoacq'] = venoacq_value
-            
-            # Salva
-            with open(config_path, 'w') as configfile:
-                config.write(configfile)
+            # Aggiorna i parametri nella tabella parametri
+            aggiorna_parametri(
+                dal=dal_value,
+                al=al_value,
+                tipo=int(tipo_value),
+                venoacq=venoacq_value,
+            )
             
             # Nome mese per log
             mesi_nomi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",

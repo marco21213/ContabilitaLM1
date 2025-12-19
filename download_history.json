@@ -1,6 +1,27 @@
 {
   "downloads": [
     {
+      "data": "2025-12-18",
+      "ora": "22:36:09",
+      "fatture": [
+        {
+          "numero": "V1-28677",
+          "soggetto": "SPARCO S.P.A.",
+          "data": "12/12/2025"
+        },
+        {
+          "numero": "20251827",
+          "soggetto": "PRODOTTI ALFA SRL",
+          "data": "15/12/2025"
+        },
+        {
+          "numero": "611-F2501597",
+          "soggetto": "JAEGER ITALIA S.R.L.",
+          "data": "16/12/2025"
+        }
+      ]
+    },
+    {
       "data": "2025-12-17",
       "ora": "22:05:30",
       "fatture": [
@@ -22,5 +43,5 @@
       ]
     }
   ],
-  "last_updated": "2025-12-17T22:05:30.581330"
+  "last_updated": "2025-12-18T22:36:09.737966"
 }

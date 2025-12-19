@@ -1,5 +1,4 @@
 import subprocess
-import configparser
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -14,24 +13,25 @@ import shutil
 from clint.textui import colored, puts
 from tqdm import *
 
+from parametri_db import carica_parametri
+
     
 def unixTime():
     dt = datetime.now(tz=pytz.utc)
     return str(int(dt.timestamp() * 1000))
-try:
-    # Leggi il file di configurazione
-    config = configparser.ConfigParser()
-    config.read('config.ini')
 
-    # Recupera i parametri dal file config.ini
-    CF = config['Parametri']['codicefiscale']
-    PIN = config['Parametri']['pin']
-    Password = config['Parametri']['password']
-    Dal = config['Parametri']['dal']
-    Al = config['Parametri']['al']
-    pivadiretta = config['Parametri']['pivadiretta']
-    tipo = int(config['Parametri']['tipo'])
-    VenOAcq = config['Parametri']['venoacq']
+try:
+    # Leggi i parametri dal database (tabella parametri, riga id=1)
+    params = carica_parametri()
+
+    CF = params['codicefiscale']
+    PIN = params['pin']
+    Password = params['password']
+    Dal = params['dal']
+    Al = params['al']
+    pivadiretta = params['pivadiretta']
+    tipo = int(params['tipo'])
+    VenOAcq = params['venoacq']
     # profilo è sempre 1 (delega diretta), non più configurabile
     profilo = 1
     

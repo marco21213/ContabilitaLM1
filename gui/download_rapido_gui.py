@@ -3,10 +3,11 @@ from tkinter import scrolledtext, messagebox
 import threading
 import subprocess
 import os
-from configparser import ConfigParser
 from datetime import datetime
 import sys
 import json
+
+from scripts.parametri_db import aggiorna_parametri
 
 
 class DownloadRapidoWindow(tk.Toplevel):
@@ -278,29 +279,16 @@ class DownloadRapidoWindow(tk.Toplevel):
             return False
     
     def aggiorna_config(self):
-        """Aggiorna il file config.ini con la data odierna"""
+        """Aggiorna nel database il campo 'aggiornamento' con la data odierna"""
         try:
             self.aggiungi_messaggio(f"\n{'='*60}")
             self.aggiungi_messaggio("📝 Aggiornamento configurazione")
             self.aggiungi_messaggio(f"{'='*60}")
             
-            # Il config.ini si trova nella root del progetto
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(current_dir)
-            config_path = os.path.join(project_root, "config.ini")
-            
-            config = ConfigParser()
-            config.read(config_path)
-            
             data_odierna = datetime.now().strftime("%d/%m/%Y")
             
-            if 'Parametri' not in config:
-                config.add_section('Parametri')
-            
-            config['Parametri']['aggiornamento'] = data_odierna
-            
-            with open(config_path, "w") as config_file:
-                config.write(config_file)
+            # Aggiorna solo il campo 'aggiornamento' nella tabella parametri
+            aggiorna_parametri(aggiornamento=data_odierna)
             
             self.aggiungi_messaggio(f"✓ Configurazione aggiornata con data: {data_odierna}")
             return True

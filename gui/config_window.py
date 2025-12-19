@@ -5,6 +5,12 @@ import configparser
 import os
 import logging
 
+from scripts.parametri_db import (
+    carica_parametri,
+    aggiorna_parametri,
+    aggiorna_credenziali as aggiorna_credenziali_db,
+)
+
 logger = logging.getLogger(__name__)
 
 class ConfigWindow:
@@ -53,15 +59,15 @@ class ConfigWindow:
         notebook = ttk.Notebook(main_frame)
         notebook.pack(fill='both', expand=True)
         
-        # Scheda Parametri (rinominata)
+        # Scheda Parametri (file config.ini)
         params_frame = ttk.Frame(notebook, padding="10")
         notebook.add(params_frame, text="Parametri")
         self.create_parameters_tab(params_frame)
-        
-        # Scheda Database (mantenuta per compatibilità futura)
-        db_frame = ttk.Frame(notebook, padding="10")
-        notebook.add(db_frame, text="Database")
-        self.create_database_tab(db_frame)
+
+        # Scheda Parametri AdE (tabella parametri nel database)
+        ade_frame = ttk.Frame(notebook, padding="10")
+        notebook.add(ade_frame, text="Parametri AdE")
+        self.create_ade_tab(ade_frame)
         
         # Scheda Backup
         backup_frame = ttk.Frame(notebook, padding="10")
@@ -164,17 +170,74 @@ class ConfigWindow:
         ).pack(side='right', padx=(5, 0))
         
         parent.columnconfigure(1, weight=1)
-    
-    def create_database_tab(self, parent: ttk.Frame) -> None:
-        """Crea la scheda per le impostazioni del database (per compatibilità futura)"""
-        info_label = ttk.Label(
-            parent, 
-            text="Le impostazioni del database principale sono gestite nella scheda 'Parametri'.\n\n"
-                 "Questa scheda è riservata per configurazioni avanzate future.",
-            justify='center',
-            font=("Arial", 10)
+
+    def create_ade_tab(self, parent: ttk.Frame) -> None:
+        """Crea la scheda per i parametri salvati nella tabella 'parametri' del database (AdE)."""
+        row = 0
+
+        ttk.Label(parent, text="Credenziali AdE", font=("Arial", 10, "bold")).grid(
+            row=row, column=0, sticky="w", pady=(0, 5)
         )
-        info_label.pack(expand=True, pady=50)
+        row += 1
+
+        ttk.Label(parent, text="Codice fiscale:").grid(row=row, column=0, sticky="w", pady=2)
+        self.cf_entry = ttk.Entry(parent, width=30)
+        self.cf_entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
+        row += 1
+
+        ttk.Label(parent, text="PIN:").grid(row=row, column=0, sticky="w", pady=2)
+        self.pin_entry = ttk.Entry(parent, width=30)
+        self.pin_entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
+        row += 1
+
+        ttk.Label(parent, text="Password:").grid(row=row, column=0, sticky="w", pady=2)
+        self.pwd_entry = ttk.Entry(parent, width=30, show="*")
+        self.pwd_entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
+        row += 1
+
+        ttk.Separator(parent, orient="horizontal").grid(
+            row=row, column=0, columnspan=2, sticky="ew", pady=10
+        )
+        row += 1
+
+        ttk.Label(parent, text="Parametri ricerca/download", font=("Arial", 10, "bold")).grid(
+            row=row, column=0, sticky="w", pady=(0, 5)
+        )
+        row += 1
+
+        ttk.Label(parent, text="P.IVA delega diretta:").grid(row=row, column=0, sticky="w", pady=2)
+        self.piva_entry = ttk.Entry(parent, width=30)
+        self.piva_entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
+        row += 1
+
+        ttk.Label(parent, text="Dal (ddmmyyyy):").grid(row=row, column=0, sticky="w", pady=2)
+        self.dal_entry = ttk.Entry(parent, width=15)
+        self.dal_entry.grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        row += 1
+
+        ttk.Label(parent, text="Al (ddmmyyyy):").grid(row=row, column=0, sticky="w", pady=2)
+        self.al_entry = ttk.Entry(parent, width=15)
+        self.al_entry.grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        row += 1
+
+        ttk.Label(parent, text="Tipo data (0/1/2):").grid(row=row, column=0, sticky="w", pady=2)
+        self.tipo_entry = ttk.Entry(parent, width=5)
+        self.tipo_entry.grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        row += 1
+
+        ttk.Label(parent, text="Vendite/Acquisti (V/A):").grid(row=row, column=0, sticky="w", pady=2)
+        self.venoacq_entry = ttk.Entry(parent, width=5)
+        self.venoacq_entry.grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        row += 1
+
+        ttk.Label(parent, text="Ultimo aggiornamento (dd/mm/yyyy):").grid(
+            row=row, column=0, sticky="w", pady=2
+        )
+        self.agg_entry = ttk.Entry(parent, width=15)
+        self.agg_entry.grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        row += 1
+
+        parent.columnconfigure(1, weight=1)
     
     def create_backup_tab(self, parent: ttk.Frame) -> None:
         """Crea la scheda per le impostazioni di backup"""
@@ -229,10 +292,54 @@ class ConfigWindow:
             # Sezione Autenticazione
             self.db_entry.insert(0, self.config.get('Autenticazione', 'percorso_database', fallback=''))
             
-            # Sezione Parametri
+            # Sezione Parametri (config.ini)
             self.vendita_entry.insert(0, self.config.get('Parametri', 'cartellaemesse', fallback=''))
             self.acquisto_entry.insert(0, self.config.get('Parametri', 'cartellaricevute', fallback=''))
             self.stampa_entry.insert(0, self.config.get('Parametri', 'cartellastampa', fallback=''))
+
+            # Parametri AdE dal database
+            try:
+                params = carica_parametri()
+                # Credenziali
+                try:
+                    self.cf_entry.insert(0, params["codicefiscale"])
+                except Exception:
+                    pass
+                try:
+                    self.pin_entry.insert(0, params["pin"])
+                except Exception:
+                    pass
+                try:
+                    self.pwd_entry.insert(0, params["password"])
+                except Exception:
+                    pass
+                # Parametri di ricerca
+                try:
+                    self.piva_entry.insert(0, params["pivadiretta"])
+                except Exception:
+                    pass
+                try:
+                    self.dal_entry.insert(0, params["dal"])
+                except Exception:
+                    pass
+                try:
+                    self.al_entry.insert(0, params["al"])
+                except Exception:
+                    pass
+                try:
+                    self.tipo_entry.insert(0, str(params["tipo"]))
+                except Exception:
+                    pass
+                try:
+                    self.venoacq_entry.insert(0, params["venoacq"])
+                except Exception:
+                    pass
+                try:
+                    self.agg_entry.insert(0, params["aggiornamento"])
+                except Exception:
+                    pass
+            except Exception as e:
+                logger.error(f"Errore nel caricamento dei parametri AdE dal database: {e}")
             
             # Backup (se esiste la sezione)
             self.backup_folder.insert(0, self.config.get('Backup', 'cartella', fallback='C:/backup/contabilita'))
@@ -246,7 +353,7 @@ class ConfigWindow:
     def save_settings(self) -> None:
         """Salva le impostazioni nel file config.ini"""
         try:
-            # Aggiorna i valori nella configurazione
+            # Aggiorna i valori nella configurazione (file config.ini)
             if not self.config.has_section('Autenticazione'):
                 self.config.add_section('Autenticazione')
             if not self.config.has_section('Parametri'):
@@ -270,8 +377,34 @@ class ConfigWindow:
             # Salva sul file
             with open(self.config_file, 'w', encoding='utf-8') as configfile:
                 self.config.write(configfile)
-            
-            messagebox.showinfo("Successo", "Parametri salvati correttamente nel file config.ini!")
+
+            # Aggiorna parametri AdE nel database
+            try:
+                # Credenziali
+                aggiorna_credenziali_db(
+                    codicefiscale=self.cf_entry.get().strip(),
+                    pin=self.pin_entry.get().strip(),
+                    password=self.pwd_entry.get().strip(),
+                )
+
+                # Parametri scarico
+                tipo_raw = self.tipo_entry.get().strip()
+                tipo_val = int(tipo_raw) if tipo_raw else None
+
+                aggiorna_parametri(
+                    dal=self.dal_entry.get().strip() or None,
+                    al=self.al_entry.get().strip() or None,
+                    tipo=tipo_val,
+                    venoacq=self.venoacq_entry.get().strip() or None,
+                    aggiornamento=self.agg_entry.get().strip() or None,
+                    pivadiretta=self.piva_entry.get().strip() or None,
+                )
+            except Exception as e:
+                logger.error(f"Errore nel salvataggio dei parametri AdE nel database: {e}")
+                messagebox.showerror("Errore", f"Errore nel salvataggio parametri AdE nel database: {e}")
+                return
+
+            messagebox.showinfo("Successo", "Parametri salvati correttamente!")
             self.window.destroy()
             
         except Exception as e:
