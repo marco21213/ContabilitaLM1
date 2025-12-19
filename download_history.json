@@ -1,6 +1,22 @@
 {
   "downloads": [
     {
+      "data": "2025-12-19",
+      "ora": "21:52:17",
+      "fatture": [
+        {
+          "numero": "27525",
+          "soggetto": "F.lli Sanvito S.R.L.",
+          "data": "17/12/2025"
+        },
+        {
+          "numero": "2503082",
+          "soggetto": "KENDAFARBEN S.P.A.",
+          "data": "16/12/2025"
+        }
+      ]
+    },
+    {
       "data": "2025-12-18",
       "ora": "22:36:09",
       "fatture": [
@@ -43,5 +59,5 @@
       ]
     }
   ],
-  "last_updated": "2025-12-18T22:36:09.737966"
+  "last_updated": "2025-12-19T21:52:17.851842"
 }
