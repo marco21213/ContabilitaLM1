@@ -48,10 +48,11 @@ class CaricaListaWindow(tk.Toplevel):
         super().__init__(parent)
         self.parent = parent
         self.selected_file = None
+        self.selected_file_estero = None
         self.caricamento_completato = False  # Flag per indicare se il caricamento è stato completato
         
         self.title("Carica Lista")
-        self.geometry("500x300")
+        self.geometry("500x400")
         self.configure(bg=Style.BACKGROUND_COLOR)
         self.resizable(False, False)
         
@@ -66,13 +67,13 @@ class CaricaListaWindow(tk.Toplevel):
         main_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=30, pady=30)
         main_frame.pack(fill="both", expand=True)
         
-        # Frame per il pulsante Sfoglia
+        # Frame per il pulsante Sfoglia - File Italia
         file_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
-        file_frame.pack(fill="x", pady=(0, 20))
+        file_frame.pack(fill="x", pady=(0, 15))
         
         tk.Label(
             file_frame,
-            text="File:",
+            text="File Italia:",
             font=("Arial", 10),
             bg=Style.BACKGROUND_COLOR,
             fg=getattr(Style, 'TEXT_COLOR', 'black')
@@ -102,6 +103,43 @@ class CaricaListaWindow(tk.Toplevel):
             command=self.browse_file
         )
         btn_sfoglia.pack(side="right")
+        
+        # Frame per il pulsante Sfoglia - File Estero (facoltativo)
+        file_estero_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        file_estero_frame.pack(fill="x", pady=(0, 20))
+        
+        tk.Label(
+            file_estero_frame,
+            text="File Estero:",
+            font=("Arial", 10),
+            bg=Style.BACKGROUND_COLOR,
+            fg=getattr(Style, 'TEXT_COLOR', 'black')
+        ).pack(side="left", padx=(0, 10))
+        
+        self.file_estero_label = tk.Label(
+            file_estero_frame,
+            text="Nessun file selezionato (facoltativo)",
+            font=("Arial", 9),
+            bg=Style.BACKGROUND_COLOR,
+            fg="#666666",
+            anchor="w"
+        )
+        self.file_estero_label.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        btn_sfoglia_estero = tk.Button(
+            file_estero_frame,
+            text="Sfoglia",
+            font=("Arial", 10),
+            bg="#4b6cb7",
+            fg="white",
+            activebackground="#3a5a9f",
+            activeforeground="white",
+            cursor="hand2",
+            padx=15,
+            pady=5,
+            command=self.browse_file_estero
+        )
+        btn_sfoglia_estero.pack(side="right")
         
         # Frame per la selezione anno
         year_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
@@ -175,9 +213,9 @@ class CaricaListaWindow(tk.Toplevel):
         btn_carica.pack(pady=(10, 0))
     
     def browse_file(self):
-        """Apre il dialog per selezionare un file"""
+        """Apre il dialog per selezionare un file Italia"""
         file_path = filedialog.askopenfilename(
-            title="Seleziona file",
+            title="Seleziona file acquisti Italia",
             filetypes=[
                 ("Tutti i file", "*.*"),
                 ("File Excel", "*.xlsx;*.xls"),
@@ -191,6 +229,24 @@ class CaricaListaWindow(tk.Toplevel):
             # Mostra solo il nome del file (non il percorso completo)
             file_name = os.path.basename(file_path)
             self.file_label.config(text=file_name, fg="black")
+    
+    def browse_file_estero(self):
+        """Apre il dialog per selezionare un file Estero"""
+        file_path = filedialog.askopenfilename(
+            title="Seleziona file acquisti Estero",
+            filetypes=[
+                ("Tutti i file", "*.*"),
+                ("File Excel", "*.xlsx;*.xls"),
+                ("File CSV", "*.csv"),
+                ("File di testo", "*.txt")
+            ]
+        )
+        
+        if file_path:
+            self.selected_file_estero = file_path
+            # Mostra solo il nome del file (non il percorso completo)
+            file_name = os.path.basename(file_path)
+            self.file_estero_label.config(text=file_name, fg="black")
     
     def on_carica_click(self):
         """Gestisce il click sul bottone CARICA"""
@@ -232,8 +288,22 @@ class CaricaListaWindow(tk.Toplevel):
             
             from carica_lista_csv import processa_carica_lista
             
+            # Se il file estero non è selezionato, chiedi conferma
+            if not self.selected_file_estero:
+                risposta = messagebox.askyesno(
+                    "Conferma",
+                    "SEI SICURO CHE NON CI SONO FATTURE DI ACQUISTO ESTERO IN QUESTO MESE?",
+                    icon="question"
+                )
+                if not risposta:
+                    return  # L'utente ha annullato
+            
             # Processa il caricamento (prima volta senza sovrascrivere)
-            successo, messaggio, percorso_json = processa_carica_lista(self.selected_file, anno, mese, sovrascrivi=False)
+            successo, messaggio, percorso_json = processa_carica_lista(
+                self.selected_file, anno, mese, 
+                file_estero=self.selected_file_estero,
+                sovrascrivi=False
+            )
             
             if messaggio == "file_esistente":
                 # Chiedi conferma all'utente
@@ -246,7 +316,9 @@ class CaricaListaWindow(tk.Toplevel):
                 if risposta:
                     # L'utente ha confermato, procedi con la sovrascrittura
                     successo, messaggio, percorso_json = processa_carica_lista(
-                        self.selected_file, anno, mese, sovrascrivi=True
+                        self.selected_file, anno, mese,
+                        file_estero=self.selected_file_estero,
+                        sovrascrivi=True
                     )
                     if successo:
                         messagebox.showinfo("Successo", messaggio)
@@ -463,21 +535,25 @@ class VerificaFtAcquistoPage(tk.Frame):
         # Salva il riferimento al frame della tabella (come in documenti_page)
         self.table_frame = table_frame
         
-        # Treeview per la tabella con 5 colonne (aggiunta CSV)
-        columns = ("MESE", "CSV", "NUMERO FT", "VERIFICA", "CHECK")
+        # Treeview per la tabella con 7 colonne
+        columns = ("MESE", "CSV", "NUMERO FT", "FT ITALIA", "FT ESTERO", "TOT IMPONIBILE", "CHECK")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
         
         # Configura le colonne
         self.tree.heading("MESE", text="MESE")
         self.tree.heading("CSV", text="CSV")
         self.tree.heading("NUMERO FT", text="NUMERO FT")
-        self.tree.heading("VERIFICA", text="VERIFICA")
+        self.tree.heading("FT ITALIA", text="FT ITALIA")
+        self.tree.heading("FT ESTERO", text="FT ESTERO")
+        self.tree.heading("TOT IMPONIBILE", text="TOT IMPONIBILE")
         self.tree.heading("CHECK", text="CHECK")
         
         self.tree.column("MESE", width=150, anchor="center")
         self.tree.column("CSV", width=120, anchor="center")
         self.tree.column("NUMERO FT", width=120, anchor="center")
-        self.tree.column("VERIFICA", width=120, anchor="center")
+        self.tree.column("FT ITALIA", width=100, anchor="center")
+        self.tree.column("FT ESTERO", width=100, anchor="center")
+        self.tree.column("TOT IMPONIBILE", width=130, anchor="center")
         self.tree.column("CHECK", width=100, anchor="center")
         
         # Scrollbar verticale e orizzontale
@@ -523,7 +599,7 @@ class VerificaFtAcquistoPage(tk.Frame):
         """Gestisce la selezione dell'anno"""
         self.load_months()
     
-    def verifica_json_esistente(self, anno: int, mese: int) -> tuple[Optional[str], Optional[int]]:
+    def verifica_json_esistente(self, anno: int, mese: int) -> tuple[Optional[str], Optional[int], Optional[int], Optional[int], Optional[float]]:
         """
         Verifica se esiste un file JSON per l'anno e mese specificati.
         
@@ -532,7 +608,8 @@ class VerificaFtAcquistoPage(tk.Frame):
             mese: Mese da verificare (1-12)
             
         Returns:
-            Tupla (data_caricamento, totale_fatture) o (None, None) se non esiste
+            Tupla (data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile)
+            o (None, None, None, None, None) se non esiste
         """
         try:
             # Costruisci il percorso del file JSON
@@ -542,20 +619,46 @@ class VerificaFtAcquistoPage(tk.Frame):
             percorso_json = os.path.join(cartella_mese, nome_file)
             
             if not os.path.exists(percorso_json):
-                return None, None
+                return None, None, None, None, None
             
             # Leggi il JSON
             with open(percorso_json, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
             data_caricamento = data.get("data_caricamento", "")
-            totale_fatture = data.get("totale_fatture", 0)
             
-            return data_caricamento, totale_fatture
+            # Estrai i totali
+            totale_italia = data.get("totale_fatture_italia", 0)
+            totale_estero = data.get("totale_fatture_estero", 0)
+            totale_fatture = totale_italia + totale_estero
+            
+            # Se il totale è 0, prova a usare il campo vecchio per retrocompatibilità
+            if totale_fatture == 0:
+                totale_fatture = data.get("totale_fatture", 0)
+                # Se non ci sono i campi separati, prova a dedurli
+                if totale_italia == 0 and totale_estero == 0:
+                    totale_italia = totale_fatture
+            
+            # Calcola il totale imponibile sommando tutti gli imponibili delle fatture
+            totale_imponibile = 0.0
+            fatture = data.get("fatture", [])
+            for fattura in fatture:
+                imponibile_str = fattura.get("imponibile", "")
+                if imponibile_str:
+                    try:
+                        # Rimuovi eventuali spazi e sostituisci virgola con punto
+                        imponibile_str = imponibile_str.strip().replace(",", ".")
+                        if imponibile_str:
+                            totale_imponibile += float(imponibile_str)
+                    except (ValueError, TypeError):
+                        # Se non riesce a convertire, ignora
+                        pass
+            
+            return data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile
         
         except Exception as e:
             print(f"Errore nella lettura del JSON per {anno}/{mese:02d}: {e}")
-            return None, None
+            return None, None, None, None, None
     
     def load_months(self):
         """Carica i mesi nella tabella per l'anno selezionato"""
@@ -592,14 +695,24 @@ class VerificaFtAcquistoPage(tk.Frame):
             month_name = month_name.upper()
             
             # Verifica se esiste il JSON
-            data_caricamento, totale_fatture = self.verifica_json_esistente(year, month_num)
+            data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile = self.verifica_json_esistente(year, month_num)
             
-            # Prepara i valori per la tabella
+            # Prepara i valori per la tabella (tutti in maiuscolo)
             csv_value = data_caricamento.upper() if data_caricamento else ""
             numero_ft = str(totale_fatture).upper() if totale_fatture else ""
+            ft_italia = str(totale_italia).upper() if totale_italia is not None else ""
+            ft_estero = str(totale_estero).upper() if totale_estero is not None else ""
+            
+            # Formatta il totale imponibile con 2 decimali
+            if totale_imponibile is not None and totale_imponibile > 0:
+                tot_imponibile_str = f"{totale_imponibile:.2f}".replace(".", ",")
+            else:
+                tot_imponibile_str = ""
             
             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
-            self.tree.insert("", "end", values=(month_name, csv_value, numero_ft, "", ""), tags=(tag,))
+            self.tree.insert("", "end", values=(
+                month_name, csv_value, numero_ft, ft_italia, ft_estero, tot_imponibile_str, ""
+            ), tags=(tag,))
     
     def on_button1_click(self):
         """Apre la finestra per caricare una lista"""

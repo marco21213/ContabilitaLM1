@@ -201,6 +201,129 @@ def calcola_codice_fattura(anno: Optional[int], mese: Optional[int],
     return f"{anno_str}-{mese_str}-{piva_str}-{num_str}"
 
 
+def leggi_csv_estero(file_path: str) -> List[Dict]:
+    """
+    Legge il file CSV per acquisti estero e estrae le colonne specificate:
+    - Colonna G (indice 6): Data emissione
+    - Colonna D (indice 3): Denominazione fornitore
+    - Partita IVA: default "ESTERO"
+    - Colonna F (indice 5): Numero fattura
+    - Colonna M (indice 12): Imponibile
+    
+    Rimuove gli apici singoli dai valori e calcola un codice aggiuntivo.
+    
+    Args:
+        file_path: Percorso del file CSV
+        
+    Returns:
+        Lista di dizionari con i dati estratti
+    """
+    dati = []
+    
+    # Indici delle colonne (0-based)
+    COL_G = 6  # Data emissione
+    COL_D = 3  # Denominazione fornitore
+    COL_F = 5  # Numero fattura
+    COL_M = 12  # Imponibile
+    PARTITA_IVA_DEFAULT = "ESTERO"
+    
+    try:
+        # Prova prima con UTF-8
+        encoding = 'utf-8'
+        try:
+            with open(file_path, 'r', encoding=encoding) as f:
+                # Usa il punto e virgola come delimitatore
+                reader = csv.reader(f, delimiter=';')
+                # Salta l'intestazione se presente
+                first_row = next(reader, None)
+                if first_row is None:
+                    return []
+                
+                print(f"✓ Intestazione rilevata (estero): {len(first_row)} colonne")
+                
+                # Leggi tutte le righe
+                for idx, row in enumerate(reader, start=2):
+                    if len(row) <= max(COL_G, COL_D, COL_F, COL_M):
+                        # Riga troppo corta, salta
+                        print(f"⚠ Riga {idx} saltata (estero): troppo corta ({len(row)} colonne)")
+                        continue
+                    
+                    # Estrai i valori dalle colonne specificate
+                    data_emissione = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
+                    denominazione = rimuovi_apici(row[COL_D]) if len(row) > COL_D else ""
+                    numero_raw = rimuovi_apici(row[COL_F]) if len(row) > COL_F else ""
+                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \
+                    imponibile = rimuovi_apici(row[COL_M]) if len(row) > COL_M else ""
+                    partita_iva = PARTITA_IVA_DEFAULT
+                    
+                    # Estrai anno e mese dalla data
+                    anno, mese = estrai_anno_mese_da_data(data_emissione)
+                    
+                    # Calcola il codice fattura
+                    codice_fattura = calcola_codice_fattura(anno, mese, partita_iva, numero)
+                    
+                    # Crea il dizionario con i dati estratti
+                    fattura = {
+                        "numero_fattura": numero,
+                        "data_emissione": data_emissione,
+                        "partita_iva_fornitore": partita_iva,
+                        "denominazione_fornitore": denominazione,
+                        "imponibile": imponibile,
+                        "anno": anno,
+                        "mese": mese,
+                        "codice_fattura": codice_fattura
+                    }
+                    
+                    dati.append(fattura)
+                    
+        except UnicodeDecodeError:
+            # Se fallisce, prova con latin-1
+            encoding = 'latin-1'
+            with open(file_path, 'r', encoding=encoding) as f:
+                reader = csv.reader(f, delimiter=';')
+                first_row = next(reader, None)
+                if first_row is None:
+                    return []
+                
+                print(f"✓ Intestazione rilevata (estero): {len(first_row)} colonne (encoding: latin-1)")
+                
+                for idx, row in enumerate(reader, start=2):
+                    if len(row) <= max(COL_G, COL_D, COL_F, COL_M):
+                        print(f"⚠ Riga {idx} saltata (estero): troppo corta ({len(row)} colonne)")
+                        continue
+                    
+                    data_emissione = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
+                    denominazione = rimuovi_apici(row[COL_D]) if len(row) > COL_D else ""
+                    numero_raw = rimuovi_apici(row[COL_F]) if len(row) > COL_F else ""
+                    numero = pulisci_numero_fattura(numero_raw)
+                    imponibile = rimuovi_apici(row[COL_M]) if len(row) > COL_M else ""
+                    partita_iva = PARTITA_IVA_DEFAULT
+                    
+                    anno, mese = estrai_anno_mese_da_data(data_emissione)
+                    codice_fattura = calcola_codice_fattura(anno, mese, partita_iva, numero)
+                    
+                    fattura = {
+                        "numero_fattura": numero,
+                        "data_emissione": data_emissione,
+                        "partita_iva_fornitore": partita_iva,
+                        "denominazione_fornitore": denominazione,
+                        "imponibile": imponibile,
+                        "anno": anno,
+                        "mese": mese,
+                        "codice_fattura": codice_fattura
+                    }
+                    
+                    dati.append(fattura)
+    
+    except Exception as e:
+        print(f"❌ Errore nella lettura del CSV estero: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+    
+    return dati
+
+
 def leggi_csv(file_path: str) -> List[Dict]:
     """
     Legge il file CSV e estrae le colonne specificate:
@@ -358,13 +481,14 @@ def verifica_file_esistente(percorso_json: str) -> bool:
     return os.path.exists(percorso_json)
 
 
-def salva_json(dati: List[Dict], anno: int, mese: int, cartella_base: str, 
-                sovrascrivi: bool = False) -> tuple[Optional[str], Optional[str]]:
+def salva_json(dati_italia: List[Dict], dati_estero: List[Dict], anno: int, mese: int, 
+                cartella_base: str, sovrascrivi: bool = False) -> tuple[Optional[str], Optional[str]]:
     """
     Salva i dati in un file JSON nella cartella corretta (anno/mese).
     
     Args:
-        dati: Lista di dizionari con i dati da salvare
+        dati_italia: Lista di dizionari con i dati delle fatture Italia
+        dati_estero: Lista di dizionari con i dati delle fatture Estero
         anno: Anno selezionato
         mese: Mese selezionato (1-12)
         cartella_base: Cartella base delle fatture ricevute
@@ -399,12 +523,21 @@ def salva_json(dati: List[Dict], anno: int, mese: int, cartella_base: str,
         # Formato data: dd/mm/yyyy
         data_caricamento = datetime.now().strftime("%d/%m/%Y")
         
+        totale_italia = len(dati_italia)
+        totale_estero = len(dati_estero)
+        totale_complessivo = totale_italia + totale_estero
+        
+        # Combina le fatture (prima Italia, poi Estero)
+        tutte_fatture = dati_italia + dati_estero
+        
         json_data = {
             "anno": anno,
             "mese": mese,
             "data_caricamento": data_caricamento,
-            "fatture": dati,
-            "totale_fatture": len(dati)
+            "fatture": tutte_fatture,
+            "totale_fatture": totale_complessivo,
+            "totale_fatture_italia": totale_italia,
+            "totale_fatture_estero": totale_estero
         }
         
         # Salva il JSON
@@ -412,7 +545,9 @@ def salva_json(dati: List[Dict], anno: int, mese: int, cartella_base: str,
             json.dump(json_data, f, indent=2, ensure_ascii=False)
         
         print(f"✓ File JSON creato: {percorso_json}")
-        print(f"✓ Totale fatture caricate: {len(dati)}")
+        print(f"✓ Totale fatture Italia: {totale_italia}")
+        print(f"✓ Totale fatture Estero: {totale_estero}")
+        print(f"✓ Totale fatture caricate: {totale_complessivo}")
         
         return percorso_json, None
     
@@ -422,14 +557,16 @@ def salva_json(dati: List[Dict], anno: int, mese: int, cartella_base: str,
 
 
 def processa_carica_lista(csv_path: str, anno: int, mese: int, 
+                         file_estero: Optional[str] = None,
                          sovrascrivi: bool = False) -> tuple[bool, str, Optional[str]]:
     """
     Funzione principale per processare il caricamento della lista da CSV.
     
     Args:
-        csv_path: Percorso del file CSV
+        csv_path: Percorso del file CSV Italia
         anno: Anno selezionato
         mese: Mese selezionato (1-12)
+        file_estero: Percorso del file CSV Estero (opzionale)
         sovrascrivi: Se True, sovrascrive il file esistente senza chiedere
         
     Returns:
@@ -438,27 +575,42 @@ def processa_carica_lista(csv_path: str, anno: int, mese: int,
         - Se successo: (True, messaggio, percorso_json)
         - Se errore: (False, messaggio_errore, None)
     """
-    # 1. Verifica formato CSV
+    # 1. Verifica formato CSV Italia
     if not verifica_formato_csv(csv_path):
-        return False, "Il file non è un CSV valido", None
+        return False, "Il file Italia non è un CSV valido", None
     
-    # 2. Leggi il CSV
-    print(f"📖 Lettura del file CSV: {csv_path}")
-    dati = leggi_csv(csv_path)
+    # 2. Leggi il CSV Italia
+    print(f"📖 Lettura del file CSV Italia: {csv_path}")
+    dati_italia = leggi_csv(csv_path)
     
-    if not dati:
-        return False, "Nessun dato trovato nel file CSV. Verifica che il file contenga le colonne richieste (C, D, G, H, L).", None
+    if not dati_italia:
+        return False, "Nessun dato trovato nel file CSV Italia. Verifica che il file contenga le colonne richieste (C, D, G, H, L).", None
     
-    print(f"✓ Righe lette dal CSV: {len(dati)}")
-    print(f"✓ Fatture estratte: {len(dati)}")
+    print(f"✓ Righe lette dal CSV Italia: {len(dati_italia)}")
+    print(f"✓ Fatture Italia estratte: {len(dati_italia)}")
     
-    # 3. Ottieni la cartella base
+    # 3. Leggi il CSV Estero se presente
+    dati_estero = []
+    if file_estero:
+        if not verifica_formato_csv(file_estero):
+            return False, "Il file Estero non è un CSV valido", None
+        
+        print(f"📖 Lettura del file CSV Estero: {file_estero}")
+        dati_estero = leggi_csv_estero(file_estero)
+        
+        if dati_estero:
+            print(f"✓ Righe lette dal CSV Estero: {len(dati_estero)}")
+            print(f"✓ Fatture Estero estratte: {len(dati_estero)}")
+        else:
+            print("⚠ Nessun dato trovato nel file CSV Estero")
+    
+    # 4. Ottieni la cartella base
     cartella_base = get_cartella_ricevute()
     if not cartella_base:
         return False, "Impossibile trovare la cartella delle fatture ricevute", None
     
-    # 4. Salva il JSON nella cartella corretta
-    percorso_json, errore = salva_json(dati, anno, mese, cartella_base, sovrascrivi)
+    # 5. Salva il JSON nella cartella corretta
+    percorso_json, errore = salva_json(dati_italia, dati_estero, anno, mese, cartella_base, sovrascrivi)
     
     if errore == "file_esistente":
         # Costruisci il percorso per restituirlo
@@ -474,7 +626,17 @@ def processa_carica_lista(csv_path: str, anno: int, mese: int,
     if not percorso_json:
         return False, "Errore nel salvataggio del file JSON", None
     
-    return True, f"Lista caricata con successo!\nFile salvato: {os.path.basename(percorso_json)}\nTotale fatture: {len(dati)}", percorso_json
+    totale_italia = len(dati_italia)
+    totale_estero = len(dati_estero)
+    totale_complessivo = totale_italia + totale_estero
+    
+    messaggio = f"Lista caricata con successo!\nFile salvato: {os.path.basename(percorso_json)}\n"
+    messaggio += f"Totale fatture Italia: {totale_italia}\n"
+    if totale_estero > 0:
+        messaggio += f"Totale fatture Estero: {totale_estero}\n"
+    messaggio += f"Totale complessivo: {totale_complessivo}"
+    
+    return True, messaggio, percorso_json
 
 
 if __name__ == "__main__":
