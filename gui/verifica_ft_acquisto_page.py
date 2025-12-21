@@ -343,6 +343,139 @@ class CaricaListaWindow(tk.Toplevel):
             messagebox.showerror("Errore", f"Errore durante il caricamento: {str(e)}")
 
 
+class SelezionaVerificaWindow(tk.Toplevel):
+    """Finestra per selezionare anno e mese per la verifica"""
+    
+    def __init__(self, parent, anni_disponibili, mesi_disponibili):
+        super().__init__(parent)
+        self.parent = parent
+        self.anno_selezionato = None
+        self.mese_selezionato = None
+        self.confermato = False
+        
+        self.title("Seleziona Anno e Mese")
+        self.geometry("400x250")
+        self.configure(bg=Style.BACKGROUND_COLOR)
+        self.resizable(False, False)
+        
+        # Centra la finestra
+        self.transient(parent)
+        self.grab_set()
+        
+        self.setup_ui(anni_disponibili, mesi_disponibili)
+    
+    def setup_ui(self, anni_disponibili, mesi_disponibili):
+        """Imposta l'interfaccia della finestra"""
+        main_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=30, pady=30)
+        main_frame.pack(fill="both", expand=True)
+        
+        # Frame per la selezione anno
+        year_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        year_frame.pack(fill="x", pady=(0, 20))
+        
+        tk.Label(
+            year_frame,
+            text="Anno:",
+            font=("Arial", 10),
+            bg=Style.BACKGROUND_COLOR,
+            fg=getattr(Style, 'TEXT_COLOR', 'black')
+        ).pack(side="left", padx=(0, 10))
+        
+        self.year_var = tk.StringVar()
+        self.year_combo = ttk.Combobox(
+            year_frame,
+            textvariable=self.year_var,
+            width=20,
+            state="readonly",
+            font=("Arial", 10)
+        )
+        self.year_combo.pack(side="left", fill="x", expand=True)
+        self.year_combo['values'] = [str(anno) for anno in sorted(anni_disponibili, reverse=True)]
+        
+        # Frame per la selezione mese
+        month_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        month_frame.pack(fill="x", pady=(0, 20))
+        
+        tk.Label(
+            month_frame,
+            text="Mese:",
+            font=("Arial", 10),
+            bg=Style.BACKGROUND_COLOR,
+            fg=getattr(Style, 'TEXT_COLOR', 'black')
+        ).pack(side="left", padx=(0, 10))
+        
+        self.month_var = tk.StringVar()
+        self.month_combo = ttk.Combobox(
+            month_frame,
+            textvariable=self.month_var,
+            width=20,
+            state="readonly",
+            font=("Arial", 10)
+        )
+        self.month_combo.pack(side="left", fill="x", expand=True)
+        
+        # Popola i mesi
+        mesi_nomi = [
+            "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+            "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+        ]
+        mesi_disponibili_nomi = [mesi_nomi[m-1] for m in sorted(mesi_disponibili)]
+        self.month_combo['values'] = mesi_disponibili_nomi
+        
+        # Bottone VERIFICA
+        btn_verifica = tk.Button(
+            main_frame,
+            text="VERIFICA",
+            font=("Arial", 11, "bold"),
+            bg="#4b6cb7",
+            fg="white",
+            activebackground="#3a5a9f",
+            activeforeground="white",
+            cursor="hand2",
+            padx=30,
+            pady=10,
+            command=self.on_verifica_click
+        )
+        btn_verifica.pack(pady=(10, 0))
+    
+    def on_verifica_click(self):
+        """Gestisce il click sul bottone VERIFICA"""
+        year = self.year_var.get()
+        month = self.month_var.get()
+        
+        if not year:
+            messagebox.showwarning("Attenzione", "Seleziona un anno")
+            return
+        
+        if not month:
+            messagebox.showwarning("Attenzione", "Seleziona un mese")
+            return
+        
+        try:
+            anno = int(year)
+            
+            # Converti il nome del mese in numero (1-12)
+            mesi_nomi = {
+                "Gennaio": 1, "Febbraio": 2, "Marzo": 3, "Aprile": 4,
+                "Maggio": 5, "Giugno": 6, "Luglio": 7, "Agosto": 8,
+                "Settembre": 9, "Ottobre": 10, "Novembre": 11, "Dicembre": 12
+            }
+            mese = mesi_nomi.get(month)
+            if not mese:
+                messagebox.showerror("Errore", f"Mese non valido: {month}")
+                return
+            
+            self.anno_selezionato = anno
+            self.mese_selezionato = mese
+            self.confermato = True
+            self.destroy()
+        
+        except ValueError:
+            messagebox.showerror("Errore", "Anno non valido")
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante la selezione: {str(e)}")
+
+
 class VerificaFtAcquistoPage(tk.Frame):
     """Pagina per la verifica delle fatture di acquisto"""
     
@@ -474,11 +607,11 @@ class VerificaFtAcquistoPage(tk.Frame):
         except Exception as e:
             print(f"Errore caricamento icona csv: {e}")
         
-        # Bottone 2 con icon2.png
+        # Bottone 2 con check.png
         btn2_frame = tk.Frame(buttons_frame, bg=Style.BACKGROUND_COLOR)
         btn2_frame.pack(side="left", padx=20)
         try:
-            icon2_img = Image.open(os.path.join(project_root, "assets", "icon", "icon2.png"))
+            icon2_img = Image.open(os.path.join(project_root, "assets", "icon", "check.png"))
             icon2_img = icon2_img.resize(icon_size, Image.Resampling.LANCZOS)
             icon2_photo = ImageTk.PhotoImage(icon2_img)
             btn2 = tk.Button(btn2_frame, image=icon2_photo, bd=0, bg=Style.BACKGROUND_COLOR,
@@ -486,27 +619,10 @@ class VerificaFtAcquistoPage(tk.Frame):
                            command=self.on_button2_click)
             btn2.image = icon2_photo
             btn2.pack()
-            tk.Label(btn2_frame, text="Bottone2", font=("Arial", 9, "bold"),
+            tk.Label(btn2_frame, text="Verifica", font=("Arial", 9, "bold"),
                     bg=Style.BACKGROUND_COLOR, fg="#1f396a").pack(pady=(5, 0))
         except Exception as e:
-            print(f"Errore caricamento icona 2: {e}")
-        
-        # Bottone 3 con icon3.png
-        btn3_frame = tk.Frame(buttons_frame, bg=Style.BACKGROUND_COLOR)
-        btn3_frame.pack(side="left", padx=20)
-        try:
-            icon3_img = Image.open(os.path.join(project_root, "assets", "icon", "icon3.png"))
-            icon3_img = icon3_img.resize(icon_size, Image.Resampling.LANCZOS)
-            icon3_photo = ImageTk.PhotoImage(icon3_img)
-            btn3 = tk.Button(btn3_frame, image=icon3_photo, bd=0, bg=Style.BACKGROUND_COLOR,
-                           activebackground=Style.BACKGROUND_COLOR, cursor="hand2",
-                           command=self.on_button3_click)
-            btn3.image = icon3_photo
-            btn3.pack()
-            tk.Label(btn3_frame, text="Bottone3", font=("Arial", 9, "bold"),
-                    bg=Style.BACKGROUND_COLOR, fg="#1f396a").pack(pady=(5, 0))
-        except Exception as e:
-            print(f"Errore caricamento icona 3: {e}")
+            print(f"Errore caricamento icona check: {e}")
         
         # Frame per selezione anno (allineato con i bottoni)
         selection_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
@@ -608,8 +724,8 @@ class VerificaFtAcquistoPage(tk.Frame):
             mese: Mese da verificare (1-12)
             
         Returns:
-            Tupla (data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile)
-            o (None, None, None, None, None) se non esiste
+            Tupla (data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile, check, check_date)
+            o (None, None, None, None, None, None, None) se non esiste
         """
         try:
             # Costruisci il percorso del file JSON
@@ -619,7 +735,7 @@ class VerificaFtAcquistoPage(tk.Frame):
             percorso_json = os.path.join(cartella_mese, nome_file)
             
             if not os.path.exists(percorso_json):
-                return None, None, None, None, None
+                return None, None, None, None, None, None, None
             
             # Leggi il JSON
             with open(percorso_json, 'r', encoding='utf-8') as f:
@@ -654,11 +770,15 @@ class VerificaFtAcquistoPage(tk.Frame):
                         # Se non riesce a convertire, ignora
                         pass
             
-            return data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile
+            # Estrai i valori di check
+            check = data.get("check", "")
+            check_date = data.get("check_date", "")
+            
+            return data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile, check, check_date
         
         except Exception as e:
             print(f"Errore nella lettura del JSON per {anno}/{mese:02d}: {e}")
-            return None, None, None, None, None
+            return None, None, None, None, None, None, None
     
     def load_months(self):
         """Carica i mesi nella tabella per l'anno selezionato"""
@@ -695,7 +815,7 @@ class VerificaFtAcquistoPage(tk.Frame):
             month_name = month_name.upper()
             
             # Verifica se esiste il JSON
-            data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile = self.verifica_json_esistente(year, month_num)
+            data_caricamento, totale_fatture, totale_italia, totale_estero, totale_imponibile, check, check_date = self.verifica_json_esistente(year, month_num)
             
             # Prepara i valori per la tabella (tutti in maiuscolo)
             csv_value = data_caricamento.upper() if data_caricamento else ""
@@ -709,9 +829,12 @@ class VerificaFtAcquistoPage(tk.Frame):
             else:
                 tot_imponibile_str = ""
             
+            # Valore per la colonna CHECK (mostra lo stato del controllo)
+            check_value = check.upper() if check else ""
+            
             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
             self.tree.insert("", "end", values=(
-                month_name, csv_value, numero_ft, ft_italia, ft_estero, tot_imponibile_str, ""
+                month_name, csv_value, numero_ft, ft_italia, ft_estero, tot_imponibile_str, check_value
             ), tags=(tag,))
     
     def on_button1_click(self):
@@ -723,10 +846,127 @@ class VerificaFtAcquistoPage(tk.Frame):
         self.load_months()
     
     def on_button2_click(self):
-        """Funzione per il bottone 2 - da configurare"""
-        pass
+        """Esegue il controllo delle fatture nel JSON rispetto ai file XML"""
+        # Trova tutti gli anni e mesi che hanno un JSON
+        all_months = self.scan_months()
+        anni_con_json = set()
+        mesi_per_anno = {}
+        
+        for y, m in all_months:
+            # Verifica se esiste il JSON per questo mese
+            cartella_anno = os.path.join(self.cartella_ricevute, str(y))
+            cartella_mese = os.path.join(cartella_anno, f"{m:02d}")
+            nome_file = f"lista_fatture_{y}_{m:02d}.json"
+            percorso_json = os.path.join(cartella_mese, nome_file)
+            if os.path.exists(percorso_json):
+                anni_con_json.add(y)
+                if y not in mesi_per_anno:
+                    mesi_per_anno[y] = set()
+                mesi_per_anno[y].add(m)
+        
+        if not anni_con_json:
+            messagebox.showinfo("Informazione", "Nessun file JSON trovato")
+            return
+        
+        # Apri la finestra di selezione
+        window = SelezionaVerificaWindow(self, anni_con_json, mesi_per_anno)
+        self.wait_window(window)
+        
+        if not window.confermato:
+            return  # L'utente ha annullato
+        
+        anno = window.anno_selezionato
+        mese = window.mese_selezionato
+        
+        # Verifica che il JSON esista ancora
+        cartella_anno = os.path.join(self.cartella_ricevute, str(anno))
+        cartella_mese = os.path.join(cartella_anno, f"{mese:02d}")
+        nome_file = f"lista_fatture_{anno}_{mese:02d}.json"
+        percorso_json = os.path.join(cartella_mese, nome_file)
+        
+        if not os.path.exists(percorso_json):
+            messagebox.showerror("Errore", f"File JSON non trovato per {mese:02d}/{anno}")
+            return
+        
+        # Esegui il controllo
+        self.verifica_fatture_mese(anno, mese)
+        
+        # Ricarica la tabella per mostrare i risultati
+        self.load_months()
+        
+        # Mostra il risultato
+        mesi_nomi = {
+            1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
+            5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
+            9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
+        }
+        mese_nome = mesi_nomi.get(mese, f"Mese {mese}")
+        messagebox.showinfo("Completato", f"Controllo completato per {mese_nome} {anno}")
     
-    def on_button3_click(self):
-        """Funzione per il bottone 3 - da configurare"""
-        pass
+    def verifica_fatture_mese(self, anno: int, mese: int):
+        """
+        Verifica se tutte le fatture nel JSON hanno un corrispondente file XML.
+        
+        Args:
+            anno: Anno da verificare
+            mese: Mese da verificare (1-12)
+        """
+        try:
+            # Costruisci il percorso del file JSON
+            cartella_anno = os.path.join(self.cartella_ricevute, str(anno))
+            cartella_mese = os.path.join(cartella_anno, f"{mese:02d}")
+            nome_file = f"lista_fatture_{anno}_{mese:02d}.json"
+            percorso_json = os.path.join(cartella_mese, nome_file)
+            
+            if not os.path.exists(percorso_json):
+                print(f"File JSON non trovato: {percorso_json}")
+                return
+            
+            # Leggi il JSON
+            with open(percorso_json, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            fatture = data.get("fatture", [])
+            if not fatture:
+                print(f"Nessuna fattura nel JSON per {anno}/{mese:02d}")
+                return
+            
+            # Lista dei file XML nella cartella
+            xml_files = []
+            if os.path.exists(cartella_mese):
+                for file in os.listdir(cartella_mese):
+                    if file.lower().endswith('.xml'):
+                        # Rimuovi l'estensione per il confronto
+                        xml_files.append(file[:-4])  # Rimuovi .xml
+            
+            # Verifica ogni fattura
+            tutte_presenti = True
+            fatture_mancanti = []
+            
+            for fattura in fatture:
+                codice_fattura = fattura.get("codice_fattura", "")
+                if codice_fattura and codice_fattura not in xml_files:
+                    tutte_presenti = False
+                    fatture_mancanti.append(codice_fattura)
+            
+            # Aggiorna il JSON con i risultati
+            from datetime import datetime
+            data["check"] = "VERIFIED" if tutte_presenti else "FAILED"
+            data["check_date"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            
+            # Salva il JSON aggiornato
+            with open(percorso_json, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            if fatture_mancanti:
+                print(f"⚠ Fatture mancanti per {anno}/{mese:02d}: {len(fatture_mancanti)}")
+                for codice in fatture_mancanti[:5]:  # Mostra solo le prime 5
+                    print(f"  - {codice}.xml")
+            else:
+                print(f"✓ Tutte le fatture presenti per {anno}/{mese:02d}")
+        
+        except Exception as e:
+            print(f"Errore durante la verifica per {anno}/{mese:02d}: {e}")
+            import traceback
+            traceback.print_exc()
 
