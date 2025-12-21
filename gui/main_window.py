@@ -224,7 +224,7 @@ class MainWindow:
     def create_side_menu(self, parent: tk.Frame) -> None:
         # Sezione Contabilità
         tk.Label(parent, text="FATTURE", **Style.MENU_HEADER_CONFIG).pack(fill='x')
-        menu_items_contabilita = ["Download", "Fatture Acquisto", "Fatture Vendita"]
+        menu_items_contabilita = ["Download", "Fatture Acquisto", "Fatture Vendita", "Verifica Ft Acquisto"]
 
         for item in menu_items_contabilita:
             tk.Button(
@@ -256,6 +256,7 @@ class MainWindow:
             "Download": {"module": "download_page", "class": "DownloadPage"},
             "Fatture Acquisto": {"module": "fatture_acquisti_page", "class": "AcquistiMensiliPage"},
             "Fatture Vendita": {"module": "fatture_vendita_page", "class": "VenditeMensiliPage"},
+            "Verifica Ft Acquisto": {"module": "verifica_ft_acquisto_page", "class": "VerificaFtAcquistoPage"},
             "Soggetti": {"module": "soggetti_page", "class": "SoggettiApp"},
             "Documenti": {"module": "documenti_page", "class": "VistaScadenzeApp"},
             "Pagamenti": {"module": "pagamenti_page", "class": "PagamentiUnificatiApp"},
