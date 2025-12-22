@@ -14,6 +14,7 @@ if scripts_path not in sys.path:
     sys.path.append(scripts_path)
 
 from check_quantita_prezzo import check_quantita_prezzo
+from check_tipo_documento import check_tipo_documento
 
 
 class ControllerManager:
@@ -21,7 +22,8 @@ class ControllerManager:
     def __init__(self):
         # Qui potrai aggiungere altri controlli
         self.controlli = [
-            ("Quantità e Prezzo", check_quantita_prezzo)
+            ("Quantità e Prezzo", check_quantita_prezzo),
+            ("Tipo Documento", check_tipo_documento)
         ]
 
     def esegui_controlli(self, xml_file):
