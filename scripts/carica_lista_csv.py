@@ -6,6 +6,7 @@ import csv
 import json
 import os
 import sys
+import re
 import configparser
 from pathlib import Path
 from datetime import datetime
@@ -119,18 +120,47 @@ def rimuovi_apici(valore: str) -> str:
 def pulisci_numero_fattura(numero: str) -> str:
     """
     Rimuove i caratteri '/' e '\' dal numero di fattura.
+    Rimuove anche TUTTI gli spazi dal numero di fattura.
+    NON aggiunge spazi, rimuove completamente i caratteri.
     
     Args:
         numero: Numero di fattura da pulire
         
     Returns:
-        Numero di fattura senza '/' e '\'
+        Numero di fattura senza '/', '\' e spazi
     """
     if not numero:
         return ""
-    # Rimuovi / e \
+    # Rimuovi spazi prima e dopo / e \
+    numero = re.sub(r'\s*[/\\]\s*', '', numero)
+    # Rimuovi anche / e \ rimanenti (senza spazi)
     numero = numero.replace('/', '').replace('\\', '')
+    # Rimuovi TUTTI gli spazi (non solo normalizza)
+    numero = re.sub(r'\s+', '', numero)
     return numero.strip()
+
+
+def pulisci_caratteri_speciali(valore: str) -> str:
+    """
+    Rimuove i caratteri '/' e '\' da qualsiasi campo.
+    Rimuove anche TUTTI gli spazi dal valore.
+    NON aggiunge spazi, rimuove completamente i caratteri.
+    
+    Args:
+        valore: Stringa da pulire
+        
+    Returns:
+        Stringa senza '/', '\' e spazi
+    """
+    if not valore:
+        return ""
+    # Rimuovi spazi prima e dopo / e \
+    valore = re.sub(r'\s*[/\\]\s*', '', valore)
+    # Rimuovi anche / e \ rimanenti (senza spazi)
+    valore = valore.replace('/', '').replace('\\', '')
+    # Rimuovi TUTTI gli spazi (non solo normalizza)
+    valore = re.sub(r'\s+', '', valore)
+    return valore.strip()
 
 
 def estrai_anno_mese_da_data(data_str: str) -> tuple[Optional[int], Optional[int]]:
@@ -183,6 +213,7 @@ def calcola_codice_fattura(anno: Optional[int], mese: Optional[int],
                            partita_iva: str, numero: str) -> str:
     """
     Calcola il codice fattura nel formato: Anno-Mese-PartitaIVA-Numero
+    Rimuove i caratteri '/' e '\' da partita_iva e numero.
     
     Args:
         anno: Anno estratto dalla data
@@ -191,12 +222,13 @@ def calcola_codice_fattura(anno: Optional[int], mese: Optional[int],
         numero: Numero fattura
         
     Returns:
-        Stringa nel formato Anno-Mese-PartitaIVA-Numero
+        Stringa nel formato Anno-Mese-PartitaIVA-Numero (senza / e \)
     """
     anno_str = str(anno) if anno else "0000"
     mese_str = f"{mese:02d}" if mese else "00"
-    piva_str = partita_iva if partita_iva else ""
-    num_str = numero if numero else ""
+    # Pulisci partita_iva e numero da / e \
+    piva_str = pulisci_caratteri_speciali(partita_iva) if partita_iva else ""
+    num_str = pulisci_caratteri_speciali(numero) if numero else ""
     
     return f"{anno_str}-{mese_str}-{piva_str}-{num_str}"
 
@@ -252,9 +284,11 @@ def leggi_csv_estero(file_path: str) -> List[Dict]:
                     data_emissione = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
                     denominazione = rimuovi_apici(row[COL_D]) if len(row) > COL_D else ""
                     numero_raw = rimuovi_apici(row[COL_F]) if len(row) > COL_F else ""
-                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \
+                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \ completamente
                     imponibile = rimuovi_apici(row[COL_M]) if len(row) > COL_M else ""
                     partita_iva = PARTITA_IVA_DEFAULT
+                    # Pulisci anche la partita IVA da / e \
+                    partita_iva = pulisci_caratteri_speciali(partita_iva)
                     
                     # Estrai anno e mese dalla data
                     anno, mese = estrai_anno_mese_da_data(data_emissione)
@@ -295,9 +329,11 @@ def leggi_csv_estero(file_path: str) -> List[Dict]:
                     data_emissione = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
                     denominazione = rimuovi_apici(row[COL_D]) if len(row) > COL_D else ""
                     numero_raw = rimuovi_apici(row[COL_F]) if len(row) > COL_F else ""
-                    numero = pulisci_numero_fattura(numero_raw)
+                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \ completamente
                     imponibile = rimuovi_apici(row[COL_M]) if len(row) > COL_M else ""
                     partita_iva = PARTITA_IVA_DEFAULT
+                    # Pulisci anche la partita IVA da / e \
+                    partita_iva = pulisci_caratteri_speciali(partita_iva)
                     
                     anno, mese = estrai_anno_mese_da_data(data_emissione)
                     codice_fattura = calcola_codice_fattura(anno, mese, partita_iva, numero)
@@ -373,9 +409,10 @@ def leggi_csv(file_path: str) -> List[Dict]:
                     
                     # Estrai i valori dalle colonne specificate
                     numero_raw = rimuovi_apici(row[COL_C]) if len(row) > COL_C else ""
-                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \
+                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \ completamente
                     data_emissione = rimuovi_apici(row[COL_D]) if len(row) > COL_D else ""
-                    partita_iva = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
+                    partita_iva_raw = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
+                    partita_iva = pulisci_caratteri_speciali(partita_iva_raw)  # Rimuovi / e \ completamente
                     denominazione = rimuovi_apici(row[COL_H]) if len(row) > COL_H else ""
                     imponibile = rimuovi_apici(row[COL_L]) if len(row) > COL_L else ""
                     
@@ -417,9 +454,10 @@ def leggi_csv(file_path: str) -> List[Dict]:
                         continue
                     
                     numero_raw = rimuovi_apici(row[COL_C]) if len(row) > COL_C else ""
-                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \
+                    numero = pulisci_numero_fattura(numero_raw)  # Rimuovi / e \ completamente
                     data_emissione = rimuovi_apici(row[COL_D]) if len(row) > COL_D else ""
-                    partita_iva = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
+                    partita_iva_raw = rimuovi_apici(row[COL_G]) if len(row) > COL_G else ""
+                    partita_iva = pulisci_caratteri_speciali(partita_iva_raw)  # Rimuovi / e \ completamente
                     denominazione = rimuovi_apici(row[COL_H]) if len(row) > COL_H else ""
                     imponibile = rimuovi_apici(row[COL_L]) if len(row) > COL_L else ""
                     

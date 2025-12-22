@@ -343,15 +343,147 @@ class CaricaListaWindow(tk.Toplevel):
             messagebox.showerror("Errore", f"Errore durante il caricamento: {str(e)}")
 
 
+class FattureMancantiWindow(tk.Toplevel):
+    """Finestra per mostrare le fatture mancanti"""
+    
+    def __init__(self, parent, fatture_mancanti, anno, mese):
+        super().__init__(parent)
+        self.parent = parent
+        
+        mesi_nomi = {
+            1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
+            5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
+            9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
+        }
+        mese_nome = mesi_nomi.get(mese, f"Mese {mese}")
+        
+        self.title(f"Fatture Mancanti - {mese_nome} {anno}")
+        self.geometry("900x500")
+        self.configure(bg=Style.BACKGROUND_COLOR)
+        self.resizable(True, True)
+        
+        # Centra la finestra
+        self.transient(parent)
+        self.grab_set()
+        
+        self.setup_ui(fatture_mancanti, anno, mese)
+    
+    def setup_ui(self, fatture_mancanti, anno, mese):
+        """Imposta l'interfaccia della finestra"""
+        main_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=20, pady=20)
+        main_frame.pack(fill="both", expand=True)
+        
+        # Titolo
+        title_label = tk.Label(
+            main_frame,
+            text=f"Fatture mancanti: {len(fatture_mancanti)}",
+            font=("Arial", 12, "bold"),
+            bg=Style.BACKGROUND_COLOR,
+            fg=getattr(Style, 'TEXT_COLOR', 'black')
+        )
+        title_label.pack(pady=(0, 15))
+        
+        # Frame per la tabella con scrollbar
+        table_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        table_frame.pack(fill="both", expand=True)
+        
+        # Scrollbar verticale
+        scrollbar_y = ttk.Scrollbar(table_frame, orient="vertical")
+        scrollbar_y.pack(side="right", fill="y")
+        
+        # Scrollbar orizzontale
+        scrollbar_x = ttk.Scrollbar(table_frame, orient="horizontal")
+        scrollbar_x.pack(side="bottom", fill="x")
+        
+        # Tabella
+        columns = ("Numero", "Data", "Fornitore", "P.IVA", "Codice", "Imponibile")
+        self.tree = ttk.Treeview(
+            table_frame,
+            columns=columns,
+            show="headings",
+            yscrollcommand=scrollbar_y.set,
+            xscrollcommand=scrollbar_x.set,
+            height=15
+        )
+        
+        # Configura le colonne
+        self.tree.heading("Numero", text="NUMERO FATTURA")
+        self.tree.heading("Data", text="DATA EMISSIONE")
+        self.tree.heading("Fornitore", text="FORNITORE")
+        self.tree.heading("P.IVA", text="PARTITA IVA")
+        self.tree.heading("Codice", text="CODICE FATTURA")
+        self.tree.heading("Imponibile", text="IMPONIBILE")
+        
+        self.tree.column("Numero", width=120, anchor="w")
+        self.tree.column("Data", width=100, anchor="w")
+        self.tree.column("Fornitore", width=200, anchor="w")
+        self.tree.column("P.IVA", width=120, anchor="w")
+        self.tree.column("Codice", width=150, anchor="w")
+        self.tree.column("Imponibile", width=120, anchor="e")
+        
+        self.tree.pack(side="left", fill="both", expand=True)
+        
+        scrollbar_y.config(command=self.tree.yview)
+        scrollbar_x.config(command=self.tree.xview)
+        
+        # Popola la tabella
+        for idx, fattura in enumerate(fatture_mancanti):
+            numero = fattura.get("numero_fattura", "")
+            data = fattura.get("data_emissione", "")
+            fornitore = fattura.get("denominazione_fornitore", "")
+            piva = fattura.get("partita_iva_fornitore", "")
+            codice = fattura.get("codice_fattura", "")
+            imponibile = fattura.get("imponibile", "")
+            
+            # Formatta l'imponibile
+            if imponibile:
+                try:
+                    imponibile_float = float(str(imponibile).replace(",", "."))
+                    imponibile_str = f"{imponibile_float:.2f}".replace(".", ",")
+                except:
+                    imponibile_str = str(imponibile)
+            else:
+                imponibile_str = ""
+            
+            tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+            self.tree.insert("", "end", values=(
+                numero, data, fornitore, piva, codice, imponibile_str
+            ), tags=(tag,))
+        
+        # Configura gli stili per le righe alternate
+        self.tree.tag_configure('evenrow', background='#f0f0f0')
+        self.tree.tag_configure('oddrow', background='white')
+        
+        # Bottone CHIUDI
+        btn_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        btn_frame.pack(pady=(15, 0))
+        
+        btn_chiudi = tk.Button(
+            btn_frame,
+            text="CHIUDI",
+            font=("Arial", 11, "bold"),
+            bg="#4b6cb7",
+            fg="white",
+            activebackground="#3a5a9f",
+            activeforeground="white",
+            cursor="hand2",
+            padx=30,
+            pady=8,
+            command=self.destroy
+        )
+        btn_chiudi.pack()
+
+
 class SelezionaVerificaWindow(tk.Toplevel):
     """Finestra per selezionare anno e mese per la verifica"""
     
-    def __init__(self, parent, anni_disponibili, mesi_disponibili):
+    def __init__(self, parent, anni_disponibili, mesi_per_anno):
         super().__init__(parent)
         self.parent = parent
         self.anno_selezionato = None
         self.mese_selezionato = None
         self.confermato = False
+        self.mesi_per_anno = mesi_per_anno  # Dizionario: {anno: set(mesi)}
         
         self.title("Seleziona Anno e Mese")
         self.geometry("400x250")
@@ -362,9 +494,9 @@ class SelezionaVerificaWindow(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         
-        self.setup_ui(anni_disponibili, mesi_disponibili)
+        self.setup_ui(anni_disponibili)
     
-    def setup_ui(self, anni_disponibili, mesi_disponibili):
+    def setup_ui(self, anni_disponibili):
         """Imposta l'interfaccia della finestra"""
         main_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=30, pady=30)
         main_frame.pack(fill="both", expand=True)
@@ -392,6 +524,9 @@ class SelezionaVerificaWindow(tk.Toplevel):
         self.year_combo.pack(side="left", fill="x", expand=True)
         self.year_combo['values'] = [str(anno) for anno in sorted(anni_disponibili, reverse=True)]
         
+        # Binding per aggiornare i mesi quando viene selezionato un anno
+        self.year_var.trace('w', self.on_year_selected)
+        
         # Frame per la selezione mese
         month_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
         month_frame.pack(fill="x", pady=(0, 20))
@@ -414,13 +549,8 @@ class SelezionaVerificaWindow(tk.Toplevel):
         )
         self.month_combo.pack(side="left", fill="x", expand=True)
         
-        # Popola i mesi
-        mesi_nomi = [
-            "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-            "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
-        ]
-        mesi_disponibili_nomi = [mesi_nomi[m-1] for m in sorted(mesi_disponibili)]
-        self.month_combo['values'] = mesi_disponibili_nomi
+        # Inizialmente i mesi sono vuoti (verranno popolati quando si seleziona un anno)
+        self.month_combo['values'] = []
         
         # Bottone VERIFICA
         btn_verifica = tk.Button(
@@ -437,6 +567,36 @@ class SelezionaVerificaWindow(tk.Toplevel):
             command=self.on_verifica_click
         )
         btn_verifica.pack(pady=(10, 0))
+    
+    def on_year_selected(self, *args):
+        """Aggiorna i mesi disponibili quando viene selezionato un anno"""
+        selected_year_str = self.year_var.get()
+        if not selected_year_str:
+            self.month_combo['values'] = []
+            self.month_var.set("")
+            return
+        
+        try:
+            selected_year = int(selected_year_str)
+            # Ottieni i mesi disponibili per l'anno selezionato
+            mesi_disponibili = self.mesi_per_anno.get(selected_year, set())
+            
+            if not mesi_disponibili:
+                self.month_combo['values'] = []
+                self.month_var.set("")
+                return
+            
+            # Converti i numeri dei mesi in nomi
+            mesi_nomi = [
+                "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+            ]
+            mesi_disponibili_nomi = [mesi_nomi[m-1] for m in sorted(mesi_disponibili)]
+            self.month_combo['values'] = mesi_disponibili_nomi
+            self.month_var.set("")  # Reset della selezione del mese
+        except ValueError:
+            self.month_combo['values'] = []
+            self.month_var.set("")
     
     def on_verifica_click(self):
         """Gestisce il click sul bottone VERIFICA"""
@@ -889,7 +1049,7 @@ class VerificaFtAcquistoPage(tk.Frame):
             return
         
         # Esegui il controllo
-        self.verifica_fatture_mese(anno, mese)
+        tutte_presenti, fatture_mancanti = self.verifica_fatture_mese(anno, mese)
         
         # Ricarica la tabella per mostrare i risultati
         self.load_months()
@@ -901,7 +1061,13 @@ class VerificaFtAcquistoPage(tk.Frame):
             9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
         }
         mese_nome = mesi_nomi.get(mese, f"Mese {mese}")
-        messagebox.showinfo("Completato", f"Controllo completato per {mese_nome} {anno}")
+        
+        if tutte_presenti:
+            messagebox.showinfo("Completato", f"Controllo completato per {mese_nome} {anno}\n\n✓ Tutte le fatture sono presenti")
+        else:
+            # Mostra la finestra con le fatture mancanti
+            window_mancanti = FattureMancantiWindow(self, fatture_mancanti, anno, mese)
+            self.wait_window(window_mancanti)
     
     def verifica_fatture_mese(self, anno: int, mese: int):
         """
@@ -910,6 +1076,10 @@ class VerificaFtAcquistoPage(tk.Frame):
         Args:
             anno: Anno da verificare
             mese: Mese da verificare (1-12)
+            
+        Returns:
+            Tuple (tutte_presenti, fatture_mancanti) dove fatture_mancanti è una lista
+            di dizionari con i dettagli delle fatture mancanti
         """
         try:
             # Costruisci il percorso del file JSON
@@ -920,7 +1090,7 @@ class VerificaFtAcquistoPage(tk.Frame):
             
             if not os.path.exists(percorso_json):
                 print(f"File JSON non trovato: {percorso_json}")
-                return
+                return True, []
             
             # Leggi il JSON
             with open(percorso_json, 'r', encoding='utf-8') as f:
@@ -929,7 +1099,7 @@ class VerificaFtAcquistoPage(tk.Frame):
             fatture = data.get("fatture", [])
             if not fatture:
                 print(f"Nessuna fattura nel JSON per {anno}/{mese:02d}")
-                return
+                return True, []
             
             # Lista dei file XML nella cartella
             xml_files = []
@@ -947,7 +1117,15 @@ class VerificaFtAcquistoPage(tk.Frame):
                 codice_fattura = fattura.get("codice_fattura", "")
                 if codice_fattura and codice_fattura not in xml_files:
                     tutte_presenti = False
-                    fatture_mancanti.append(codice_fattura)
+                    # Aggiungi i dettagli della fattura mancante
+                    fatture_mancanti.append({
+                        "codice_fattura": codice_fattura,
+                        "numero_fattura": fattura.get("numero_fattura", ""),
+                        "data_emissione": fattura.get("data_emissione", ""),
+                        "denominazione_fornitore": fattura.get("denominazione_fornitore", ""),
+                        "partita_iva_fornitore": fattura.get("partita_iva_fornitore", ""),
+                        "imponibile": fattura.get("imponibile", "")
+                    })
             
             # Aggiorna il JSON con i risultati
             from datetime import datetime
@@ -958,15 +1136,11 @@ class VerificaFtAcquistoPage(tk.Frame):
             with open(percorso_json, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             
-            if fatture_mancanti:
-                print(f"⚠ Fatture mancanti per {anno}/{mese:02d}: {len(fatture_mancanti)}")
-                for codice in fatture_mancanti[:5]:  # Mostra solo le prime 5
-                    print(f"  - {codice}.xml")
-            else:
-                print(f"✓ Tutte le fatture presenti per {anno}/{mese:02d}")
+            return tutte_presenti, fatture_mancanti
         
         except Exception as e:
             print(f"Errore durante la verifica per {anno}/{mese:02d}: {e}")
             import traceback
             traceback.print_exc()
+            return False, []
 
