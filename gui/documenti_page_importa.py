@@ -123,6 +123,35 @@ class ImportaFattureXML:
             self.log(f"  ⚠ Errore nel recupero tipo_pagamento: {str(e)}")
             return None
     
+    def verifica_spese_bancarie(self, root):
+        """Verifica se nell'XML sono presenti spese bancarie.
+        Le spese bancarie hanno:
+        - TipoCessionePrestazione = "AC"
+        - Descrizione = "Spese Bancarie" (case-insensitive)
+        
+        Restituisce "SI" se presenti, "NO" altrimenti.
+        """
+        try:
+            # Trova tutte le linee
+            linee = root.findall(".//DettaglioLinee")
+            
+            for linea in linee:
+                # Estrai TipoCessionePrestazione e Descrizione
+                tipo_cessione = linea.findtext("TipoCessionePrestazione", "").strip()
+                descrizione = linea.findtext("Descrizione", "").strip()
+                
+                # Verifica se è una spesa bancaria
+                # TipoCessionePrestazione deve essere "AC" e Descrizione deve contenere "Spese Bancarie"
+                # Controllo case-insensitive per la descrizione
+                if tipo_cessione == "AC" and "spese bancarie" in descrizione.lower():
+                    return "SI"
+            
+            return "NO"
+        except Exception as e:
+            # In caso di errore, restituisci "NO"
+            self.log(f"  ⚠ Errore nel controllo spese bancarie: {str(e)}")
+            return "NO"
+    
     def estrai_testo(self, root, xpath, default=''):
         """Estrae testo da un nodo XML e converte in maiuscolo"""
         elemento = root.find(xpath)
@@ -194,6 +223,9 @@ class ImportaFattureXML:
         modalita_pagamento_xml = self.estrai_testo(root, './/DatiPagamento/DettaglioPagamento/ModalitaPagamento', '')
         tipo_pagamento_id = self.get_tipo_pagamento_id(modalita_pagamento_xml) if modalita_pagamento_xml else None
         
+        # Verifica presenza spese bancarie
+        spese_bancarie = self.verifica_spese_bancarie(root)
+        
         soggetto_id, tipo_soggetto_esistente = self.verifica_soggetto_esistente(partita_iva, codice_fiscale)
         
         if soggetto_id:
@@ -209,9 +241,9 @@ class ImportaFattureXML:
                 # Se era già entrambi, non facciamo nulla
                 pass
             
-            # Aggiorna tipo_fattura e tipo_pagamento se disponibili
-            if tipo_fattura or tipo_pagamento_id:
-                self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id)
+            # Aggiorna tipo_fattura, tipo_pagamento e spese_bancarie se disponibili
+            if tipo_fattura or tipo_pagamento_id or spese_bancarie:
+                self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id, spese_bancarie)
             
             return soggetto_id, False
         
@@ -230,18 +262,31 @@ class ImportaFattureXML:
         
         codice_soggetto = self.get_prossimo_codice_soggetto()
         
-        # Costruisci la query INSERT includendo tipo_fattura e tipo_pagamento
+        # Costruisci la query INSERT includendo tipo_fattura, tipo_pagamento e spese_bancarie
         # Verifica se le colonne esistono nella tabella
         try:
             self.cursor.execute("PRAGMA table_info(soggetti)")
             colonne = [col[1] for col in self.cursor.fetchall()]
             has_tipo_fattura = 'tipo_fattura' in colonne
             has_tipo_pagamento = 'tipo_pagamento' in colonne
+            has_spese_bancarie = 'spese_bancarie' in colonne
         except Exception:
             has_tipo_fattura = False
             has_tipo_pagamento = False
+            has_spese_bancarie = False
         
-        if has_tipo_fattura and has_tipo_pagamento:
+        if has_tipo_fattura and has_tipo_pagamento and has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti 
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale, 
+                 partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, ragione_sociale, 'FORNITORE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento_id, spese_bancarie
+            ))
+        elif has_tipo_fattura and has_tipo_pagamento:
             query = """
                 INSERT INTO soggetti 
                 (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale, 
@@ -251,6 +296,28 @@ class ImportaFattureXML:
             self.cursor.execute(query, (
                 codice_soggetto, ragione_sociale, 'FORNITORE', codice_fiscale,
                 partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento_id
+            ))
+        elif has_tipo_fattura and has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti 
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale, 
+                 partita_iva, citta, cap, provincia, email, tipo_fattura, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, ragione_sociale, 'FORNITORE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_fattura, spese_bancarie
+            ))
+        elif has_tipo_pagamento and has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti 
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale, 
+                 partita_iva, citta, cap, provincia, email, tipo_pagamento, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, ragione_sociale, 'FORNITORE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_pagamento_id, spese_bancarie
             ))
         elif has_tipo_fattura:
             query = """
@@ -274,6 +341,17 @@ class ImportaFattureXML:
                 codice_soggetto, ragione_sociale, 'FORNITORE', codice_fiscale,
                 partita_iva, citta, cap, provincia, email, tipo_pagamento_id
             ))
+        elif has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti 
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale, 
+                 partita_iva, citta, cap, provincia, email, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, ragione_sociale, 'FORNITORE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, spese_bancarie
+            ))
         else:
             # Fallback alla query originale se le colonne non esistono
             query = """
@@ -289,16 +367,17 @@ class ImportaFattureXML:
         
         return self.cursor.lastrowid, False
     
-    def aggiorna_tipo_fattura_pagamento(self, soggetto_id, tipo_fattura, tipo_pagamento_id):
-        """Aggiorna tipo_fattura e tipo_pagamento per un soggetto esistente."""
+    def aggiorna_tipo_fattura_pagamento(self, soggetto_id, tipo_fattura, tipo_pagamento_id, spese_bancarie=None):
+        """Aggiorna tipo_fattura, tipo_pagamento e spese_bancarie per un soggetto esistente."""
         try:
             # Verifica se le colonne esistono
             self.cursor.execute("PRAGMA table_info(soggetti)")
             colonne = [col[1] for col in self.cursor.fetchall()]
             has_tipo_fattura = 'tipo_fattura' in colonne
             has_tipo_pagamento = 'tipo_pagamento' in colonne
+            has_spese_bancarie = 'spese_bancarie' in colonne
             
-            if not has_tipo_fattura and not has_tipo_pagamento:
+            if not has_tipo_fattura and not has_tipo_pagamento and not has_spese_bancarie:
                 return
             
             # Costruisci la query UPDATE dinamicamente
@@ -313,13 +392,17 @@ class ImportaFattureXML:
                 updates.append("tipo_pagamento = ?")
                 params.append(tipo_pagamento_id)
             
+            if has_spese_bancarie and spese_bancarie:
+                updates.append("spese_bancarie = ?")
+                params.append(spese_bancarie)
+            
             if updates:
                 params.append(soggetto_id)
                 query = f"UPDATE soggetti SET {', '.join(updates)} WHERE id = ?"
                 self.cursor.execute(query, params)
         except Exception as e:
             # Ignora errori se le colonne non esistono o altri problemi
-            self.log(f"  ⚠ Errore aggiornamento tipo_fattura/pagamento: {str(e)}")
+            self.log(f"  ⚠ Errore aggiornamento tipo_fattura/pagamento/spese_bancarie: {str(e)}")
     
     def inserisci_documento(self, root, soggetto_id):
         """Inserisce un nuovo documento"""
@@ -732,6 +815,7 @@ class ImportaDocumentoWindow(tk.Toplevel):
         self.aggiungi_messaggio("Pronto per l'importazione.")
         self.aggiungi_messaggio("Seleziona anno e mese, poi clicca su 'Avvia Importazione'.\n")
     
+    
     def get_percorso_base(self):
         """Ottiene il percorso base, verificando se esiste e usando fallback se necessario"""
         try:
@@ -808,6 +892,7 @@ class ImportaDocumentoWindow(tk.Toplevel):
         self.text_area.insert(tk.END, messaggio + end)
         self.text_area.see(tk.END)
         self.text_area.config(state='disabled')
+    
         self.update_idletasks()
     
     def set_callback_success(self, callback):

@@ -31,6 +31,8 @@ class ImportaFattureVenditaXML:
         self.file_con_errori = []
         # Dati delle fatture importate per il riepilogo
         self.fatture_importate = []
+        # Fatture con dichiarazione d'intento riconosciuta
+        self.fatture_con_di = []
 
     def log(self, messaggio, end='\n'):
         """Invia un messaggio alla GUI"""
@@ -118,6 +120,35 @@ class ImportaFattureVenditaXML:
             # Tipo documento non supportato
             return None
     
+    def verifica_spese_bancarie(self, root):
+        """Verifica se nell'XML sono presenti spese bancarie.
+        Le spese bancarie hanno:
+        - TipoCessionePrestazione = "AC"
+        - Descrizione = "Spese Bancarie" (case-insensitive)
+        
+        Restituisce "SI" se presenti, "NO" altrimenti.
+        """
+        try:
+            # Trova tutte le linee
+            linee = root.findall(".//DettaglioLinee")
+            
+            for linea in linee:
+                # Estrai TipoCessionePrestazione e Descrizione
+                tipo_cessione = linea.findtext("TipoCessionePrestazione", "").strip()
+                descrizione = linea.findtext("Descrizione", "").strip()
+                
+                # Verifica se è una spesa bancaria
+                # TipoCessionePrestazione deve essere "AC" e Descrizione deve contenere "Spese Bancarie"
+                # Controllo case-insensitive per la descrizione
+                if tipo_cessione == "AC" and "spese bancarie" in descrizione.lower():
+                    return "SI"
+            
+            return "NO"
+        except Exception as e:
+            # In caso di errore, restituisci "NO"
+            self.log(f"  ⚠ Errore nel controllo spese bancarie: {str(e)}")
+            return "NO"
+    
     def get_tipo_pagamento_id(self, codice_pagamento):
         """Ottiene l'id del tipo_pagamento dalla tabella tipo_pagamento usando il codice.
         Restituisce l'id se trovato, None altrimenti.
@@ -180,6 +211,81 @@ class ImportaFattureVenditaXML:
                     continue
         
         return totale_imponibile
+    
+    def verifica_dichiarazione_intento(self, root):
+        """
+        Verifica se la fattura è agganciabile a una dichiarazione d'intento.
+        Cerca nei nodi DatiRiepilogo con AliquotaIVA = 0.00 e Natura che inizia con N3.
+        Esclude N3.1 che non è una dichiarazione d'intento.
+        
+        Returns:
+            True se trovata una dichiarazione d'intento, False altrimenti
+        """
+        try:
+            # Cerca nei DatiRiepilogo
+            riepiloghi = root.findall('.//DatiRiepilogo')
+            
+            for riepilogo in riepiloghi:
+                # Estrai AliquotaIVA e Natura
+                aliquota_iva_text = riepilogo.findtext('AliquotaIVA', '').strip()
+                natura = riepilogo.findtext('Natura', '').strip()
+                
+                # Verifica se è una dichiarazione d'intento
+                # Condizioni: AliquotaIVA = 0.00 e Natura inizia con N3. ma NON è N3.1
+                try:
+                    aliquota_iva = float(aliquota_iva_text) if aliquota_iva_text else None
+                except (ValueError, TypeError):
+                    continue
+                
+                # Verifica condizioni per dichiarazione d'intento
+                # Escludi N3.1 che non è una dichiarazione d'intento
+                if (aliquota_iva == 0.00 and 
+                    natura and 
+                    natura.upper().startswith('N3.') and 
+                    natura.upper() != 'N3.1'):
+                    # Trovata una dichiarazione d'intento
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            # In caso di errore, restituisci False
+            self.log(f"  ⚠ Errore verifica dichiarazione d'intento: {str(e)}")
+            return False
+    
+    def estrai_imponibile_dichiarazione_intento(self, root):
+        """
+        Estrae l'imponibile dalla dichiarazione d'intento.
+        Cerca nei DatiRiepilogo con AliquotaIVA = 0.00 e Natura N3.x (escluso N3.1).
+        
+        Returns:
+            ImponibileImporto se trovato, 0.0 altrimenti
+        """
+        try:
+            riepiloghi = root.findall('.//DatiRiepilogo')
+            
+            for riepilogo in riepiloghi:
+                aliquota_iva_text = riepilogo.findtext('AliquotaIVA', '').strip()
+                natura = riepilogo.findtext('Natura', '').strip()
+                imponibile_text = riepilogo.findtext('ImponibileImporto', '').strip()
+                
+                try:
+                    aliquota_iva = float(aliquota_iva_text) if aliquota_iva_text else None
+                    imponibile = float(imponibile_text) if imponibile_text else 0.0
+                except (ValueError, TypeError):
+                    continue
+                
+                # Verifica condizioni per dichiarazione d'intento (escluso N3.1)
+                if (aliquota_iva == 0.00 and 
+                    natura and 
+                    natura.upper().startswith('N3.') and 
+                    natura.upper() != 'N3.1'):
+                    return imponibile
+            
+            return 0.0
+        except Exception as e:
+            self.log(f"  ⚠ Errore estrazione imponibile DI: {str(e)}")
+            return 0.0
 
     def verifica_soggetto_esistente(self, partita_iva, codice_fiscale):
         """Verifica se un soggetto esiste già nel database"""
@@ -250,6 +356,9 @@ class ImportaFattureVenditaXML:
         # Estrai modalità pagamento dal primo DettaglioPagamento
         modalita_pagamento_xml = self.estrai_testo(root, './/DatiPagamento/DettaglioPagamento/ModalitaPagamento', '')
         tipo_pagamento_id = self.get_tipo_pagamento_id(modalita_pagamento_xml) if modalita_pagamento_xml else None
+        
+        # Verifica presenza spese bancarie
+        spese_bancarie = self.verifica_spese_bancarie(root)
 
         soggetto_id, tipo_soggetto_esistente = self.verifica_soggetto_esistente(partita_iva, codice_fiscale)
     
@@ -282,9 +391,9 @@ class ImportaFattureVenditaXML:
                 # Se era già entrambi, non facciamo nulla
                 pass
             
-            # Aggiorna tipo_fattura e tipo_pagamento se disponibili
-            if tipo_fattura or tipo_pagamento_id:
-                self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id)
+            # Aggiorna tipo_fattura, tipo_pagamento e spese_bancarie se disponibili
+            if tipo_fattura or tipo_pagamento_id or spese_bancarie:
+                self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id, spese_bancarie)
             
             return soggetto_id, False
 
@@ -307,18 +416,31 @@ class ImportaFattureVenditaXML:
 
         codice_soggetto = self.get_prossimo_codice_soggetto(tipo='cliente')
 
-        # Costruisci la query INSERT includendo tipo_fattura e tipo_pagamento
+        # Costruisci la query INSERT includendo tipo_fattura, tipo_pagamento e spese_bancarie
         # Verifica se le colonne esistono nella tabella
         try:
             self.cursor.execute("PRAGMA table_info(soggetti)")
             colonne = [col[1] for col in self.cursor.fetchall()]
             has_tipo_fattura = 'tipo_fattura' in colonne
             has_tipo_pagamento = 'tipo_pagamento' in colonne
+            has_spese_bancarie = 'spese_bancarie' in colonne
         except Exception:
             has_tipo_fattura = False
             has_tipo_pagamento = False
+            has_spese_bancarie = False
 
-        if has_tipo_fattura and has_tipo_pagamento:
+        if has_tipo_fattura and has_tipo_pagamento and has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento_id, spese_bancarie
+            ))
+        elif has_tipo_fattura and has_tipo_pagamento:
             query = """
                 INSERT INTO soggetti
                 (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
@@ -328,6 +450,28 @@ class ImportaFattureVenditaXML:
             self.cursor.execute(query, (
                 codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
                 partita_iva, citta, cap, provincia, email, tipo_fattura, tipo_pagamento_id
+            ))
+        elif has_tipo_fattura and has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, tipo_fattura, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_fattura, spese_bancarie
+            ))
+        elif has_tipo_pagamento and has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, tipo_pagamento, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, tipo_pagamento_id, spese_bancarie
             ))
         elif has_tipo_fattura:
             query = """
@@ -351,6 +495,17 @@ class ImportaFattureVenditaXML:
                 codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
                 partita_iva, citta, cap, provincia, email, tipo_pagamento_id
             ))
+        elif has_spese_bancarie:
+            query = """
+                INSERT INTO soggetti
+                (codice_soggetto, ragione_sociale, tipo_soggetto, codice_fiscale,
+                 partita_iva, citta, cap, provincia, email, spese_bancarie)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                codice_soggetto, denominazione, 'CLIENTE', codice_fiscale,
+                partita_iva, citta, cap, provincia, email, spese_bancarie
+            ))
         else:
             # Fallback alla query originale se le colonne non esistono
             query = """
@@ -366,16 +521,17 @@ class ImportaFattureVenditaXML:
 
         return self.cursor.lastrowid, False
     
-    def aggiorna_tipo_fattura_pagamento(self, soggetto_id, tipo_fattura, tipo_pagamento_id):
-        """Aggiorna tipo_fattura e tipo_pagamento per un soggetto esistente."""
+    def aggiorna_tipo_fattura_pagamento(self, soggetto_id, tipo_fattura, tipo_pagamento_id, spese_bancarie=None):
+        """Aggiorna tipo_fattura, tipo_pagamento e spese_bancarie per un soggetto esistente."""
         try:
             # Verifica se le colonne esistono
             self.cursor.execute("PRAGMA table_info(soggetti)")
             colonne = [col[1] for col in self.cursor.fetchall()]
             has_tipo_fattura = 'tipo_fattura' in colonne
             has_tipo_pagamento = 'tipo_pagamento' in colonne
+            has_spese_bancarie = 'spese_bancarie' in colonne
             
-            if not has_tipo_fattura and not has_tipo_pagamento:
+            if not has_tipo_fattura and not has_tipo_pagamento and not has_spese_bancarie:
                 return
             
             # Costruisci la query UPDATE dinamicamente
@@ -390,13 +546,17 @@ class ImportaFattureVenditaXML:
                 updates.append("tipo_pagamento = ?")
                 params.append(tipo_pagamento_id)
             
+            if has_spese_bancarie and spese_bancarie:
+                updates.append("spese_bancarie = ?")
+                params.append(spese_bancarie)
+            
             if updates:
                 params.append(soggetto_id)
                 query = f"UPDATE soggetti SET {', '.join(updates)} WHERE id = ?"
                 self.cursor.execute(query, params)
         except Exception as e:
             # Ignora errori se le colonne non esistono o altri problemi
-            self.log(f"  ⚠ Errore aggiornamento tipo_fattura/pagamento: {str(e)}")
+            self.log(f"  ⚠ Errore aggiornamento tipo_fattura/pagamento/spese_bancarie: {str(e)}")
 
     def inserisci_documento(self, root, soggetto_id):
         """Inserisce un nuovo documento (fattura vendita)"""
@@ -427,18 +587,45 @@ class ImportaFattureVenditaXML:
         
         # CALCOLA L'IMPONIBILE TOTALE
         imponibile_totale = self.calcola_imponibile_totale(root)
-
-        query = """
-            INSERT INTO documenti
-            (soggetto_id, tipo_documento, segno, numero_documento,
-             data_documento, data_registrazione, totale, importo_imponibile)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """
-
-        self.cursor.execute(query, (
-            soggetto_id, tipo_documento, segno, numero_documento,
-            data_documento, data_registrazione, totale, imponibile_totale
-        ))
+        
+        # Verifica se la fattura è agganciabile a una dichiarazione d'intento
+        ha_dichiarazione_intento = self.verifica_dichiarazione_intento(root)
+        
+        # Determina il valore per id_dichiarazione_intento:
+        # - 1 se agganciabile (valore provvisorio)
+        # - NULL se aliquota normale
+        id_dichiarazione_intento = 1 if ha_dichiarazione_intento else None
+        
+        # Verifica se esiste la colonna id_dichiarazione_intento
+        try:
+            self.cursor.execute("PRAGMA table_info(documenti)")
+            colonne = [col[1] for col in self.cursor.fetchall()]
+            has_dichiarazione_field = "id_dichiarazione_intento" in colonne
+        except:
+            has_dichiarazione_field = False
+        
+        if has_dichiarazione_field:
+            query = """
+                INSERT INTO documenti
+                (soggetto_id, tipo_documento, segno, numero_documento,
+                 data_documento, data_registrazione, totale, importo_imponibile, id_dichiarazione_intento)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                soggetto_id, tipo_documento, segno, numero_documento,
+                data_documento, data_registrazione, totale, imponibile_totale, id_dichiarazione_intento
+            ))
+        else:
+            query = """
+                INSERT INTO documenti
+                (soggetto_id, tipo_documento, segno, numero_documento,
+                 data_documento, data_registrazione, totale, importo_imponibile)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                soggetto_id, tipo_documento, segno, numero_documento,
+                data_documento, data_registrazione, totale, imponibile_totale
+            ))
 
         return self.cursor.lastrowid
 
@@ -543,6 +730,35 @@ class ImportaFattureVenditaXML:
 
             if documento_id is None:
                 return True
+            
+            # Estrai dati documento per il log e per le dichiarazioni d'intento
+            numero_documento_raw = self.estrai_testo(root, './/DatiGeneraliDocumento/Numero')
+            numero_documento = self.normalizza_numero_fattura(numero_documento_raw)
+            data_documento_str = self.estrai_testo(root, './/DatiGeneraliDocumento/Data')
+            if data_documento_str:
+                try:
+                    data_obj = datetime.strptime(data_documento_str, '%Y-%m-%d')
+                    data_documento = data_obj.strftime('%d/%m/%Y')
+                except Exception:
+                    data_documento = data_documento_str
+            else:
+                data_documento = ''
+            
+            # Se è stata riconosciuta una dichiarazione d'intento, salva i dati
+            if self.verifica_dichiarazione_intento(root):
+                # Estrai l'imponibile dalla dichiarazione d'intento
+                imponibile_di = self.estrai_imponibile_dichiarazione_intento(root)
+                
+                self.log(f"  ✓ Dichiarazione d'intento riconosciuta per fattura {numero_documento}")
+                
+                # Salva i dati per la finestra di selezione
+                self.fatture_con_di.append({
+                    'documento_id': documento_id,
+                    'soggetto_id': soggetto_id,
+                    'numero_documento': numero_documento,
+                    'data_documento': data_documento,
+                    'imponibile': imponibile_di
+                })
 
             # Inserisce scadenze (e eventuali riba)
             self.inserisci_scadenze(root, documento_id)
@@ -968,6 +1184,12 @@ class ImportaDocumentoVenditeWindow(tk.Toplevel):
                     callback=self.aggiungi_messaggio
                 )
                 importatore.esegui_importazione()
+                
+                # Se ci sono fatture con dichiarazione d'intento, mostra la finestra di selezione
+                if importatore.fatture_con_di:
+                    self.after(0, lambda: self.mostra_finestra_dichiarazioni_intento(
+                        importatore.fatture_con_di, importatore.db_path
+                    ))
 
                 if self.callback_success:
                     self.after(0, self.callback_success)
@@ -979,3 +1201,8 @@ class ImportaDocumentoVenditeWindow(tk.Toplevel):
 
         thread = threading.Thread(target=esegui, daemon=True)
         thread.start()
+    
+    def mostra_finestra_dichiarazioni_intento(self, fatture_con_di, db_path):
+        """Mostra la finestra per agganciare le fatture alle dichiarazioni d'intento"""
+        from gui.documenti_page_aggancia_dichiarazioni import AgganciaDichiarazioniWindow
+        AgganciaDichiarazioniWindow(self, db_path, fatture_con_di)

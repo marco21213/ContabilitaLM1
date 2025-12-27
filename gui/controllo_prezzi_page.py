@@ -52,6 +52,20 @@ class ControlloPrezziPage(tk.Frame):
         )
         title_label.pack(side="left")
 
+        # Bottone Info
+        info_btn = tk.Button(
+            header_frame,
+            text="ℹ️ Info",
+            command=self.mostra_info_controlli,
+            bg="#17a2b8",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            padx=15,
+            pady=5,
+            cursor="hand2",
+        )
+        info_btn.pack(side="right")
+
         # ==================== SELEZIONE CARTELLA ====================
         folder_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
         folder_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
@@ -245,11 +259,21 @@ class ControlloPrezziPage(tk.Frame):
             messagebox.showwarning("Attenzione", "Nessun file XML selezionato.")
             return
 
+        # Operazione preventiva: rinomina i file XML con il numero di fattura
+        self.update_status("Rinomina file XML in corso...")
+        self.rinomina_file_xml()
+
+        # Ricarica i file XML dopo la rinomina
+        folder_path = self.selected_folder.get()
+        if folder_path:
+            self.load_xml_files(folder_path)
+
         for item in self.tree.get_children():
             self.tree.delete(item)
 
         self.controlli_results = []
 
+        self.update_status("Esecuzione controlli in corso...")
         for xml_file in self.xml_files:
             risultato = self.analizza_file_xml(xml_file)
             self.controlli_results.append(risultato)
@@ -257,6 +281,124 @@ class ControlloPrezziPage(tk.Frame):
 
         messagebox.showinfo("Completato", "Controllo completato!")
         self.update_status("Controllo completato")
+
+    def rinomina_file_xml(self):
+        """
+        Rinomina tutti i file XML nella cartella selezionata con il numero di fattura.
+        Rimuove i caratteri '/' e '\' dal numero di fattura.
+        Esempio: 1040/A diventa 1040A.xml
+        """
+        folder_path = self.selected_folder.get()
+        if not folder_path:
+            return
+
+        try:
+            xml_files = list(Path(folder_path).glob("*.xml"))
+            rinomine_effettuati = 0
+            errori = []
+
+            for xml_file in xml_files:
+                try:
+                    # Estrai il numero di fattura dall'XML
+                    numero_fattura = self.estrai_numero_fattura(xml_file)
+                    
+                    if not numero_fattura:
+                        errori.append(f"{xml_file.name}: Numero fattura non trovato")
+                        continue
+
+                    # Pulisci il numero di fattura rimuovendo '/' e '\'
+                    numero_pulito = self.pulisci_numero_fattura(numero_fattura)
+                    
+                    # Crea il nuovo nome file
+                    nuovo_nome = f"{numero_pulito}.xml"
+                    nuovo_path = xml_file.parent / nuovo_nome
+
+                    # Se il nuovo nome è diverso dal vecchio, rinomina
+                    if nuovo_nome != xml_file.name:
+                        # Se esiste già un file con lo stesso nome, aggiungi un suffisso
+                        if nuovo_path.exists() and nuovo_path != xml_file:
+                            counter = 1
+                            while nuovo_path.exists():
+                                nuovo_nome = f"{numero_pulito}_{counter}.xml"
+                                nuovo_path = xml_file.parent / nuovo_nome
+                                counter += 1
+                        
+                        # Rinomina il file
+                        xml_file.rename(nuovo_path)
+                        rinomine_effettuati += 1
+
+                except Exception as e:
+                    errori.append(f"{xml_file.name}: {str(e)}")
+
+            # Mostra un messaggio con i risultati
+            if rinomine_effettuati > 0 or errori:
+                messaggio = f"Rinomina completata:\n"
+                if rinomine_effettuati > 0:
+                    messaggio += f"✅ {rinomine_effettuati} file rinominati\n"
+                if errori:
+                    messaggio += f"⚠️ {len(errori)} errori\n"
+                    if len(errori) <= 5:
+                        messaggio += "\n".join(errori)
+                    else:
+                        messaggio += "\n".join(errori[:5]) + f"\n... e altri {len(errori) - 5} errori"
+                
+                if rinomine_effettuati > 0:
+                    messagebox.showinfo("Rinomina completata", messaggio)
+
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante la rinomina: {str(e)}")
+
+    def estrai_numero_fattura(self, xml_file: Path) -> str:
+        """
+        Estrae il numero di fattura da un file XML.
+        
+        Args:
+            xml_file: Percorso del file XML
+            
+        Returns:
+            Numero di fattura come stringa, o stringa vuota se non trovato
+        """
+        try:
+            tree = ET.parse(xml_file)
+            root = tree.getroot()
+            
+            # Gestione namespace se presente
+            ns = {}
+            if '}' in root.tag:
+                ns_prefix = root.tag.split('}')[0].strip('{')
+                ns = {'ns': ns_prefix}
+            
+            # Cerca il numero con e senza namespace
+            numero = None
+            if ns:
+                numero = root.findtext(".//ns:DatiGenerali/ns:DatiGeneraliDocumento/ns:Numero", namespaces=ns, default="")
+            
+            if not numero:
+                numero = root.findtext(".//DatiGenerali/DatiGeneraliDocumento/Numero", default="")
+            
+            return numero.strip() if numero else ""
+            
+        except Exception as e:
+            return ""
+
+    def pulisci_numero_fattura(self, numero: str) -> str:
+        """
+        Pulisce il numero di fattura rimuovendo i caratteri '/' e '\'.
+        Esempio: '1040/A' diventa '1040A'
+        
+        Args:
+            numero: Numero di fattura da pulire
+            
+        Returns:
+            Numero di fattura pulito
+        """
+        if not numero:
+            return numero
+        
+        # Rimuovi '/' e '\'
+        numero_pulito = numero.replace('/', '').replace('\\', '')
+        
+        return numero_pulito
 
     def analizza_file_xml(self, xml_file: Path) -> dict:
         """
@@ -381,3 +523,86 @@ DETTAGLI:
     def update_status(self, message: str):
         self.status_label.config(text=message)
         self.update_idletasks()
+
+    def mostra_info_controlli(self):
+        """Mostra una finestra con il promemoria dei controlli implementati."""
+        info_window = tk.Toplevel(self)
+        info_window.title("ℹ️ Informazioni Controlli")
+        info_window.geometry("500x400")
+        info_window.resizable(False, False)
+        info_window.transient(self)
+        info_window.grab_set()
+
+        # Frame principale
+        main_frame = tk.Frame(info_window, bg=Style.BACKGROUND_COLOR)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Titolo
+        title_label = tk.Label(
+            main_frame,
+            text="📋 Controlli Implementati",
+            font=("Arial", 16, "bold"),
+            bg=Style.BACKGROUND_COLOR,
+            fg=Style.MENU_HEADER_BG,
+        )
+        title_label.pack(pady=(0, 20))
+
+        # Testo informativo
+        info_text = """I seguenti controlli vengono eseguiti automaticamente 
+su tutti i file XML selezionati:
+
+1️⃣  CONTROLLO PREZZI MANCANTI
+    Verifica l'assenza di quantità o prezzi zero/negativi
+    nelle righe articolo delle fatture.
+
+2️⃣  CONTROLLO CORRISPONDENZA FATTURA CON DATABASE
+    Verifica che il TipoDocumento (TD01 - TD24) nell'XML
+    corrisponda al tipo_fattura salvato nel database
+    per il soggetto (fornitore o cliente).
+
+3️⃣  CONTROLLO SPESE BANCARIE
+    Verifica la presenza di spese bancarie nell'XML
+    (TipoCessionePrestazione = "AC" e 
+     Descrizione = "Spese Bancarie").
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+I risultati di tutti i controlli vengono visualizzati
+nella tabella sottostante con i relativi dettagli."""
+
+        text_widget = tk.Text(
+            main_frame,
+            wrap="word",
+            font=("Arial", 10),
+            bg="white",
+            fg="#333",
+            padx=15,
+            pady=15,
+            relief="flat",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground="#ccc",
+        )
+        text_widget.pack(fill="both", expand=True, pady=(0, 15))
+        text_widget.insert("1.0", info_text)
+        text_widget.config(state="disabled")
+
+        # Bottone Chiudi
+        close_btn = tk.Button(
+            main_frame,
+            text="Chiudi",
+            command=info_window.destroy,
+            bg=Style.MENU_HEADER_BG,
+            fg="white",
+            font=("Arial", 10, "bold"),
+            padx=30,
+            pady=8,
+            cursor="hand2",
+        )
+        close_btn.pack()
+
+        # Centra la finestra
+        info_window.update_idletasks()
+        x = (info_window.winfo_screenwidth() // 2) - (info_window.winfo_width() // 2)
+        y = (info_window.winfo_screenheight() // 2) - (info_window.winfo_height() // 2)
+        info_window.geometry(f"+{x}+{y}")
