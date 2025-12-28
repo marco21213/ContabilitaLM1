@@ -9,20 +9,22 @@ sys.path.append("assets/style")
 from styles import Style
 
 
-class NuovaDichiarazioneWindow(tk.Toplevel):
-    def __init__(self, parent, db_path, on_success=None):
+class ModificaDichiarazioneWindow(tk.Toplevel):
+    def __init__(self, parent, db_path, dichiarazione_id, on_success=None):
         super().__init__(parent)
 
         self.db_path = db_path
+        self.dichiarazione_id = dichiarazione_id
         self.on_success = on_success
 
-        self.title("Nuova Dichiarazione d’Intento")
+        self.title("Modifica Dichiarazione d'Intento")
         self.geometry("500x480")
         self.resizable(False, False)
         self.configure(bg=Style.BACKGROUND_COLOR)
 
         self.create_widgets()
         self.load_soggetti()
+        self.load_dichiarazione_data()
 
     # ----------------------------------------------------------------
     #   LAYOUT
@@ -31,7 +33,7 @@ class NuovaDichiarazioneWindow(tk.Toplevel):
         frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=20, pady=20)
         frame.pack(fill="both", expand=True)
 
-        title = tk.Label(frame, text="➕ Nuova Dichiarazione d'Intento",
+        title = tk.Label(frame, text="✏️ Modifica Dichiarazione d'Intento",
                          font=("Arial", 15, "bold"), bg=Style.BACKGROUND_COLOR)
         title.grid(row=0, column=0, columnspan=2, pady=(0, 20), sticky="w")
 
@@ -135,6 +137,69 @@ class NuovaDichiarazioneWindow(tk.Toplevel):
             messagebox.showerror("Errore DB", f"Errore caricamento soggetti:\n{e}")
 
     # ----------------------------------------------------------------
+    #   CARICA DATI DICHIARAZIONE
+    # ----------------------------------------------------------------
+    def load_dichiarazione_data(self):
+        """Carica i dati della dichiarazione dal database e li inserisce nei campi"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cur = conn.cursor()
+
+            # Carica dalla vista per avere tutti i dati inclusi plafond_residuo
+            cur.execute("""
+                SELECT id_soggetto, numero_dichiarazione, data_inizio, data_fine,
+                       plafond_iniziale
+                FROM vw_dichiarazioni_intento
+                WHERE id = ?
+            """, (self.dichiarazione_id,))
+
+            row = cur.fetchone()
+            conn.close()
+
+            if not row:
+                messagebox.showerror("Errore", "Dichiarazione non trovata.")
+                self.destroy()
+                return
+
+            id_soggetto, numero, data_inizio, data_fine, plafond_iniziale = row
+
+            # Trova il nome del soggetto
+            soggetto_nome = None
+            for sid, name in self.soggetti:
+                if sid == id_soggetto:
+                    soggetto_nome = name
+                    break
+
+            if soggetto_nome:
+                self.soggetto_cb.set(soggetto_nome)
+
+            # Precompila i campi
+            self.numero_entry.insert(0, numero if numero else "")
+            
+            # Converti date da yyyy-mm-dd a dd/mm/yyyy per DateEntry
+            if data_inizio:
+                try:
+                    data_inizio_obj = datetime.strptime(data_inizio, "%Y-%m-%d")
+                    self.data_inizio.set_date(data_inizio_obj)
+                except:
+                    pass
+
+            if data_fine:
+                try:
+                    data_fine_obj = datetime.strptime(data_fine, "%Y-%m-%d")
+                    self.data_fine.set_date(data_fine_obj)
+                except:
+                    pass
+
+            # Plafond iniziale
+            if plafond_iniziale:
+                self.plafond_entry.insert(0, str(plafond_iniziale))
+
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore caricamento dati:\n{e}")
+            self.destroy()
+
+    # ----------------------------------------------------------------
     #   RICERCA SOGGETTO CON TASTIERA
     # ----------------------------------------------------------------
     def on_soggetto_keyrelease(self, event):
@@ -203,17 +268,22 @@ class NuovaDichiarazioneWindow(tk.Toplevel):
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
 
+            # Aggiorna la dichiarazione (solo nella tabella dichiarazioni_intento)
             cur.execute("""
-                INSERT INTO dichiarazioni_intento
-                (id_soggetto, numero_dichiarazione, data_inizio, data_fine,
-                 plafond_iniziale)
-                VALUES (?, ?, ?, ?, ?)
+                UPDATE dichiarazioni_intento
+                SET id_soggetto = ?,
+                    numero_dichiarazione = ?,
+                    data_inizio = ?,
+                    data_fine = ?,
+                    plafond_iniziale = ?
+                WHERE id = ?
             """, (
                 id_soggetto,
                 self.numero_entry.get().strip(),
                 d_in,
                 d_fi,
-                p_iniziale
+                p_iniziale,
+                self.dichiarazione_id
             ))
 
             conn.commit()
@@ -222,8 +292,9 @@ class NuovaDichiarazioneWindow(tk.Toplevel):
             if self.on_success:
                 self.on_success()
 
-            messagebox.showinfo("Successo", "Dichiarazione salvata con successo.")
+            messagebox.showinfo("Successo", "Dichiarazione modificata con successo.")
             self.destroy()
 
         except Exception as e:
             messagebox.showerror("Errore", f"Errore salvataggio:\n{e}")
+

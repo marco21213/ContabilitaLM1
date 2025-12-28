@@ -681,16 +681,16 @@ class VerificaFtAcquistoPage(tk.Frame):
                  foreground=[('selected', 'white')])
     
     def get_cartella_ricevute(self):
-        """Legge il percorso della cartella ricevute da config.ini"""
+        """Legge il percorso della cartella ricevute dal database"""
         try:
-            config = configparser.ConfigParser()
-            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.ini")
-            config.read(config_path, encoding="utf-8")
+            import sys
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from scripts.parametri_db import get_cartella_ricevute
             
-            cartella = config.get("Parametri", "cartellaricevute", fallback="")
+            cartella = get_cartella_ricevute()
             
             if not cartella:
-                messagebox.showerror("Errore", "Parametro 'cartellaricevute' non trovato nel file config.ini")
+                messagebox.showerror("Errore", "Parametro 'cartellaricevute' non trovato nel database")
                 return None
             
             if not os.path.exists(cartella):
@@ -699,7 +699,7 @@ class VerificaFtAcquistoPage(tk.Frame):
             
             return cartella
         except Exception as e:
-            messagebox.showerror("Errore", f"Errore nella lettura di config.ini: {e}")
+            messagebox.showerror("Errore", f"Errore nella lettura dal database: {e}")
             return None
     
     def scan_months(self):

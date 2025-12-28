@@ -65,7 +65,7 @@ class DichiarazioniIntentoPage(tk.Frame):
             ("nuovo", "Nuova", self.nuova_dichiarazione, "#4CAF50"),
             ("modifica", "Modifica", self.modifica_dichiarazione, "#FF9800"),
             ("cancella", "Cancella", self.cancella_dichiarazione, "#F44336"),
-            ("documento", "Movimenti", self.apri_movimenti, "#2196F3"),
+            ("movimenti", "Movimenti", self.apri_movimenti, "#2196F3"),
         ]
 
         icon_size = (32, 32)
@@ -141,7 +141,7 @@ class DichiarazioniIntentoPage(tk.Frame):
                 SELECT di.id, s.ragione_sociale, di.numero_dichiarazione,
                        di.data_inizio, di.data_fine,
                        di.plafond_iniziale, di.plafond_residuo
-                FROM dichiarazioni_intento di
+                FROM vw_dichiarazioni_intento di
                 JOIN soggetti s ON s.id = di.id_soggetto
                 ORDER BY di.data_inizio DESC
             """)
@@ -214,7 +214,8 @@ class DichiarazioniIntentoPage(tk.Frame):
             messagebox.showwarning("Attenzione", "Seleziona una dichiarazione.")
             return
 
-        messagebox.showinfo("Modifica", f"Da implementare — ID {did}")
+        from dichiarazioni_page_modifica import ModificaDichiarazioneWindow
+        ModificaDichiarazioneWindow(self, self.db_path, did, on_success=self.load_data)
 
     def cancella_dichiarazione(self):
         did = self.get_selected_id()
@@ -241,12 +242,6 @@ class DichiarazioniIntentoPage(tk.Frame):
         if not did:
             messagebox.showwarning("Attenzione", "Seleziona una dichiarazione.")
             return
-
-        def apri_movimenti(self):
-            did = self.get_selected_id()
-            if not did:
-                messagebox.showwarning("Attenzione", "Seleziona una dichiarazione.")
-                return
 
         from dichiarazioni_page_movimenti import MovimentiDichiarazioneWindow
         MovimentiDichiarazioneWindow(self, self.db_path, did)

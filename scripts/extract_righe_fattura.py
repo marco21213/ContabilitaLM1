@@ -237,13 +237,11 @@ class RigheFatturaExtractor:
 if __name__ == "__main__":
     import configparser
     
-    # Carica configurazione
-    config = configparser.ConfigParser()
-    config_path = Path(__file__).parent.parent / "config.ini"
-    config.read(config_path, encoding="utf-8")
+    # Ottieni cartella da processare dal database
+    sys.path.append(str(Path(__file__).parent.parent))
+    from scripts.parametri_db import get_cartella_ricevute
     
-    # Ottieni cartella da processare (default: cartella acquisti)
-    cartella = config.get('Parametri', 'cartellaricevute', fallback=None)
+    cartella = get_cartella_ricevute()
     
     if not cartella or not Path(cartella).exists():
         print(f"Cartella non configurata o non trovata: {cartella}")

@@ -6,6 +6,9 @@ import os
 from PIL import Image, ImageTk
 from datetime import datetime
 from tkcalendar import DateEntry
+import sys
+sys.path.append("scripts")
+from parametri_db import get_cartella_ricevute, get_import_rapido
 
 # Importa gli stili
 import sys
@@ -756,9 +759,11 @@ class VistaScadenzeApp(tk.Frame):
         return c.get("Autenticazione", "percorso_database", fallback="./database.db")
 
     def get_cartella_ricevute(self):
-        c = configparser.ConfigParser()
-        c.read("config.ini", encoding="utf-8")
-        return c.get("Parametri", "cartellaricevute", fallback="./ricevute")
+        try:
+            cartella = get_cartella_ricevute()
+            return cartella if cartella else "./ricevute"
+        except Exception:
+            return "./ricevute"
     
     def get_sort_preference(self, key, default):
         """Legge le preferenze di ordinamento dal config.ini"""
@@ -1118,6 +1123,10 @@ class VistaScadenzeApp(tk.Frame):
                         doc_id = int(t[3:])
                 if not doc_id: 
                     continue
+                
+                # Gestisci il movimento del plafond se il documento è agganciato a una dichiarazione
+                self._rimuovi_movimento_plafond_documento(c, doc_id)
+                
                 # Elimina prima le associazioni pagamenti collegate al documento
                 c.execute("DELETE FROM associazioni_pagamenti WHERE id_documento=?", (doc_id,))
                 # Elimina le scadenze
@@ -1130,6 +1139,33 @@ class VistaScadenzeApp(tk.Frame):
             self.load_data()
         except Exception as e:
             messagebox.showerror("Errore", str(e))
+    
+    def _rimuovi_movimento_plafond_documento(self, cursor, documento_id):
+        """Rimuove il movimento del plafond associato a un documento e ripristina il residuo"""
+        try:
+            # Verifica se il documento è agganciato a una dichiarazione
+            cursor.execute("""
+                SELECT id_dichiarazione_intento FROM documenti WHERE id = ?
+            """, (documento_id,))
+            risultato = cursor.fetchone()
+            id_dichiarazione = risultato[0] if risultato and risultato[0] else None
+            
+            if id_dichiarazione:
+                # Verifica se esiste un movimento per questo documento
+                cursor.execute("""
+                    SELECT id, importo_consumato FROM consumo_plafond
+                    WHERE id_dichiarazione = ? AND id_documento = ?
+                """, (id_dichiarazione, documento_id))
+                movimento = cursor.fetchone()
+                
+                if movimento:
+                    movimento_id, importo_movimento = movimento
+                    # Elimina il movimento
+                    # Il plafond_residuo viene calcolato automaticamente dalla vista
+                    cursor.execute("DELETE FROM consumo_plafond WHERE id = ?", (movimento_id,))
+        except Exception:
+            # Ignora errori se le tabelle non esistono o altri problemi
+            pass
 
     def importa_acquisti(self):
         """Apre la finestra per importare documenti di acquisto"""
@@ -1155,15 +1191,13 @@ class VistaScadenzeApp(tk.Frame):
             messagebox.showerror("Errore", f"Impossibile aprire la finestra di importazione vendite:\n{str(e)}")
 
     def importa_rapido(self):
-        """Importa XML direttamente dalla cartella specificata in config.ini senza interazione utente"""
+        """Importa XML direttamente dalla cartella specificata nel database senza interazione utente"""
         try:
-            # Leggi il percorso da config.ini
-            config = configparser.ConfigParser()
-            config.read('config.ini')
-            folder = config.get('Parametri', 'importarapido')
+            # Leggi il percorso dal database
+            folder = get_import_rapido()
             
             if not folder or not os.path.exists(folder):
-                messagebox.showerror("Errore", f"Cartella non trovata o non configurata:\n{folder}\n\nVerifica il percorso in config.ini [Parametri] importarapido")
+                messagebox.showerror("Errore", f"Cartella non trovata o non configurata:\n{folder}\n\nVerifica il percorso nel database (tabella parametri, campo importarapido)")
                 return
             
             # Mostra finestra di progresso
@@ -1331,8 +1365,8 @@ class VistaScadenzeApp(tk.Frame):
             thread = threading.Thread(target=esegui_importazione, daemon=True)
             thread.start()
             
-        except configparser.NoOptionError:
-            messagebox.showerror("Errore", "Parametro 'importarapido' non trovato in config.ini [Parametri]")
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante l'importazione rapida:\n{str(e)}")
         except Exception as e:
             print(f"Errore in importa_rapido: {e}")
             messagebox.showerror("Errore", f"Errore durante l'importazione rapida:\n{str(e)}")

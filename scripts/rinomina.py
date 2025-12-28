@@ -5,6 +5,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import sys
 import argparse
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.parametri_db import get_cartella_emesse, get_cartella_ricevute, get_cartella_stampa
 
 class XMLRenamer:
     def __init__(self):
@@ -244,14 +246,14 @@ def main():
         # Determina se copiare in Stampa (default: True, False solo se --no-stampa è passato)
         copy_to_stampa = not args.no_stampa
         
-        # Leggi il file di configurazione
-        config = configparser.ConfigParser()
-        config.read('config.ini')
+        # Recupera i percorsi dal database
+        cartella_emesse = get_cartella_emesse()
+        cartella_ricevute = get_cartella_ricevute()
+        cartella_stampa = get_cartella_stampa()
         
-        # Recupera i percorsi dal config
-        cartella_emesse = config['Parametri']['cartellaemesse']
-        cartella_ricevute = config['Parametri']['cartellaricevute']
-        cartella_stampa = config['Parametri']['cartellastampa']
+        if not cartella_emesse or not cartella_ricevute or not cartella_stampa:
+            print("❌ Errore: Impossibile leggere i percorsi delle cartelle dal database")
+            return
         
         print("\nArchivazione file XML Fatture")
         if copy_to_stampa:

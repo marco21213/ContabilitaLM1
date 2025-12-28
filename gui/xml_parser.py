@@ -3,27 +3,24 @@ import glob
 from lxml import etree
 import configparser
 from typing import List, Dict, Optional, Tuple
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.parametri_db import get_cartella_stampa
 
 class XMLParser:
     def __init__(self):
-        self.config = self.load_config()
-        
-    def load_config(self) -> configparser.ConfigParser:
-        """Carica il file di configurazione."""
-        config = configparser.ConfigParser()
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_dir = os.path.dirname(current_dir)
-        config_path = os.path.join(project_dir, 'config.ini')
-        config.read(config_path)
-        return config
+        pass
     
     def get_xml_files(self) -> List[str]:
         """Restituisce la lista dei file XML nella cartella specificata."""
-        folder_path = self.config.get('Parametri', 'cartellastampa', fallback=None)
-        if not folder_path or not os.path.exists(folder_path):
+        try:
+            folder_path = get_cartella_stampa()
+            if not folder_path or not os.path.exists(folder_path):
+                return []
+            
+            return glob.glob(os.path.join(folder_path, '*.xml'))
+        except Exception:
             return []
-        
-        return glob.glob(os.path.join(folder_path, '*.xml'))
     
     def extract_basic_data(self, file_path: str) -> Optional[Dict]:
         """Estrae i dati base dal file XML."""

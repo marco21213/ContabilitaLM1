@@ -115,7 +115,20 @@ class NuovoMovimentoWindow(tk.Toplevel):
         display = []
 
         for did, num, data, imp in rows:
-            d_fmt = datetime.strptime(data, "%Y-%m-%d").strftime("%d/%m/%Y")
+            # Le date nel database sono già in formato dd/mm/yyyy
+            # Se per caso sono in formato YYYY-MM-DD, convertiamo
+            if data:
+                try:
+                    # Se contiene '/' è già in formato dd/mm/yyyy
+                    if '/' in str(data):
+                        d_fmt = data
+                    else:
+                        # Se è in formato YYYY-MM-DD, converti
+                        d_fmt = datetime.strptime(data, "%Y-%m-%d").strftime("%d/%m/%Y")
+                except:
+                    d_fmt = data  # Fallback: usa il valore originale
+            else:
+                d_fmt = ""
             display.append(f"{num} del {d_fmt} – € {imp:,.2f}")
 
         self.doc_cb["values"] = display
@@ -156,22 +169,19 @@ class NuovoMovimentoWindow(tk.Toplevel):
             cur = conn.cursor()
 
             # Inserisci movimento
+            # Usa formato dd/mm/yyyy per la data
+            # Il plafond_residuo viene calcolato automaticamente dalla vista
+            data_oggi = datetime.now().strftime('%d/%m/%Y')
             cur.execute("""
                 INSERT INTO consumo_plafond
                 (id_dichiarazione, id_documento, data, importo_consumato)
-                VALUES (?, ?, date('now'), ?)
+                VALUES (?, ?, ?, ?)
             """, (
                 self.id_dichiarazione,
                 did,
+                data_oggi,
                 importo
             ))
-
-            # Aggiorna plafond residuo
-            cur.execute("""
-                UPDATE dichiarazioni_intento
-                SET plafond_residuo = plafond_residuo - ?
-                WHERE id=?
-            """, (importo, self.id_dichiarazione))
 
             conn.commit()
             conn.close()

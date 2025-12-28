@@ -152,12 +152,18 @@ class P7MConverter:
 
 def main():
     try:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).parent.parent))
+        from scripts.parametri_db import get_cartella_emesse, get_cartella_ricevute
+        
+        cartella_emesse = get_cartella_emesse()
+        cartella_ricevute = get_cartella_ricevute()
+        
+        # openssl_path non è nella tabella parametri, lo leggiamo ancora da config.ini se necessario
         config = configparser.ConfigParser()
         config.read('config.ini')
-        
-        cartella_emesse = config['Parametri']['cartellaemesse']
-        cartella_ricevute = config['Parametri']['cartellaricevute']
-        openssl_path = config['Parametri'].get('openssl_path', r'C:\Program Files\OpenSSL-Win64\bin\openssl')
+        openssl_path = config.get('Parametri', 'openssl_path', fallback=r'C:\Program Files\OpenSSL-Win64\bin\openssl')
         
         print("\nConvertitore P7M -> XML")
         print("-" * 50)

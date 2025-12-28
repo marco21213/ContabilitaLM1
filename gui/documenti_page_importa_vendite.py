@@ -8,6 +8,9 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 import threading
+import sys
+sys.path.append("scripts")
+from parametri_db import get_import_vendite, get_cartella_emesse, set_import_vendite
 
 
 class ImportaFattureVenditaXML:
@@ -890,15 +893,16 @@ class ImportaDocumentoVenditeWindow(tk.Toplevel):
         self.center_window()
 
     def estrai_anno_mese_da_config(self):
-        """Estrae anno e mese dal percorso nel config.ini (parametro importavendite)."""
+        """Estrae anno e mese dal percorso nel database (parametro importvendite)."""
         try:
-            percorso = self.config.get('Parametri', 'importavendite')
-            parti = percorso.replace('\\', '/').split('/')
+            percorso = get_import_vendite()
+            if percorso:
+                parti = percorso.replace('\\', '/').split('/')
 
-            if len(parti) >= 2:
-                anno = parti[-2]
-                mese = parti[-1]
-                return anno, mese
+                if len(parti) >= 2:
+                    anno = parti[-2]
+                    mese = parti[-1]
+                    return anno, mese
         except Exception:
             pass
 
@@ -1079,31 +1083,32 @@ class ImportaDocumentoVenditeWindow(tk.Toplevel):
     def get_percorso_base(self):
         """Ottiene il percorso base, verificando se esiste e usando fallback se necessario"""
         try:
-            # Prova prima a leggere dal config
-            percorso_base = self.config.get('Parametri', 'importavendite')
-            parti = percorso_base.replace('\\', '/').split('/')
-            if len(parti) >= 2:
-                base = '/'.join(parti[:-2])
-            else:
-                base = percorso_base
-            
-            # Verifica se il percorso base esiste
-            if base and os.path.exists(base):
-                return base
+            # Prova prima a leggere dal database
+            percorso_base = get_import_vendite()
+            if percorso_base:
+                parti = percorso_base.replace('\\', '/').split('/')
+                if len(parti) >= 2:
+                    base = '/'.join(parti[:-2])
+                else:
+                    base = percorso_base
+                
+                # Verifica se il percorso base esiste
+                if base and os.path.exists(base):
+                    return base
             
             # Se non esiste, prova a usare cartella_base come fallback
             if self.cartella_base and os.path.exists(self.cartella_base):
                 return self.cartella_base
             
-            # Prova anche a leggere cartellaemesse dal config come fallback
+            # Prova anche a leggere cartellaemesse dal database come fallback
             try:
-                cartella_emesse = self.config.get('Parametri', 'cartellaemesse')
+                cartella_emesse = get_cartella_emesse()
                 if cartella_emesse and os.path.exists(cartella_emesse):
                     return cartella_emesse
             except Exception:
                 pass
             
-            # Se tutto fallisce, restituisci comunque il percorso dal config
+            # Se tutto fallisce, restituisci comunque il percorso dal database
             # (l'utente vedrà l'errore quando proverà a importare)
             return base if base else None
             
@@ -1134,14 +1139,10 @@ class ImportaDocumentoVenditeWindow(tk.Toplevel):
     def aggiorna_config_ini(self):
         try:
             nuovo_percorso = self.get_percorso_completo()
-            self.config.set('Parametri', 'importavendite', nuovo_percorso)
-
-            with open(self.config_path, 'w') as configfile:
-                self.config.write(configfile)
-
+            set_import_vendite(nuovo_percorso)
             return True
         except Exception as e:
-            self.aggiungi_messaggio(f"✗ Errore aggiornamento config.ini: {str(e)}")
+            self.aggiungi_messaggio(f"✗ Errore aggiornamento database: {str(e)}")
             return False
 
     def aggiungi_messaggio(self, messaggio, end='\n'):

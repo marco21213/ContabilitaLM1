@@ -273,10 +273,10 @@ class AgganciaDichiarazioniWindow(tk.Toplevel):
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            # Carica dichiarazioni attive (con plafond residuo > 0)
+            # Carica dichiarazioni attive (con plafond residuo > 0) dalla vista
             cursor.execute("""
                 SELECT id, numero_dichiarazione, data_inizio, data_fine, plafond_residuo
-                FROM dichiarazioni_intento
+                FROM vw_dichiarazioni_intento
                 WHERE id_soggetto = ? AND plafond_residuo > 0
                 ORDER BY data_inizio DESC
             """, (soggetto_id,))
@@ -336,15 +336,10 @@ class AgganciaDichiarazioniWindow(tk.Toplevel):
                         if movimento:
                             movimento_id, importo_movimento = movimento
                             # Elimina il movimento
+                            # Il plafond_residuo viene calcolato automaticamente dalla vista
                             cursor.execute("""
                                 DELETE FROM consumo_plafond WHERE id = ?
                             """, (movimento_id,))
-                            # Ripristina il plafond residuo
-                            cursor.execute("""
-                                UPDATE dichiarazioni_intento
-                                SET plafond_residuo = plafond_residuo + ?
-                                WHERE id = ?
-                            """, (importo_movimento, id_dichiarazione_attuale))
                     
                     # Imposta id_dichiarazione_intento a NULL
                     cursor.execute("""
@@ -377,15 +372,10 @@ class AgganciaDichiarazioniWindow(tk.Toplevel):
                             if movimento:
                                 movimento_id, importo_movimento = movimento
                                 # Elimina il movimento
+                                # Il plafond_residuo viene calcolato automaticamente dalla vista
                                 cursor.execute("""
                                     DELETE FROM consumo_plafond WHERE id = ?
                                 """, (movimento_id,))
-                                # Ripristina il plafond residuo della vecchia dichiarazione
-                                cursor.execute("""
-                                    UPDATE dichiarazioni_intento
-                                    SET plafond_residuo = plafond_residuo + ?
-                                    WHERE id = ?
-                                """, (importo_movimento, id_dichiarazione_attuale))
                         
                         # Aggiorna il documento con la nuova dichiarazione
                         cursor.execute("""
@@ -403,18 +393,14 @@ class AgganciaDichiarazioniWindow(tk.Toplevel):
                         
                         if not movimento_esistente:
                             # Crea nuovo movimento in consumo_plafond
+                            # Usa formato dd/mm/yyyy per la data
+                            # Il plafond_residuo viene calcolato automaticamente dalla vista
+                            data_oggi = datetime.now().strftime('%d/%m/%Y')
                             cursor.execute("""
                                 INSERT INTO consumo_plafond
                                 (id_dichiarazione, id_documento, data, importo_consumato)
-                                VALUES (?, ?, date('now'), ?)
-                            """, (id_dichiarazione_nuova, documento_id, imponibile))
-                            
-                            # Aggiorna plafond residuo
-                            cursor.execute("""
-                                UPDATE dichiarazioni_intento
-                                SET plafond_residuo = plafond_residuo - ?
-                                WHERE id = ?
-                            """, (imponibile, id_dichiarazione_nuova))
+                                VALUES (?, ?, ?, ?)
+                            """, (id_dichiarazione_nuova, documento_id, data_oggi, imponibile))
                         
                         agganciate += 1
             

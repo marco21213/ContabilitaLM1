@@ -3,12 +3,28 @@ from tkinter import ttk, messagebox, filedialog
 from typing import Dict, Any
 import configparser
 import os
+import sys
 import logging
+
+# Aggiungi il percorso alla root del progetto per importare scripts
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.parametri_db import (
     carica_parametri,
     aggiorna_parametri,
     aggiorna_credenziali as aggiorna_credenziali_db,
+    get_cartella_emesse,
+    get_cartella_ricevute,
+    get_cartella_stampa,
+    get_import_acquisti,
+    get_import_vendite,
+    get_import_rapido,
+    set_cartella_emesse,
+    set_cartella_ricevute,
+    set_cartella_stampa,
+    set_import_acquisti,
+    set_import_vendite,
+    set_import_rapido,
 )
 
 logger = logging.getLogger(__name__)
@@ -20,7 +36,7 @@ class ConfigWindow:
         self.parent = parent
         self.window = tk.Toplevel(parent)
         self.window.title("Configurazione")
-        self.window.geometry("800x500")
+        self.window.geometry("800x650")
         self.window.resizable(True, True)
         self.window.transient(parent)
         self.window.grab_set()
@@ -169,6 +185,61 @@ class ConfigWindow:
             command=lambda: self.browse_folder(self.stampa_entry, "Seleziona cartella fatture stampa")
         ).pack(side='right', padx=(5, 0))
         
+        # Separatore
+        ttk.Separator(parent, orient='horizontal').grid(
+            row=7, column=0, columnspan=2, sticky='ew', pady=15
+        )
+        
+        # Cartelle Import
+        ttk.Label(parent, text="Cartelle Import:", font=("Arial", 10, "bold")).grid(
+            row=8, column=0, sticky='w', pady=(0, 5)
+        )
+        
+        # Import Acquisti
+        ttk.Label(parent, text="Import Acquisti:").grid(row=9, column=0, sticky='w', pady=2)
+        
+        import_acquisti_frame = ttk.Frame(parent)
+        import_acquisti_frame.grid(row=9, column=1, padx=5, pady=2, sticky='ew')
+        
+        self.import_acquisti_entry = ttk.Entry(import_acquisti_frame, width=40)
+        self.import_acquisti_entry.pack(side='left', fill='x', expand=True)
+        
+        ttk.Button(
+            import_acquisti_frame, 
+            text="Sfoglia...", 
+            command=lambda: self.browse_folder(self.import_acquisti_entry, "Seleziona cartella import acquisti")
+        ).pack(side='right', padx=(5, 0))
+        
+        # Import Vendite
+        ttk.Label(parent, text="Import Vendite:").grid(row=10, column=0, sticky='w', pady=2)
+        
+        import_vendite_frame = ttk.Frame(parent)
+        import_vendite_frame.grid(row=10, column=1, padx=5, pady=2, sticky='ew')
+        
+        self.import_vendite_entry = ttk.Entry(import_vendite_frame, width=40)
+        self.import_vendite_entry.pack(side='left', fill='x', expand=True)
+        
+        ttk.Button(
+            import_vendite_frame, 
+            text="Sfoglia...", 
+            command=lambda: self.browse_folder(self.import_vendite_entry, "Seleziona cartella import vendite")
+        ).pack(side='right', padx=(5, 0))
+        
+        # Import Rapido
+        ttk.Label(parent, text="Import Rapido:").grid(row=11, column=0, sticky='w', pady=2)
+        
+        import_rapido_frame = ttk.Frame(parent)
+        import_rapido_frame.grid(row=11, column=1, padx=5, pady=2, sticky='ew')
+        
+        self.import_rapido_entry = ttk.Entry(import_rapido_frame, width=40)
+        self.import_rapido_entry.pack(side='left', fill='x', expand=True)
+        
+        ttk.Button(
+            import_rapido_frame, 
+            text="Sfoglia...", 
+            command=lambda: self.browse_folder(self.import_rapido_entry, "Seleziona cartella import rapido")
+        ).pack(side='right', padx=(5, 0))
+        
         parent.columnconfigure(1, weight=1)
 
     def create_ade_tab(self, parent: ttk.Frame) -> None:
@@ -292,10 +363,49 @@ class ConfigWindow:
             # Sezione Autenticazione
             self.db_entry.insert(0, self.config.get('Autenticazione', 'percorso_database', fallback=''))
             
-            # Sezione Parametri (config.ini)
-            self.vendita_entry.insert(0, self.config.get('Parametri', 'cartellaemesse', fallback=''))
-            self.acquisto_entry.insert(0, self.config.get('Parametri', 'cartellaricevute', fallback=''))
-            self.stampa_entry.insert(0, self.config.get('Parametri', 'cartellastampa', fallback=''))
+            # Parametri cartelle dal database
+            try:
+                cartella_emesse = get_cartella_emesse()
+                if cartella_emesse:
+                    self.vendita_entry.insert(0, cartella_emesse)
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento cartella_emesse: {e}")
+            
+            try:
+                cartella_ricevute = get_cartella_ricevute()
+                if cartella_ricevute:
+                    self.acquisto_entry.insert(0, cartella_ricevute)
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento cartella_ricevute: {e}")
+            
+            try:
+                cartella_stampa = get_cartella_stampa()
+                if cartella_stampa:
+                    self.stampa_entry.insert(0, cartella_stampa)
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento cartella_stampa: {e}")
+            
+            # Parametri import dal database
+            try:
+                import_acquisti = get_import_acquisti()
+                if import_acquisti:
+                    self.import_acquisti_entry.insert(0, import_acquisti)
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento import_acquisti: {e}")
+            
+            try:
+                import_vendite = get_import_vendite()
+                if import_vendite:
+                    self.import_vendite_entry.insert(0, import_vendite)
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento import_vendite: {e}")
+            
+            try:
+                import_rapido = get_import_rapido()
+                if import_rapido:
+                    self.import_rapido_entry.insert(0, import_rapido)
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento import_rapido: {e}")
 
             # Parametri AdE dal database
             try:
@@ -351,23 +461,36 @@ class ConfigWindow:
             messagebox.showerror("Errore", f"Errore nel caricamento configurazione: {e}")
     
     def save_settings(self) -> None:
-        """Salva le impostazioni nel file config.ini"""
+        """Salva le impostazioni nel file config.ini e nel database"""
         try:
             # Aggiorna i valori nella configurazione (file config.ini)
             if not self.config.has_section('Autenticazione'):
                 self.config.add_section('Autenticazione')
-            if not self.config.has_section('Parametri'):
-                self.config.add_section('Parametri')
             if not self.config.has_section('Backup'):
                 self.config.add_section('Backup')
             
             # Autenticazione
             self.config.set('Autenticazione', 'percorso_database', self.db_entry.get())
             
-            # Parametri
-            self.config.set('Parametri', 'cartellaemesse', self.vendita_entry.get())
-            self.config.set('Parametri', 'cartellaricevute', self.acquisto_entry.get())
-            self.config.set('Parametri', 'cartellastampa', self.stampa_entry.get())
+            # Parametri cartelle nel database
+            try:
+                set_cartella_emesse(self.vendita_entry.get())
+                set_cartella_ricevute(self.acquisto_entry.get())
+                set_cartella_stampa(self.stampa_entry.get())
+            except Exception as e:
+                logger.error(f"Errore nel salvataggio dei parametri cartelle nel database: {e}")
+                messagebox.showerror("Errore", f"Errore nel salvataggio parametri cartelle nel database: {e}")
+                return
+            
+            # Parametri import nel database
+            try:
+                set_import_acquisti(self.import_acquisti_entry.get())
+                set_import_vendite(self.import_vendite_entry.get())
+                set_import_rapido(self.import_rapido_entry.get())
+            except Exception as e:
+                logger.error(f"Errore nel salvataggio dei parametri import nel database: {e}")
+                messagebox.showerror("Errore", f"Errore nel salvataggio parametri import nel database: {e}")
+                return
             
             # Backup
             self.config.set('Backup', 'cartella', self.backup_folder.get())
@@ -417,7 +540,9 @@ class ConfigWindow:
             try:
                 # Pulizia campi
                 for entry in [self.db_entry, self.vendita_entry, self.acquisto_entry, 
-                             self.stampa_entry, self.backup_folder]:
+                             self.stampa_entry, self.import_acquisti_entry, 
+                             self.import_vendite_entry, self.import_rapido_entry, 
+                             self.backup_folder]:
                     entry.delete(0, tk.END)
                 
                 # Valori predefiniti
@@ -425,12 +550,18 @@ class ConfigWindow:
                 default_vendita = "fatture/emesse"
                 default_acquisto = "fatture/ricevute"
                 default_stampa = "fatture/stampa"
+                default_import_acquisti = "fatture/ricevute"
+                default_import_vendite = "fatture/emesse"
+                default_import_rapido = "fatture/emesse"
                 default_backup = "backup"
                 
                 self.db_entry.insert(0, default_db)
                 self.vendita_entry.insert(0, default_vendita)
                 self.acquisto_entry.insert(0, default_acquisto)
                 self.stampa_entry.insert(0, default_stampa)
+                self.import_acquisti_entry.insert(0, default_import_acquisti)
+                self.import_vendite_entry.insert(0, default_import_vendite)
+                self.import_rapido_entry.insert(0, default_import_rapido)
                 self.backup_folder.insert(0, default_backup)
                 self.keep_backup_days.set("30")
                 self.auto_backup.set(True)

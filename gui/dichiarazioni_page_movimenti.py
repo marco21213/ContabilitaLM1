@@ -116,10 +116,10 @@ class MovimentiDichiarazioneWindow(tk.Toplevel):
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
 
-            # Leggi dati dichiarazione
+            # Leggi dati dichiarazione dalla vista
             cur.execute("""
                 SELECT numero_dichiarazione, plafond_iniziale, plafond_residuo
-                FROM dichiarazioni_intento
+                FROM vw_dichiarazioni_intento
                 WHERE id = ?
             """, (self.id_dichiarazione,))
             dichiarazione = cur.fetchone()
@@ -160,9 +160,22 @@ class MovimentiDichiarazioneWindow(tk.Toplevel):
         for row in movimenti:
             mid, data, imp, num_doc, data_doc = row
 
-            data_fmt = datetime.strptime(data, "%Y-%m-%d").strftime("%d/%m/%Y")
+            # La data in consumo_plafond è già in formato dd/mm/yyyy
+            data_fmt = data if data else ""
             imp_fmt = f"€ {imp:,.2f}"
-            doc_txt = f"{num_doc} del {datetime.strptime(data_doc, '%Y-%m-%d').strftime('%d/%m/%Y')}" if num_doc else "-"
+            # La data_documento potrebbe essere in formato dd/mm/yyyy o yyyy-mm-dd
+            if num_doc and data_doc:
+                try:
+                    # Prova formato dd/mm/yyyy
+                    if '/' in data_doc:
+                        doc_txt = f"{num_doc} del {data_doc}"
+                    else:
+                        # Prova formato yyyy-mm-dd
+                        doc_txt = f"{num_doc} del {datetime.strptime(data_doc, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+                except:
+                    doc_txt = f"{num_doc} del {data_doc}"
+            else:
+                doc_txt = "-"
 
             self.tree.insert(
                 "",
@@ -212,14 +225,8 @@ class MovimentiDichiarazioneWindow(tk.Toplevel):
             imp = cur.fetchone()[0]
 
             # Elimina movimento
+            # Il plafond_residuo viene calcolato automaticamente dalla vista
             cur.execute("DELETE FROM consumo_plafond WHERE id=?", (mid,))
-
-            # Aggiorna plafond residuo
-            cur.execute("""
-                UPDATE dichiarazioni_intento
-                SET plafond_residuo = plafond_residuo + ?
-                WHERE id = ?
-            """, (imp, self.id_dichiarazione))
 
             conn.commit()
             conn.close()

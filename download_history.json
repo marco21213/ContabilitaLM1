@@ -1,6 +1,232 @@
 {
   "downloads": [
     {
+      "data": "2025-12-28",
+      "ora": "17:39:41",
+      "fatture": [
+        {
+          "numero": "30082500",
+          "soggetto": "S.I.L.A.C. SRL",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "29012500",
+          "soggetto": "S.I.L.A.C. SRL",
+          "data": "03/12/2025"
+        },
+        {
+          "numero": "29712500",
+          "soggetto": "S.I.L.A.C. SRL",
+          "data": "12/12/2025"
+        },
+        {
+          "numero": "1239FI",
+          "soggetto": "INDUSTRIE BIAGIOLI SPA",
+          "data": "16/12/2025"
+        },
+        {
+          "numero": "V1-1055-2025",
+          "soggetto": "SMART SRL",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "4783IT",
+          "soggetto": "CIAC srl",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "0100002568",
+          "soggetto": "AMANN ITALIA S.R.L",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "471",
+          "soggetto": "SPAZZ.TIRRENO DI SANDRO SCARLATTI &C.SNC",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "761",
+          "soggetto": "NUOVA ACCOPPIATURA SRL",
+          "data": "23/12/2025"
+        },
+        {
+          "numero": "7390",
+          "soggetto": "COSTANZI CLAUDIO  S.R.L.",
+          "data": "22/12/2025"
+        },
+        {
+          "numero": "109",
+          "soggetto": "CARTIERA MENEGAZZO SRL",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "2025-FETOIL10-2393",
+          "soggetto": "TOIL SPA",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "0039852826",
+          "soggetto": "Maiora SpA SB",
+          "data": "22/12/2025"
+        },
+        {
+          "numero": "867FI",
+          "soggetto": "FUTURE SRL",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "V1-29505",
+          "soggetto": "SPARCO S.P.A.",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "1483V",
+          "soggetto": "BIANCHI MARE' S.R.L.",
+          "data": "23/12/2025"
+        },
+        {
+          "numero": "1754",
+          "soggetto": "BANCI NASTRI S.R.L.",
+          "data": "23/12/2025"
+        },
+        {
+          "numero": "92V1",
+          "soggetto": "CASARANO CALCIO SRL",
+          "data": "09/12/2025"
+        },
+        {
+          "numero": "107000",
+          "soggetto": "GI & GI ITALIA S.R.L.",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "1251050773",
+          "soggetto": "DIADORA S.p.A. Società a socio Unico",
+          "data": "22/12/2025"
+        },
+        {
+          "numero": "440",
+          "soggetto": "BUCCI NICOLETTA",
+          "data": "22/12/2025"
+        },
+        {
+          "numero": "01.007169",
+          "soggetto": "SOLLINI GINO SRL",
+          "data": "22/12/2025"
+        },
+        {
+          "numero": "85825",
+          "soggetto": "CIPPARRONE ROCCO ANTONIO",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "111",
+          "soggetto": "D.B. TRADING SRL",
+          "data": "17/12/2025"
+        },
+        {
+          "numero": "8182025",
+          "soggetto": "Sindaco Antonio",
+          "data": "27/12/2025"
+        },
+        {
+          "numero": "09-0000578",
+          "soggetto": "METALLURGICA LOMBARDA Srl S.U.",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "13932025",
+          "soggetto": "ALIMENTARIA SRLS",
+          "data": "05/12/2025"
+        },
+        {
+          "numero": "1239",
+          "soggetto": "ABITALIA INC",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "006202A",
+          "soggetto": "AUTOTRASPORTI MORETTI S.R.L.",
+          "data": "13/12/2025"
+        },
+        {
+          "numero": "004489",
+          "soggetto": "RIEN di Concetti Giorgio S.R.L",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "2025V11694",
+          "soggetto": "CT POINT S.P.A.",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "301890",
+          "soggetto": "AWF ABRASIVE WHEELS FACTORY S.R.L.",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "VI-002338",
+          "soggetto": "EPOCA S.R.L UNIPERSONALE",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "2503196",
+          "soggetto": "KENDAFARBEN S.P.A.",
+          "data": "23/12/2025"
+        },
+        {
+          "numero": "743",
+          "soggetto": "FERNANDO TOMA SRLS",
+          "data": "18/12/2025"
+        },
+        {
+          "numero": "VE0000423",
+          "soggetto": "CARTIERA PASQUINI SRL",
+          "data": "12/12/2025"
+        },
+        {
+          "numero": "1125095644",
+          "soggetto": "I. C. F. SpA",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "68611210",
+          "soggetto": "SALENTAUTO DE NUZZO S.R.L.",
+          "data": "23/12/2025"
+        },
+        {
+          "numero": "1032025",
+          "soggetto": "GRAFICHE AEFFE SRL",
+          "data": "10/12/2025"
+        },
+        {
+          "numero": "885",
+          "soggetto": "FABBRICA CHIMICA UNIONE S.R.L.",
+          "data": "12/12/2025"
+        },
+        {
+          "numero": "7331301259",
+          "soggetto": "Groz-Beckert Italia Srl",
+          "data": "23/12/2025"
+        },
+        {
+          "numero": "257",
+          "soggetto": "ERIK RAPPRESENTANZE SRL",
+          "data": "19/12/2025"
+        },
+        {
+          "numero": "12922",
+          "soggetto": "TAN COMPANY ITALIA SRL",
+          "data": "17/12/2025"
+        },
+        {
+          "numero": "3359",
+          "soggetto": "MAC SHOES S.R.L. - UNIPERSONALE",
+          "data": "18/12/2025"
+        }
+      ]
+    },
+    {
       "data": "2025-12-19",
       "ora": "21:52:17",
       "fatture": [
@@ -59,5 +285,5 @@
       ]
     }
   ],
-  "last_updated": "2025-12-19T21:52:17.851842"
+  "last_updated": "2025-12-28T17:39:41.119114"
 }

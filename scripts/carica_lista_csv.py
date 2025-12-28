@@ -28,16 +28,15 @@ def get_config_path():
 
 
 def get_cartella_ricevute() -> Optional[str]:
-    """Legge il percorso della cartella ricevute da config.ini"""
+    """Legge il percorso della cartella ricevute dal database"""
     try:
-        config = configparser.ConfigParser()
-        config_path = get_config_path()
-        config.read(config_path, encoding="utf-8")
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from parametri_db import get_cartella_ricevute as get_cartella_ricevute_db
         
-        cartella = config.get("Parametri", "cartellaricevute", fallback="")
+        cartella = get_cartella_ricevute_db()
         
         if not cartella:
-            print(f"❌ Errore: Parametro 'cartellaricevute' non trovato nel file config.ini")
+            print(f"❌ Errore: Parametro 'cartellaricevute' non trovato nel database")
             return None
         
         if not os.path.exists(cartella):
@@ -46,7 +45,7 @@ def get_cartella_ricevute() -> Optional[str]:
         
         return cartella
     except Exception as e:
-        print(f"❌ Errore nella lettura di config.ini: {e}")
+        print(f"❌ Errore nella lettura dal database: {e}")
         return None
 
 

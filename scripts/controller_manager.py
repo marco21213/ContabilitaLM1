@@ -16,6 +16,7 @@ if scripts_path not in sys.path:
 from check_quantita_prezzo import check_quantita_prezzo
 from check_tipo_documento import check_tipo_documento
 from check_spese_bancarie import check_spese_bancarie
+from check_dichiarazione_intento import check_dichiarazione_intento
 
 
 class ControllerManager:
@@ -25,7 +26,8 @@ class ControllerManager:
         self.controlli = [
             ("Quantità e Prezzo", check_quantita_prezzo),
             ("Tipo Documento", check_tipo_documento),
-            ("Spese Bancarie", check_spese_bancarie)
+            ("Spese Bancarie", check_spese_bancarie),
+            ("Dichiarazione d'Intento", check_dichiarazione_intento)
         ]
 
     def esegui_controlli(self, xml_file):

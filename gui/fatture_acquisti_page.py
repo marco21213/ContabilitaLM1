@@ -59,14 +59,18 @@ class AcquistiMensiliPage(tk.Frame):
         # Inizializza il parser XML
         self.xml_parser = XMLParser()
         
-        # Ottieni il percorso delle fatture acquisti dalla configurazione
+        # Ottieni il percorso delle fatture acquisti dal database
         try:
-            self.fatture_acquisti_path = self.config['Parametri']['cartellaricevute']
-            if not os.path.exists(self.fatture_acquisti_path):
+            import sys
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from scripts.parametri_db import get_cartella_ricevute
+            
+            self.fatture_acquisti_path = get_cartella_ricevute()
+            if not self.fatture_acquisti_path or not os.path.exists(self.fatture_acquisti_path):
                 messagebox.showerror("Errore", f"Cartella fatture acquisti non trovata: {self.fatture_acquisti_path}")
                 return
-        except KeyError:
-            messagebox.showerror("Errore", "Parametro 'cartellastampa' non trovato nel file config.ini")
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore nel caricamento del percorso dal database: {e}")
             return
         
         self.setup_ui()

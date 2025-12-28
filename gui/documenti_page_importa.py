@@ -7,6 +7,9 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import threading
+import sys
+sys.path.append("scripts")
+from parametri_db import get_import_acquisti, get_cartella_ricevute, set_import_acquisti
 
 
 class ImportaFattureXML:
@@ -613,16 +616,17 @@ class ImportaDocumentoWindow(tk.Toplevel):
         self.center_window()
         
     def estrai_anno_mese_da_config(self):
-        """Estrae anno e mese dal percorso nel config.ini"""
+        """Estrae anno e mese dal percorso nel database"""
         try:
-            percorso = self.config.get('Parametri', 'importacquisti')
-            parti = percorso.replace('\\', '/').split('/')
-            
-            # Prende gli ultimi due elementi (anno e mese)
-            if len(parti) >= 2:
-                anno = parti[-2]
-                mese = parti[-1]
-                return anno, mese
+            percorso = get_import_acquisti()
+            if percorso:
+                parti = percorso.replace('\\', '/').split('/')
+                
+                # Prende gli ultimi due elementi (anno e mese)
+                if len(parti) >= 2:
+                    anno = parti[-2]
+                    mese = parti[-1]
+                    return anno, mese
         except:
             pass
         
@@ -819,31 +823,32 @@ class ImportaDocumentoWindow(tk.Toplevel):
     def get_percorso_base(self):
         """Ottiene il percorso base, verificando se esiste e usando fallback se necessario"""
         try:
-            # Prova prima a leggere dal config
-            percorso_base = self.config.get('Parametri', 'importacquisti')
-            parti = percorso_base.replace('\\', '/').split('/')
-            if len(parti) >= 2:
-                base = '/'.join(parti[:-2])
-            else:
-                base = percorso_base
-            
-            # Verifica se il percorso base esiste
-            if base and os.path.exists(base):
-                return base
+            # Prova prima a leggere dal database
+            percorso_base = get_import_acquisti()
+            if percorso_base:
+                parti = percorso_base.replace('\\', '/').split('/')
+                if len(parti) >= 2:
+                    base = '/'.join(parti[:-2])
+                else:
+                    base = percorso_base
+                
+                # Verifica se il percorso base esiste
+                if base and os.path.exists(base):
+                    return base
             
             # Se non esiste, prova a usare cartella_base come fallback
             if self.cartella_base and os.path.exists(self.cartella_base):
                 return self.cartella_base
             
-            # Prova anche a leggere cartellaricevute dal config come fallback
+            # Prova anche a leggere cartellaricevute dal database come fallback
             try:
-                cartella_ricevute = self.config.get('Parametri', 'cartellaricevute')
+                cartella_ricevute = get_cartella_ricevute()
                 if cartella_ricevute and os.path.exists(cartella_ricevute):
                     return cartella_ricevute
             except Exception:
                 pass
             
-            # Se tutto fallisce, restituisci comunque il percorso dal config
+            # Se tutto fallisce, restituisci comunque il percorso dal database
             # (l'utente vedrà l'errore quando proverà a importare)
             return base if base else None
             
@@ -873,17 +878,13 @@ class ImportaDocumentoWindow(tk.Toplevel):
         self.percorso_label.config(text=self.get_percorso_completo())
     
     def aggiorna_config_ini(self):
-        """Aggiorna il file config.ini con il nuovo percorso"""
+        """Aggiorna il database con il nuovo percorso"""
         try:
             nuovo_percorso = self.get_percorso_completo()
-            self.config.set('Parametri', 'importacquisti', nuovo_percorso)
-            
-            with open(self.config_path, 'w') as configfile:
-                self.config.write(configfile)
-            
+            set_import_acquisti(nuovo_percorso)
             return True
         except Exception as e:
-            self.aggiungi_messaggio(f"✗ Errore aggiornamento config.ini: {str(e)}")
+            self.aggiungi_messaggio(f"✗ Errore aggiornamento database: {str(e)}")
             return False
     
     def aggiungi_messaggio(self, messaggio, end='\n'):

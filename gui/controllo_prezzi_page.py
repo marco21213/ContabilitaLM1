@@ -565,6 +565,11 @@ su tutti i file XML selezionati:
     (TipoCessionePrestazione = "AC" e 
      Descrizione = "Spese Bancarie").
 
+4️⃣  CONTROLLO DICHIARAZIONE D'INTENTO
+    Per i clienti con dichiarazione d'intento valida:
+    - Verifica che tutte le righe abbiano IVA a 0 e codice N3.5
+    - Verifica che l'imponibile N3.5 non superi il plafond residuo
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 I risultati di tutti i controlli vengono visualizzati

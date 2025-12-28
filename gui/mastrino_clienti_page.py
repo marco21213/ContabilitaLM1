@@ -20,12 +20,13 @@ class MastrinoClientiPage(tk.Frame):
         self.parent = parent
         self.current_html = None
         
-        # Leggi il percorso dalla configurazione
-        config = configparser.ConfigParser()
-        config.read('config.ini')
+        # Leggi il percorso dal database
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from scripts.parametri_db import get_cartella_stampa
         
         self.current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.p7m_dir = config['Parametri']['cartellastampa']
+        self.p7m_dir = get_cartella_stampa() or ''
         self.xsl_path = os.path.join(self.current_dir, '../documents/css_fatture', 'FoglioStileConDatiTrasmissione.xsl')
         
         self.wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
