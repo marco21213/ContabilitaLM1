@@ -988,61 +988,26 @@ class RibaTab(tk.Frame):
                     except:
                         pass  # Se la query fallisce, continua comunque
                 
-                # Verifica anche se l'ID esiste (se è numerico)
-                try:
-                    try:
-                        num_int = int(num_distinta)
-                        cur.execute("SELECT id FROM distinte_riba WHERE id = ?", (num_int,))
-                        if cur.fetchone():
-                            messagebox.showerror('Errore', f'L\'ID distinta {num_int} è già utilizzato')
-                            conn.close()
-                            return
-                        # Inserisci con ID specifico
-                        # Costruisci la query in base alle colonne disponibili
-                        colonne = ['id', 'data_creazione']
-                        valori = [num_int, data_cre]
-                        
-                        if colonna_num_esiste:
-                            colonne.append('numero_distinta')
-                            valori.append(num_distinta)
-                        if colonna_data_esiste:
-                            colonne.append('data_distinta')
-                            valori.append(data_distinta)
-                        if colonna_banca_esiste:
-                            colonne.append('banca_id')
-                            valori.append(banca_id)
-                        
-                        # Costruisci la query in modo sicuro
-                        colonne_str = ', '.join(colonne)
-                        placeholders = ', '.join(['?'] * len(colonne))
-                        query = f"INSERT INTO distinte_riba ({colonne_str}) VALUES ({placeholders})"
-                        cur.execute(query, valori)
-                        distinta_id = num_int
-                    except ValueError:
-                        # Numero non intero, inserisci normalmente
-                        colonne = ['data_creazione']
-                        valori = [data_cre]
-                        
-                        if colonna_num_esiste:
-                            colonne.append('numero_distinta')
-                            valori.append(num_distinta)
-                        if colonna_data_esiste:
-                            colonne.append('data_distinta')
-                            valori.append(data_distinta)
-                        if colonna_banca_esiste:
-                            colonne.append('banca_id')
-                            valori.append(banca_id)
-                        
-                        # Costruisci la query in modo sicuro
-                        colonne_str = ', '.join(colonne)
-                        placeholders = ', '.join(['?'] * len(colonne))
-                        query = f"INSERT INTO distinte_riba ({colonne_str}) VALUES ({placeholders})"
-                        cur.execute(query, valori)
-                        distinta_id = cur.lastrowid
-                except sqlite3.IntegrityError:
-                    messagebox.showerror('Errore', f'Errore nell\'inserimento: possibile conflitto con ID esistente')
-                    conn.close()
-                    return
+                # Inserisci la distinta (l'ID sarà auto-incrementale)
+                colonne = ['data_creazione']
+                valori = [data_cre]
+                
+                if colonna_num_esiste:
+                    colonne.append('numero_distinta')
+                    valori.append(num_distinta)
+                if colonna_data_esiste:
+                    colonne.append('data_distinta')
+                    valori.append(data_distinta)
+                if colonna_banca_esiste:
+                    colonne.append('banca_id')
+                    valori.append(banca_id)
+                
+                # Costruisci la query in modo sicuro
+                colonne_str = ', '.join(colonne)
+                placeholders = ', '.join(['?'] * len(colonne))
+                query = f"INSERT INTO distinte_riba ({colonne_str}) VALUES ({placeholders})"
+                cur.execute(query, valori)
+                distinta_id = cur.lastrowid
                 
                 # Verifica e crea colonne nella tabella riba se non esistono
                 try:
@@ -1436,7 +1401,7 @@ class RibaTab(tk.Frame):
                 
                 select_parts.extend([
                     'COUNT(r.id) AS num_riba',
-                    'COALESCE(SUM(r.importo), 0) AS totale'
+                    'COALESCE(SUM(sc.importo_scadenza), 0) AS totale'
                 ])
                 
                 join_clause = ''
@@ -1447,6 +1412,7 @@ class RibaTab(tk.Frame):
                     SELECT {', '.join(select_parts)}
                     FROM distinte_riba di
                     LEFT JOIN riba r ON r.distinta_id = di.id
+                    LEFT JOIN scadenze sc ON r.scadenza_id = sc.id
                     {join_clause}
                     GROUP BY di.id
                     ORDER BY di.id DESC
