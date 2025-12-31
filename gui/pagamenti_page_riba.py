@@ -123,6 +123,16 @@ class RibaTab(tk.Frame):
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
             
+            # Verifica se la colonna distinta_id esiste nella tabella riba
+            try:
+                cur.execute("PRAGMA table_info(riba)")
+                colonne_riba = [col[1] for col in cur.fetchall()]
+                if 'distinta_id' not in colonne_riba:
+                    cur.execute("ALTER TABLE riba ADD COLUMN distinta_id INTEGER")
+                    conn.commit()
+            except Exception as e:
+                logger.error(f"Errore verifica/aggiunta colonna distinta_id: {e}")
+            
             # Verifica quali colonne esistono in distinte_riba
             try:
                 cur.execute("PRAGMA table_info(distinte_riba)")
@@ -135,9 +145,10 @@ class RibaTab(tk.Frame):
                 has_data_distinta = False
             
             # Costruisci query dinamica
+            # Usa COALESCE per usare sc.id se r.id è NULL (scadenza senza riga in riba)
             select_parts = [
-                'r.id', 's.ragione_sociale', 'd.numero_documento', 'sc.data_scadenza', 
-                'sc.importo_scadenza AS importo', 'r.stato', 'di.id AS distinta_id'
+                'COALESCE(r.id, sc.id) AS riba_id', 's.ragione_sociale', 'd.numero_documento', 'sc.data_scadenza', 
+                'sc.importo_scadenza AS importo', 'COALESCE(r.stato, \'Da emettere\') AS stato', 'di.id AS distinta_id'
             ]
             
             if has_numero_distinta:
@@ -150,13 +161,16 @@ class RibaTab(tk.Frame):
             else:
                 select_parts.append('di.data_creazione AS data_distinta')
             
+            # Query che parte da scadenze per mostrare tutte le scadenze con tipo_pagamento = 'RIBA'
+            # anche se non hanno ancora una riga in riba
             query = f"""
                 SELECT {', '.join(select_parts)}
-                FROM riba r
-                LEFT JOIN scadenze sc ON r.scadenza_id = sc.id
+                FROM scadenze sc
                 LEFT JOIN documenti d ON sc.id_documento = d.id
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
+                LEFT JOIN riba r ON r.scadenza_id = sc.id
                 LEFT JOIN distinte_riba di ON r.distinta_id = di.id
+                WHERE sc.tipo_pagamento = 'RIBA'
                 ORDER BY sc.data_scadenza DESC
             """
             
@@ -181,7 +195,9 @@ class RibaTab(tk.Frame):
             
             self.original_data = []
             for r in rows:
-                distinta_id = r[6] if r[6] else None
+                # Gestisci il caso in cui r[0] potrebbe essere NULL (scadenza senza riga in riba)
+                riba_id = r[0] if r[0] is not None else None
+                distinta_id = r[6] if len(r) > 6 and r[6] else None
                 numero_distinta_raw = r[7] if len(r) > 7 and r[7] else None
                 data_dist_raw = r[8] if len(r) > 8 and r[8] else ""
                 
@@ -199,9 +215,13 @@ class RibaTab(tk.Frame):
                 
                 data_dist = formatta_data(data_dist_raw)
                 
+                # Formatta data_scadenza
+                data_scadenza_str = str(r[3]) if r[3] else ""
+                data_scadenza_formattata = formatta_data(data_scadenza_str)
+                
                 self.original_data.append({
-                    'id': r[0], 'cliente': str(r[1]) if r[1] else "", 'documento': str(r[2]) if r[2] else "",
-                    'data_scadenza': str(r[3]) if r[3] else "", 'importo': float(r[4]) if r[4] else 0.0,
+                    'id': riba_id, 'cliente': str(r[1]) if r[1] else "", 'documento': str(r[2]) if r[2] else "",
+                    'data_scadenza': data_scadenza_formattata, 'importo': float(r[4]) if r[4] else 0.0,
                     'stato': str(r[5]) if r[5] else '', 'distinta': dati_distinta, 'data_distinta': data_dist
                 })
             self.apply_filters()
@@ -424,7 +444,7 @@ class RibaTab(tk.Frame):
         try:
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
-            cur.execute("SELECT id, banca FROM banche ORDER BY banca")
+            cur.execute("SELECT id, denominazione FROM banche ORDER BY denominazione")
             banche_rows = cur.fetchall()
             conn.close()
             # Crea dizionario per mappare nome banca -> id
@@ -784,13 +804,38 @@ class RibaTab(tk.Frame):
         # carica le Ri.Ba. da emettere
         try:
             conn = sqlite3.connect(self.db_path); cur = conn.cursor()
+            # Verifica se la colonna distinta_id esiste nella tabella riba
+            try:
+                cur.execute("PRAGMA table_info(riba)")
+                colonne_riba = [col[1] for col in cur.fetchall()]
+                if 'distinta_id' not in colonne_riba:
+                    cur.execute("ALTER TABLE riba ADD COLUMN distinta_id INTEGER")
+                    conn.commit()
+            except Exception as e:
+                logger.error(f"Errore verifica/aggiunta colonna distinta_id: {e}")
+            
+            # Query che parte da scadenze per trovare tutte le scadenze con tipo_pagamento = 'RIBA'
+            # e che non hanno ancora una riga in riba o hanno una riga con stato 'Da emettere' non assegnata a distinta
             cur.execute("""
-                SELECT r.id, s.ragione_sociale, d.data_documento, d.numero_documento, sc.data_scadenza, sc.importo_scadenza AS importo, s.id AS soggetto_id, d.id AS documento_id
-                FROM riba r
-                LEFT JOIN scadenze sc ON r.scadenza_id = sc.id
+                SELECT 
+                    COALESCE(r.id, sc.id) AS riba_id,
+                    s.ragione_sociale, 
+                    d.data_documento, 
+                    d.numero_documento, 
+                    sc.data_scadenza, 
+                    sc.importo_scadenza AS importo, 
+                    s.id AS soggetto_id, 
+                    d.id AS documento_id,
+                    sc.id AS scadenza_id
+                FROM scadenze sc
                 LEFT JOIN documenti d ON sc.id_documento = d.id
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
-                WHERE r.stato = 'Da emettere'
+                LEFT JOIN riba r ON r.scadenza_id = sc.id
+                WHERE sc.tipo_pagamento = 'RIBA'
+                  AND (
+                      r.id IS NULL 
+                      OR (r.stato = 'Da emettere' AND (r.distinta_id IS NULL OR r.distinta_id = 0))
+                  )
                 ORDER BY sc.data_scadenza
             """)
             rows = cur.fetchall(); conn.close()
@@ -815,13 +860,20 @@ class RibaTab(tk.Frame):
             return data_str  # Se non riesce a convertire, restituisce l'originale
 
         for r in rows:
-            riba_id = r[0]
+            riba_id = r[0]  # Può essere NULL se non esiste ancora una riga in riba
+            scadenza_id = r[8] if len(r) > 8 else None  # ID della scadenza
             importo = float(r[5]) if r[5] else 0.0
             soggetto_id = r[6] if len(r) > 6 else None
             documento_id = r[7] if len(r) > 7 else None
             # Formatta la data in formato dd/mm/yyyy (r[2] è data_documento)
             data_doc = formatta_data(r[2] if r[2] else '')
-            tags_list = [f"id_{riba_id}", f"importo_{importo}"]
+            # Usa scadenza_id come identificatore se riba_id è NULL
+            identificatore = riba_id if riba_id else scadenza_id
+            tags_list = [f"id_{identificatore}", f"scadenza_id_{scadenza_id}", f"importo_{importo}"]
+            if riba_id:
+                tags_list.append("riba_esistente")
+            else:
+                tags_list.append("riba_da_creare")
             if soggetto_id:
                 tags_list.append(f"cliente_id_{soggetto_id}")
             if documento_id:
@@ -833,16 +885,34 @@ class RibaTab(tk.Frame):
             importi_dict[item_id] = importo  # Memorizza l'importo nel dizionario
 
         def crea_distinta():
-            # Raccogli gli ID selezionati
-            ids = []
+            # Raccogli gli ID selezionati (riba_id o scadenza_id)
+            ids_riba = []  # ID delle RiBa esistenti
+            scadenze_da_creare = []  # (scadenza_id, importo, data_scadenza) per RiBa da creare
             for item in listbox.get_children():
                 if item in selezioni and selezioni[item]:
                     tags = listbox.item(item, 'tags')
+                    riba_id = None
+                    scadenza_id = None
+                    importo = importi_dict.get(item, 0.0)
                     for t in tags:
                         if t.startswith('id_'):
-                            ids.append(int(t[3:]))
+                            identificatore = int(t[3:])
+                            if 'riba_esistente' in tags:
+                                riba_id = identificatore
+                            else:
+                                scadenza_id = identificatore
+                        elif t.startswith('scadenza_id_'):
+                            scadenza_id = int(t[12:])
+                    
+                    if riba_id:
+                        ids_riba.append(riba_id)
+                    elif scadenza_id:
+                        # Recupera data_scadenza dalla riga
+                        values = listbox.item(item, 'values')
+                        data_scadenza = values[4] if len(values) > 4 else None
+                        scadenze_da_creare.append((scadenza_id, importo, data_scadenza))
             
-            if not ids:
+            if not ids_riba and not scadenze_da_creare:
                 messagebox.showwarning('Attenzione', 'Seleziona almeno una Ri.Ba.'); return
             
             # Ottieni il numero distinta
@@ -1011,41 +1081,136 @@ class RibaTab(tk.Frame):
                     except:
                         pass
                 
-                # Costruisci query UPDATE dinamica
-                update_cols = ['distinta_id', "stato = 'Emessa'"]
-                update_vals = []
+                # Verifica quali ID sono effettivamente riba_id esistenti e quali sono scadenza_id
+                # Questa verifica deve avvenire PRIMA della creazione delle righe
+                ids_riba_verificati = []
+                scadenze_da_creare_da_ids = []
                 
-                if colonna_numero_riba_esiste:
-                    update_cols.append('numero_riba')
-                    update_vals.append(num_distinta)
-                if colonna_data_emissione_esiste:
-                    update_cols.append('data_emissione')
-                    update_vals.append(data_distinta)
-                if colonna_banca_appoggio_esiste:
-                    update_cols.append('banca_appoggio')
-                    update_vals.append(banca_selezionata)
-                
-                # Costruisci la query UPDATE
-                set_clauses = []
-                param_idx = 0
-                for col in update_cols:
-                    if '=' in col:
-                        set_clauses.append(col)
+                for riba_id in ids_riba:
+                    # Verifica se esiste nella tabella riba
+                    cur.execute("SELECT id, scadenza_id FROM riba WHERE id = ?", (riba_id,))
+                    row = cur.fetchone()
+                    if row:
+                        ids_riba_verificati.append(riba_id)
                     else:
-                        set_clauses.append(f"{col} = ?")
-                        param_idx += 1
+                        # Non esiste in riba, probabilmente è uno scadenza_id
+                        # Verifica se esiste in scadenze
+                        cur.execute("SELECT id, importo_scadenza, data_scadenza FROM scadenze WHERE id = ?", (riba_id,))
+                        scad_row = cur.fetchone()
+                        if scad_row:
+                            scadenze_da_creare_da_ids.append((riba_id, float(scad_row[1]) if scad_row[1] else 0.0, scad_row[2]))
                 
-                query_update = f"UPDATE riba SET {', '.join(set_clauses)} WHERE id = ?"
+                # Aggiungi le scadenze trovate alla lista da creare
+                scadenze_da_creare.extend(scadenze_da_creare_da_ids)
                 
-                # Prepara i parametri per ogni riga
-                all_params = []
-                for riba_id in ids:
-                    params = [distinta_id]
-                    params.extend(update_vals)
-                    params.append(riba_id)
-                    all_params.append(tuple(params))
+                # Prima crea le righe in riba per le scadenze che non hanno ancora una riga
+                for scadenza_id, importo, data_scadenza in scadenze_da_creare:
+                    try:
+                        # Crea la riga in riba
+                        colonne_riba = ['scadenza_id', 'stato', 'distinta_id']
+                        valori_riba = [scadenza_id, 'Emessa', distinta_id]
+                        
+                        if colonna_numero_riba_esiste:
+                            colonne_riba.append('numero_riba')
+                            valori_riba.append(num_distinta)
+                        if colonna_data_emissione_esiste:
+                            colonne_riba.append('data_emissione')
+                            valori_riba.append(data_distinta)
+                        if colonna_banca_appoggio_esiste:
+                            colonne_riba.append('banca_appoggio')
+                            valori_riba.append(banca_selezionata)
+                        
+                        # Verifica se esiste già una colonna data_scadenza o importo (per compatibilità)
+                        try:
+                            cur.execute("SELECT data_scadenza FROM riba LIMIT 1")
+                            colonne_riba.append('data_scadenza')
+                            valori_riba.append(data_scadenza if data_scadenza else '')
+                        except:
+                            pass
+                        try:
+                            cur.execute("SELECT importo FROM riba LIMIT 1")
+                            colonne_riba.append('importo')
+                            valori_riba.append(importo)
+                        except:
+                            pass
+                        
+                        colonne_str = ', '.join(colonne_riba)
+                        placeholders = ', '.join(['?'] * len(colonne_riba))
+                        query_insert = f"INSERT INTO riba ({colonne_str}) VALUES ({placeholders})"
+                        cur.execute(query_insert, valori_riba)
+                        # Aggiungi l'ID della riga appena creata alla lista delle RiBa verificate
+                        nuovo_id = cur.lastrowid
+                        ids_riba_verificati.append(nuovo_id)
+                    except Exception as e:
+                        messagebox.showerror('Errore', f'Errore creando riga riba per scadenza {scadenza_id}: {str(e)}')
+                        raise
                 
-                cur.executemany(query_update, all_params)
+                # Verifica quali ID sono effettivamente riba_id esistenti e quali sono scadenza_id
+                ids_riba_verificati = []
+                scadenze_da_creare_da_ids = []
+                
+                for riba_id in ids_riba:
+                    # Verifica se esiste nella tabella riba
+                    cur.execute("SELECT id, scadenza_id FROM riba WHERE id = ?", (riba_id,))
+                    row = cur.fetchone()
+                    if row:
+                        ids_riba_verificati.append(riba_id)
+                        print(f"DEBUG: riba_id {riba_id} verificato - esiste in riba")
+                    else:
+                        # Non esiste in riba, probabilmente è uno scadenza_id
+                        # Verifica se esiste in scadenze
+                        cur.execute("SELECT id, importo_scadenza, data_scadenza FROM scadenze WHERE id = ?", (riba_id,))
+                        scad_row = cur.fetchone()
+                        if scad_row:
+                            scadenze_da_creare_da_ids.append((riba_id, float(scad_row[1]) if scad_row[1] else 0.0, scad_row[2]))
+                            print(f"DEBUG: riba_id {riba_id} non esiste in riba, ma esiste in scadenze - aggiunto alla lista da creare")
+                        else:
+                            print(f"DEBUG: ATTENZIONE: ID {riba_id} non esiste né in riba né in scadenze!")
+                
+                # Aggiungi le scadenze trovate alla lista da creare
+                scadenze_da_creare.extend(scadenze_da_creare_da_ids)
+                
+                # Ora aggiorna tutte le RiBa (quelle esistenti e quelle appena create)
+                if ids_riba_verificati:
+                    try:
+                        # Costruisci query UPDATE dinamica
+                        update_cols = ['distinta_id', "stato = 'Emessa'"]
+                        update_vals = []
+                        
+                        if colonna_numero_riba_esiste:
+                            update_cols.append('numero_riba')
+                            update_vals.append(num_distinta)
+                        if colonna_data_emissione_esiste:
+                            update_cols.append('data_emissione')
+                            update_vals.append(data_distinta)
+                        if colonna_banca_appoggio_esiste:
+                            update_cols.append('banca_appoggio')
+                            update_vals.append(banca_selezionata)
+                        
+                        # Costruisci la query UPDATE
+                        set_clauses = []
+                        param_idx = 0
+                        for col in update_cols:
+                            if '=' in col:
+                                set_clauses.append(col)
+                            else:
+                                set_clauses.append(f"{col} = ?")
+                                param_idx += 1
+                        
+                        query_update = f"UPDATE riba SET {', '.join(set_clauses)} WHERE id = ?"
+                        
+                        # Prepara i parametri per ogni riga
+                        all_params = []
+                        for riba_id in ids_riba_verificati:
+                            params = [distinta_id]
+                            params.extend(update_vals)
+                            params.append(riba_id)
+                            all_params.append(tuple(params))
+                        
+                        cur.executemany(query_update, all_params)
+                    except Exception as e:
+                        messagebox.showerror('Errore', f'Errore aggiornando righe riba: {str(e)}')
+                        raise
                 
                 # 🔹 STEP: Gestisci note di credito selezionate
                 # Raccogli le note di credito selezionate
@@ -1099,7 +1264,7 @@ class RibaTab(tk.Frame):
                         LEFT JOIN scadenze sc ON r.scadenza_id = sc.id
                         WHERE r.id IN ({})
                         ORDER BY sc.data_scadenza
-                    """.format(','.join(['?'] * len(ids))), ids)
+                    """.format(','.join(['?'] * len(ids_riba))), ids_riba)
                     riba_ordered = cur.fetchall()
                     
                     # Ordina NC per data documento
@@ -1169,7 +1334,8 @@ class RibaTab(tk.Frame):
                                         riba_documenti[riba_id]['importo_netto'] = 0
                                     break
                 
-                conn.commit(); conn.close()
+                conn.commit()
+                conn.close()
                 
                 # Messaggio riepilogativo
                 totale_riba = sum(importi_dict.get(item, 0) for item in listbox.get_children() 
@@ -1178,7 +1344,8 @@ class RibaTab(tk.Frame):
                                if item in selezioni_nc and selezioni_nc[item])
                 importo_netto = max(0, totale_riba - totale_nc)
                 
-                msg = f'Distinta {num_distinta} (ID: {distinta_id}) creata con {len(ids)} Ri.Ba.\n'
+                totale_riba_count = len(ids_riba)
+                msg = f'Distinta {num_distinta} (ID: {distinta_id}) creata con {totale_riba_count} Ri.Ba.\n'
                 msg += f'Totale RiBa: € {totale_riba:,.2f}\n'
                 if totale_nc > 0.01:
                     msg += f'Note Credito applicate: € {totale_nc:,.2f}\n'
@@ -1263,7 +1430,7 @@ class RibaTab(tk.Frame):
                 select_parts.append('di.data_creazione')
                 
                 if has_banca_id:
-                    select_parts.append('b.banca')
+                    select_parts.append('b.denominazione')
                 else:
                     select_parts.append('NULL AS banca')
                 
@@ -1421,7 +1588,7 @@ class RibaTab(tk.Frame):
                 
                 # Carica banche
                 try:
-                    cur.execute("SELECT id, banca FROM banche ORDER BY banca")
+                    cur.execute("SELECT id, denominazione FROM banche ORDER BY denominazione")
                     banche_rows = cur.fetchall()
                     banche_dict = {b[1]: b[0] for b in banche_rows}
                     banche_nomi = [b[1] for b in banche_rows]

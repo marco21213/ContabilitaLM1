@@ -1316,3 +1316,578 @@
 [2025-12-28 17:41:45] File ITMNSDVD69S24B936Q_09629.xml archiviato come 2024-09-03245230754-937A.xml
 [2025-12-28 17:41:45] File ITMNSDVD69S24B936Q_09630.xml archiviato come 2024-09-03245230754-908A.xml
 [2025-12-28 17:41:45] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
+[2025-12-31 16:40:25] File 2025-01-03245230754-17A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:25] File 2025-01-03245230754-30A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-26A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-27A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File ITMNSDVD69S24B936Q_09976.xml archiviato come 2025-01-03245230754-1A.xml
+[2025-12-31 16:40:26] File ITMNSDVD69S24B936Q_09977.xml archiviato come 2025-01-03245230754-2A.xml
+[2025-12-31 16:40:26] File ITMNSDVD69S24B936Q_09978.xml archiviato come 2025-01-03245230754-3A.xml
+[2025-12-31 16:40:26] File 2025-01-03245230754-4A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-5A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-6A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-7A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-8A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-9A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-10A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-13A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-15A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-16A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:26] File 2025-01-03245230754-1A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-14A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-18A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-19A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-20A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-21A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-22A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:27] File 2025-01-03245230754-23A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:28] File 2025-01-03245230754-24A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:28] File 2025-01-03245230754-25A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:28] File 2025-01-03245230754-28A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:28] File 2025-01-03245230754-29A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-31A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-32A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-33A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-34A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-35A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-36A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-37A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-38A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-39A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-44A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-45A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-46A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-47A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:29] File 2025-01-03245230754-48A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-49A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-50A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-51A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-53A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-54A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-55A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:30] File 2025-01-03245230754-56A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-60A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-61A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-62A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-63A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-64A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-67A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-68A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-69A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-70A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-71A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-73A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:31] File 2025-01-03245230754-75A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-76A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-77A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-78A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-80A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-81A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-84A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-85A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-86A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-87A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-88A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:32] File 2025-01-03245230754-89A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:33] File 2025-01-03245230754-90A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:33] File 2025-01-03245230754-91A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:33] File 2025-01-03245230754-72A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:33] File 2025-01-03245230754-92A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:33] File 2025-01-03245230754-93A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:33] File 2025-01-03245230754-94A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-95A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-96A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-97A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-98A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-99A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-100A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-101A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-102A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-103A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-113A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:34] File 2025-01-03245230754-42A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:35] File 2025-01-03245230754-117A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:35] File 2025-01-03245230754-118A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:35] File 2025-01-03245230754-119A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:35] File 2025-01-03245230754-41A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:35] File 2025-01-03245230754-66A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-79A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-83A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-104A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-58A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-65A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-57A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-52A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:36] File 2025-01-03245230754-109A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-108A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-105A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-74A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-112A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-107A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-114A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-115A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:37] File 2025-01-03245230754-116A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-59A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-110A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-111A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-82A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-120A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-106A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-40A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] File 2025-01-03245230754-43A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:40:38] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
+[2025-12-31 16:43:58] File 2025-02-03245230754-121A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:58] File 2025-02-03245230754-122A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:58] File 2025-02-03245230754-123A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:58] File 2025-02-03245230754-124A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:58] File 2025-02-03245230754-125A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:58] File 2025-02-03245230754-127A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-128A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-130A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-131A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-132A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-133A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-129A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-135A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-136A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-137A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-139A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-126A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-134A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-140A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-141A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-142A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-144A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-143A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:43:59] File 2025-02-03245230754-145A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-138A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-146A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-147A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-148A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-149A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-150A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-2A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-151A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-152A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-153A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:00] File 2025-02-03245230754-154A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-156A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-157A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-158A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-159A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-160A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-162A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-163A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-165A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-167A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-168A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-169A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-170A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-171A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-172A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-173A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-174A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:01] File 2025-02-03245230754-175A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-176A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-177A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-178A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-179A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-180A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-185A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-186A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-188A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-189A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-190A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-191A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-193A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-194A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-195A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-196A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-197A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-198A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:02] File 2025-02-03245230754-199A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-200A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-201A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-204A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-206A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-207A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-211A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-212A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-213A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-214A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-219A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-220A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-228A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:03] File 2025-02-03245230754-187A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-205A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-215A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-166A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-222A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-227A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-226A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-221A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-223A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-224A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:04] File 2025-02-03245230754-155A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-233A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-164A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-183A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-208A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-216A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-229A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-182A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-181A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-192A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-202A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-203A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:05] File 2025-02-03245230754-209A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-210A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-217A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-218A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-225A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-184A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-232A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-231A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-230A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] File 2025-02-03245230754-161A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:44:06] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
+[2025-12-31 16:48:22] File IT03245230754_c9YB0.xml archiviato come 2025-10-03245230754-1039A.xml
+[2025-12-31 16:48:22] File IT03245230754_DNIuZ.xml archiviato come 2025-10-03245230754-1053A.xml
+[2025-12-31 16:48:22] File IT03245230754_PVGDs.xml archiviato come 2025-10-03245230754-1052A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11121.xml archiviato come 2025-10-03245230754-1033A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11122.xml archiviato come 2025-10-03245230754-14A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11125.xml archiviato come 2025-10-03245230754-1035A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11126.xml archiviato come 2025-10-03245230754-1036A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11127.xml archiviato come 2025-10-03245230754-1037A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11128.xml archiviato come 2025-10-03245230754-1038A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11130.xml archiviato come 2025-10-03245230754-1041A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11131.xml archiviato come 2025-10-03245230754-1040A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11132.xml archiviato come 2025-10-03245230754-1042A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11133.xml archiviato come 2025-10-03245230754-1043A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11134.xml archiviato come 2025-10-03245230754-1045A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11135.xml archiviato come 2025-10-03245230754-1044A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11137.xml archiviato come 2025-10-03245230754-1034A.xml
+[2025-12-31 16:48:22] File ITMNSDVD69S24B936Q_11138.xml archiviato come 2025-10-03245230754-1046A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11139.xml archiviato come 2025-10-03245230754-1048A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11140.xml archiviato come 2025-10-03245230754-1049A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11141.xml archiviato come 2025-10-03245230754-1050A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11142.xml archiviato come 2025-10-03245230754-1051A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11143.xml archiviato come 2025-10-03245230754-1047A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11144.xml archiviato come 2025-10-03245230754-1054A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11145.xml archiviato come 2025-10-03245230754-1055A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11146.xml archiviato come 2025-10-03245230754-1056A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11148.xml archiviato come 2025-10-03245230754-1057A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11149.xml archiviato come 2025-10-03245230754-1058A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11150.xml archiviato come 2025-10-03245230754-1059A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11151.xml archiviato come 2025-10-03245230754-1060A.xml
+[2025-12-31 16:48:23] File ITMNSDVD69S24B936Q_11152.xml archiviato come 2025-10-03245230754-1061A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11154.xml archiviato come 2025-10-03245230754-1062A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11155.xml archiviato come 2025-10-03245230754-1064A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11156.xml archiviato come 2025-10-03245230754-1065A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11158.xml archiviato come 2025-10-03245230754-1066A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11159.xml archiviato come 2025-10-03245230754-1068A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11160.xml archiviato come 2025-10-03245230754-1067A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11161.xml archiviato come 2025-10-03245230754-1069A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11162.xml archiviato come 2025-10-03245230754-1063A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11163.xml archiviato come 2025-10-03245230754-1070A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11165.xml archiviato come 2025-10-03245230754-1071A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11166.xml archiviato come 2025-10-03245230754-1072A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11168.xml archiviato come 2025-10-03245230754-1112A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11169.xml archiviato come 2025-10-03245230754-1130A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11170.xml archiviato come 2025-10-03245230754-1073A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11171.xml archiviato come 2025-10-03245230754-1074A.xml
+[2025-12-31 16:48:24] File ITMNSDVD69S24B936Q_11172.xml archiviato come 2025-10-03245230754-1075A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11173.xml archiviato come 2025-10-03245230754-1077A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11174.xml archiviato come 2025-10-03245230754-1080A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11175.xml archiviato come 2025-10-03245230754-1081A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11176.xml archiviato come 2025-10-03245230754-1082A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11177.xml archiviato come 2025-10-03245230754-1083A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11178.xml archiviato come 2025-10-03245230754-1084A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11179.xml archiviato come 2025-10-03245230754-1085A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11181.xml archiviato come 2025-10-03245230754-1087A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11182.xml archiviato come 2025-10-03245230754-1089A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11183.xml archiviato come 2025-10-03245230754-1090A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11184.xml archiviato come 2025-10-03245230754-1091A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11185.xml archiviato come 2025-10-03245230754-1092A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11186.xml archiviato come 2025-10-03245230754-1093A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11187.xml archiviato come 2025-10-03245230754-1095A.xml
+[2025-12-31 16:48:25] File ITMNSDVD69S24B936Q_11188.xml archiviato come 2025-10-03245230754-1096A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11189.xml archiviato come 2025-10-03245230754-1098A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11190.xml archiviato come 2025-10-03245230754-1099A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11191.xml archiviato come 2025-10-03245230754-1100A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11192.xml archiviato come 2025-10-03245230754-1101A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11193.xml archiviato come 2025-10-03245230754-1104A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11194.xml archiviato come 2025-10-03245230754-1105A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11195.xml archiviato come 2025-10-03245230754-1107A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11196.xml archiviato come 2025-10-03245230754-1109A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11197.xml archiviato come 2025-10-03245230754-1110A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11198.xml archiviato come 2025-10-03245230754-1111A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11199.xml archiviato come 2025-10-03245230754-1113A.xml
+[2025-12-31 16:48:26] File ITMNSDVD69S24B936Q_11200.xml archiviato come 2025-10-03245230754-1114A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11201.xml archiviato come 2025-10-03245230754-1115A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11202.xml archiviato come 2025-10-03245230754-1116A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11203.xml archiviato come 2025-10-03245230754-1117A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11204.xml archiviato come 2025-10-03245230754-1118A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11205.xml archiviato come 2025-10-03245230754-1119A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11206.xml archiviato come 2025-10-03245230754-1120A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11207.xml archiviato come 2025-10-03245230754-1121A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11208.xml archiviato come 2025-10-03245230754-1122A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11209.xml archiviato come 2025-10-03245230754-1123A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11210.xml archiviato come 2025-10-03245230754-1124A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11211.xml archiviato come 2025-10-03245230754-1127A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11212.xml archiviato come 2025-10-03245230754-1128A.xml
+[2025-12-31 16:48:27] File ITMNSDVD69S24B936Q_11213.xml archiviato come 2025-10-03245230754-1136A.xml
+[2025-12-31 16:48:27] File 2025-10-03245230754-1147A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:27] File 2025-10-03245230754-1148A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:28] File 2025-10-03245230754-1146A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11220.xml archiviato come 2025-10-03245230754-1097A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11221.xml archiviato come 2025-10-03245230754-1094A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11222.xml archiviato come 2025-10-03245230754-1088A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11223.xml archiviato come 2025-10-03245230754-1086A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11224.xml archiviato come 2025-10-03245230754-1132A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11225.xml archiviato come 2025-10-03245230754-1131A.xml
+[2025-12-31 16:48:28] File 2025-10-03245230754-1150A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11227.xml archiviato come 2025-10-03245230754-1139A.xml
+[2025-12-31 16:48:28] File 2025-10-03245230754-1153A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:28] File 2025-10-03245230754-1156A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11233.xml archiviato come 2025-10-03245230754-1138A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11234.xml archiviato come 2025-10-03245230754-1137A.xml
+[2025-12-31 16:48:28] File ITMNSDVD69S24B936Q_11235.xml archiviato come 2025-10-03245230754-1079A.xml
+[2025-12-31 16:48:28] File 2025-10-03245230754-1152A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:28] File 2025-10-03245230754-1154A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11238.xml archiviato come 2025-10-03245230754-1134A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11239.xml archiviato come 2025-10-03245230754-1135A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11240.xml archiviato come 2025-10-03245230754-1141A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11241.xml archiviato come 2025-10-03245230754-1103A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11242.xml archiviato come 2025-10-03245230754-1102A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11243.xml archiviato come 2025-10-03245230754-1133A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11244.xml archiviato come 2025-10-03245230754-1106A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11246.xml archiviato come 2025-10-03245230754-1126A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11248.xml archiviato come 2025-10-03245230754-1142A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11249.xml archiviato come 2025-10-03245230754-1129A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11250.xml archiviato come 2025-10-03245230754-1140A.xml
+[2025-12-31 16:48:29] File ITMNSDVD69S24B936Q_11251.xml archiviato come 2025-10-03245230754-1144A.xml
+[2025-12-31 16:48:29] File 2025-10-03245230754-1145A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:29] File 2025-10-03245230754-1155A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:30] File 2025-10-03245230754-1151A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:30] File ITMNSDVD69S24B936Q_11255.xml archiviato come 2025-10-03245230754-1076A.xml
+[2025-12-31 16:48:30] File 2025-10-03245230754-1149A.xml già presente in archivio - rimuovo il file sorgente
+[2025-12-31 16:48:30] File ITMNSDVD69S24B936Q_11259.xml archiviato come 2025-10-03245230754-15A.xml
+[2025-12-31 16:48:30] File ITMNSDVD69S24B936Q_11260.xml archiviato come 2025-10-03245230754-1143A.xml
+[2025-12-31 16:48:30] File ITMNSDVD69S24B936Q_11261.xml archiviato come 2025-10-03245230754-1108A.xml
+[2025-12-31 16:48:30] File ITMNSDVD69S24B936Q_11266.xml archiviato come 2025-10-03245230754-1078A.xml
+[2025-12-31 16:48:30] File ITMNSDVD69S24B936Q_11268.xml archiviato come 2025-10-03245230754-1125A.xml
+[2025-12-31 16:48:30] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
+[2025-12-31 16:49:16] File IT03245230754_TFnw9.xml archiviato come 2025-11-03245230754-1176A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11218.xml archiviato come 2025-11-03245230754-1158A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11219.xml archiviato come 2025-11-03245230754-1159A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11262.xml archiviato come 2025-11-03245230754-1157A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11263.xml archiviato come 2025-11-03245230754-1160A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11264.xml archiviato come 2025-11-03245230754-1161A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11265.xml archiviato come 2025-11-03245230754-1162A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11267.xml archiviato come 2025-11-03245230754-1163A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11271.xml archiviato come 2025-11-03245230754-1164A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11273.xml archiviato come 2025-11-03245230754-1165A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11274.xml archiviato come 2025-11-03245230754-1166A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11275.xml archiviato come 2025-11-03245230754-1167A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11277.xml archiviato come 2025-11-03245230754-1168A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11278.xml archiviato come 2025-11-03245230754-16A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11279.xml archiviato come 2025-11-03245230754-1170A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11280.xml archiviato come 2025-11-03245230754-17A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11281.xml archiviato come 2025-11-03245230754-1171A.xml
+[2025-12-31 16:49:17] File ITMNSDVD69S24B936Q_11283.xml archiviato come 2025-11-03245230754-1169A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11284.xml archiviato come 2025-11-03245230754-1173A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11285.xml archiviato come 2025-11-03245230754-1175A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11289.xml archiviato come 2025-11-03245230754-1172A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11290.xml archiviato come 2025-11-03245230754-1174A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11291.xml archiviato come 2025-11-03245230754-1177A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11292.xml archiviato come 2025-11-03245230754-1179A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11293.xml archiviato come 2025-11-03245230754-1178A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11294.xml archiviato come 2025-11-03245230754-1180A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11295.xml archiviato come 2025-11-03245230754-1181A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11296.xml archiviato come 2025-11-03245230754-1182A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11297.xml archiviato come 2025-11-03245230754-1183A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11298.xml archiviato come 2025-11-03245230754-1184A.xml
+[2025-12-31 16:49:18] File ITMNSDVD69S24B936Q_11300.xml archiviato come 2025-11-03245230754-1185A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11301.xml archiviato come 2025-11-03245230754-1186A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11302.xml archiviato come 2025-11-03245230754-1187A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11303.xml archiviato come 2025-11-03245230754-1188A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11304.xml archiviato come 2025-11-03245230754-1189A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11305.xml archiviato come 2025-11-03245230754-1190A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11306.xml archiviato come 2025-11-03245230754-1193A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11308.xml archiviato come 2025-11-03245230754-1194A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11309.xml archiviato come 2025-11-03245230754-1195A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11311.xml archiviato come 2025-11-03245230754-1192A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11312.xml archiviato come 2025-11-03245230754-1191A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11314.xml archiviato come 2025-11-03245230754-1196A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11316.xml archiviato come 2025-11-03245230754-1197A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11317.xml archiviato come 2025-11-03245230754-1199A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11318.xml archiviato come 2025-11-03245230754-1202A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11319.xml archiviato come 2025-11-03245230754-1198A.xml
+[2025-12-31 16:49:19] File ITMNSDVD69S24B936Q_11320.xml archiviato come 2025-11-03245230754-1200A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11321.xml archiviato come 2025-11-03245230754-1201A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11322.xml archiviato come 2025-11-03245230754-1203A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11323.xml archiviato come 2025-11-03245230754-1204A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11324.xml archiviato come 2025-11-03245230754-1205A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11325.xml archiviato come 2025-11-03245230754-1206A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11326.xml archiviato come 2025-11-03245230754-1207A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11327.xml archiviato come 2025-11-03245230754-1208A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11328.xml archiviato come 2025-11-03245230754-1209A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11329.xml archiviato come 2025-11-03245230754-1210A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11330.xml archiviato come 2025-11-03245230754-1211A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11331.xml archiviato come 2025-11-03245230754-1212A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11332.xml archiviato come 2025-11-03245230754-1213A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11333.xml archiviato come 2025-11-03245230754-1215A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11334.xml archiviato come 2025-11-03245230754-1216A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11335.xml archiviato come 2025-11-03245230754-1217A.xml
+[2025-12-31 16:49:20] File ITMNSDVD69S24B936Q_11336.xml archiviato come 2025-11-03245230754-1218A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11337.xml archiviato come 2025-11-03245230754-1219A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11338.xml archiviato come 2025-11-03245230754-1220A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11339.xml archiviato come 2025-11-03245230754-1221A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11340.xml archiviato come 2025-11-03245230754-1222A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11341.xml archiviato come 2025-11-03245230754-1224A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11342.xml archiviato come 2025-11-03245230754-1226A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11343.xml archiviato come 2025-11-03245230754-1227A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11344.xml archiviato come 2025-11-03245230754-1228A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11345.xml archiviato come 2025-11-03245230754-1229A.xml
+[2025-12-31 16:49:21] File ITMNSDVD69S24B936Q_11346.xml archiviato come 2025-11-03245230754-1231A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11347.xml archiviato come 2025-11-03245230754-1232A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11348.xml archiviato come 2025-11-03245230754-1234A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11349.xml archiviato come 2025-11-03245230754-1235A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11350.xml archiviato come 2025-11-03245230754-1236A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11351.xml archiviato come 2025-11-03245230754-1237A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11352.xml archiviato come 2025-11-03245230754-1239A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11353.xml archiviato come 2025-11-03245230754-1244A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11354.xml archiviato come 2025-11-03245230754-1245A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11355.xml archiviato come 2025-11-03245230754-1246A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11356.xml archiviato come 2025-11-03245230754-1247A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11357.xml archiviato come 2025-11-03245230754-1248A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11358.xml archiviato come 2025-11-03245230754-1254A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11359.xml archiviato come 2025-11-03245230754-1255A.xml
+[2025-12-31 16:49:22] File ITMNSDVD69S24B936Q_11360.xml archiviato come 2025-11-03245230754-1233A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11361.xml archiviato come 2025-11-03245230754-1230A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11362.xml archiviato come 2025-11-03245230754-1225A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11363.xml archiviato come 2025-11-03245230754-1223A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11364.xml archiviato come 2025-11-03245230754-1214A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11365.xml archiviato come 2025-11-03245230754-1249A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11366.xml archiviato come 2025-11-03245230754-1243A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11367.xml archiviato come 2025-11-03245230754-1252A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11368.xml archiviato come 2025-11-03245230754-1253A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11369.xml archiviato come 2025-11-03245230754-1238A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11370.xml archiviato come 2025-11-03245230754-1242A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11371.xml archiviato come 2025-11-03245230754-1240A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11372.xml archiviato come 2025-11-03245230754-1250A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11373.xml archiviato come 2025-11-03245230754-1256A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11374.xml archiviato come 2025-11-03245230754-1257A.xml
+[2025-12-31 16:49:23] File ITMNSDVD69S24B936Q_11375.xml archiviato come 2025-11-03245230754-1258A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11376.xml archiviato come 2025-11-03245230754-1265A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11377.xml archiviato come 2025-11-03245230754-1259A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11378.xml archiviato come 2025-11-03245230754-1267A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11379.xml archiviato come 2025-11-03245230754-1262A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11380.xml archiviato come 2025-11-03245230754-1263A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11382.xml archiviato come 2025-11-03245230754-1264A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11383.xml archiviato come 2025-11-03245230754-1251A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11384.xml archiviato come 2025-11-03245230754-1261A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11385.xml archiviato come 2025-11-03245230754-1260A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11386.xml archiviato come 2025-11-03245230754-1266A.xml
+[2025-12-31 16:49:24] File ITMNSDVD69S24B936Q_11387.xml archiviato come 2025-11-03245230754-1241A.xml
+[2025-12-31 16:49:24] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
+[2025-12-31 16:50:02] File ITMNSDVD69S24B936Q_11388.xml archiviato come 2025-12-03245230754-1268A.xml
+[2025-12-31 16:50:02] File ITMNSDVD69S24B936Q_11389.xml archiviato come 2025-12-03245230754-1269A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11390.xml archiviato come 2025-12-03245230754-1270A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11394.xml archiviato come 2025-12-03245230754-18A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11396.xml archiviato come 2025-12-03245230754-19A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11397.xml archiviato come 2025-12-03245230754-20A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11399.xml archiviato come 2025-12-03245230754-1274A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11401.xml archiviato come 2025-12-03245230754-1273A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11402.xml archiviato come 2025-12-03245230754-1272A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11514.xml archiviato come 2025-12-03245230754-1271A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11515.xml archiviato come 2025-12-03245230754-21A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11516.xml archiviato come 2025-12-03245230754-1275A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11517.xml archiviato come 2025-12-03245230754-1276A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11518.xml archiviato come 2025-12-03245230754-1277A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11519.xml archiviato come 2025-12-03245230754-1279A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11520.xml archiviato come 2025-12-03245230754-1278A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11522.xml archiviato come 2025-12-03245230754-1280A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11525.xml archiviato come 2025-12-03245230754-1281A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11526.xml archiviato come 2025-12-03245230754-1282A.xml
+[2025-12-31 16:50:03] File ITMNSDVD69S24B936Q_11527.xml archiviato come 2025-12-03245230754-1283A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11530.xml archiviato come 2025-12-03245230754-1284A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11531.xml archiviato come 2025-12-03245230754-1285A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11532.xml archiviato come 2025-12-03245230754-1286A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11533.xml archiviato come 2025-12-03245230754-1287A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11534.xml archiviato come 2025-12-03245230754-1288A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11535.xml archiviato come 2025-12-03245230754-1289A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11537.xml archiviato come 2025-12-03245230754-1290A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11538.xml archiviato come 2025-12-03245230754-1291A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11539.xml archiviato come 2025-12-03245230754-1293A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11540.xml archiviato come 2025-12-03245230754-1292A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11541.xml archiviato come 2025-12-03245230754-1296A.xml
+[2025-12-31 16:50:04] File ITMNSDVD69S24B936Q_11542.xml archiviato come 2025-12-03245230754-1297A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11543.xml archiviato come 2025-12-03245230754-1298A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11544.xml archiviato come 2025-12-03245230754-1299A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11545.xml archiviato come 2025-12-03245230754-1300A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11546.xml archiviato come 2025-12-03245230754-1301A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11547.xml archiviato come 2025-12-03245230754-1302A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11548.xml archiviato come 2025-12-03245230754-1294A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11549.xml archiviato come 2025-12-03245230754-1295A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11550.xml archiviato come 2025-12-03245230754-1304A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11551.xml archiviato come 2025-12-03245230754-1306A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11552.xml archiviato come 2025-12-03245230754-1307A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11553.xml archiviato come 2025-12-03245230754-1308A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11554.xml archiviato come 2025-12-03245230754-1309A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11555.xml archiviato come 2025-12-03245230754-1310A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11556.xml archiviato come 2025-12-03245230754-1311A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11557.xml archiviato come 2025-12-03245230754-1312A.xml
+[2025-12-31 16:50:05] File ITMNSDVD69S24B936Q_11558.xml archiviato come 2025-12-03245230754-1313A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11559.xml archiviato come 2025-12-03245230754-1314A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11560.xml archiviato come 2025-12-03245230754-1315A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11561.xml archiviato come 2025-12-03245230754-1316A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11562.xml archiviato come 2025-12-03245230754-1317A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11563.xml archiviato come 2025-12-03245230754-1318A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11564.xml archiviato come 2025-12-03245230754-1319A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11565.xml archiviato come 2025-12-03245230754-1320A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11566.xml archiviato come 2025-12-03245230754-1321A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11567.xml archiviato come 2025-12-03245230754-1323A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11568.xml archiviato come 2025-12-03245230754-1324A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11569.xml archiviato come 2025-12-03245230754-1325A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11570.xml archiviato come 2025-12-03245230754-1327A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11571.xml archiviato come 2025-12-03245230754-1328A.xml
+[2025-12-31 16:50:06] File ITMNSDVD69S24B936Q_11572.xml archiviato come 2025-12-03245230754-1329A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11573.xml archiviato come 2025-12-03245230754-1330A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11574.xml archiviato come 2025-12-03245230754-1331A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11575.xml archiviato come 2025-12-03245230754-1332A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11576.xml archiviato come 2025-12-03245230754-1333A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11577.xml archiviato come 2025-12-03245230754-1334A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11578.xml archiviato come 2025-12-03245230754-1335A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11579.xml archiviato come 2025-12-03245230754-1336A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11580.xml archiviato come 2025-12-03245230754-1337A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11581.xml archiviato come 2025-12-03245230754-1338A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11582.xml archiviato come 2025-12-03245230754-1339A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11583.xml archiviato come 2025-12-03245230754-1340A.xml
+[2025-12-31 16:50:07] File ITMNSDVD69S24B936Q_11584.xml archiviato come 2025-12-03245230754-1341A.xml
+[2025-12-31 16:50:08] File ITMNSDVD69S24B936Q_11585.xml archiviato come 2025-12-03245230754-1305A.xml
+[2025-12-31 16:50:08] File ITMNSDVD69S24B936Q_11586.xml archiviato come 2025-12-03245230754-1303A.xml
+[2025-12-31 16:50:08] File ITMNSDVD69S24B936Q_11588.xml archiviato come 2025-12-03245230754-1326A.xml
+[2025-12-31 16:50:08] File ITMNSDVD69S24B936Q_11589.xml archiviato come 2025-12-03245230754-1322A.xml
+[2025-12-31 16:50:08] File ITMNSDVD69S24B936Q_11590.xml archiviato come 2025-12-03245230754-1342A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11593.xml archiviato come 2025-12-03245230754-1343A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11594.xml archiviato come 2025-12-03245230754-1344A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11595.xml archiviato come 2025-12-03245230754-1345A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11596.xml archiviato come 2025-12-03245230754-1346A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11597.xml archiviato come 2025-12-03245230754-1347A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11598.xml archiviato come 2025-12-03245230754-1348A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11600.xml archiviato come 2025-12-03245230754-1349A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11601.xml archiviato come 2025-12-03245230754-1350A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11602.xml archiviato come 2025-12-03245230754-1351A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11603.xml archiviato come 2025-12-03245230754-1352A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11604.xml archiviato come 2025-12-03245230754-1353A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11606.xml archiviato come 2025-12-03245230754-1354A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11607.xml archiviato come 2025-12-03245230754-1355A.xml
+[2025-12-31 16:50:09] File ITMNSDVD69S24B936Q_11608.xml archiviato come 2025-12-03245230754-1356A.xml
+[2025-12-31 16:50:10] File ITMNSDVD69S24B936Q_11609.xml archiviato come 2025-12-03245230754-1357A.xml
+[2025-12-31 16:50:10] File ITMNSDVD69S24B936Q_11610.xml archiviato come 2025-12-03245230754-1358A.xml
+[2025-12-31 16:50:10] File ITMNSDVD69S24B936Q_11611.xml archiviato come 2025-12-03245230754-1359A.xml
+[2025-12-31 16:50:10] File ITMNSDVD69S24B936Q_11612.xml archiviato come 2025-12-03245230754-1360A.xml
+[2025-12-31 16:50:10] File ITMNSDVD69S24B936Q_11613.xml archiviato come 2025-12-03245230754-1361A.xml
+[2025-12-31 16:50:10] Dati mancanti in C:/Users/user/Desktop/Fatture_Elettroniche/Fatture_Acquisti\ITFSNGPP68A11L484H_02543.xml: IdCodice
