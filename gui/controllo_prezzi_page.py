@@ -51,16 +51,109 @@ class ControlloPrezziPage(tk.Frame):
         main_container = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=5, pady=5)
         main_container.pack(fill="both", expand=True)
         
-        # Crea la top bar con i comandi
+        # Header con icone personalizzate + TopBar
+        header_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR, height=70)
+        header_frame.pack(side="top", fill="x", pady=(0, 10))
+        header_frame.pack_propagate(False)
+        
+        icons_container = tk.Frame(header_frame, bg=Style.BACKGROUND_COLOR)
+        icons_container.pack(side="left", padx=20)
+        
+        # Pulsante Avvia Controllo
+        try:
+            avvia_img = self.icon_manager.load_icon('icon3.png')
+            avvia_frame = tk.Frame(icons_container, bg=Style.BACKGROUND_COLOR)
+            avvia_frame.pack(side="left", padx=15)
+            
+            self.start_btn = tk.Button(avvia_frame, image=avvia_img, bd=0, 
+                                     bg=Style.BACKGROUND_COLOR,
+                                     activebackground=Style.BACKGROUND_COLOR, 
+                                     cursor="hand2",
+                                     command=self.avvia_controllo,
+                                     state="disabled")
+            self.start_btn.image = avvia_img
+            self.start_btn.pack()
+            
+            tk.Label(avvia_frame, text="Avvia Controllo", font=("Arial", 9, "bold"), 
+                   bg=Style.BACKGROUND_COLOR, fg=self.icon_manager.icon_color).pack(pady=(3, 0))
+        except Exception as e:
+            # Fallback
+            avvia_frame = tk.Frame(icons_container, bg=Style.BACKGROUND_COLOR)
+            avvia_frame.pack(side="left", padx=15)
+            self.start_btn = tk.Button(avvia_frame, text="Avvia Controllo", 
+                                      font=("Arial", 9, "bold"),
+                                      bg="green", fg="white", cursor="hand2",
+                                      command=self.avvia_controllo, state="disabled",
+                                      padx=5, pady=2)
+            self.start_btn.pack()
+        
+        # Pulsante Pulisci Risultati
+        try:
+            cancella_img = self.icon_manager.load_icon('cancella.png')
+            cancella_frame = tk.Frame(icons_container, bg=Style.BACKGROUND_COLOR)
+            cancella_frame.pack(side="left", padx=15)
+            
+            self.clear_btn = tk.Button(cancella_frame, image=cancella_img, bd=0, 
+                                     bg=Style.BACKGROUND_COLOR,
+                                     activebackground=Style.BACKGROUND_COLOR, 
+                                     cursor="hand2",
+                                     command=self.pulisci_risultati)
+            self.clear_btn.image = cancella_img
+            self.clear_btn.pack()
+            
+            tk.Label(cancella_frame, text="Pulisci Risultati", font=("Arial", 9, "bold"), 
+                   bg=Style.BACKGROUND_COLOR, fg=self.icon_manager.icon_color).pack(pady=(3, 0))
+        except Exception as e:
+            # Fallback
+            cancella_frame = tk.Frame(icons_container, bg=Style.BACKGROUND_COLOR)
+            cancella_frame.pack(side="left", padx=15)
+            self.clear_btn = tk.Button(cancella_frame, text="Pulisci Risultati", 
+                                     font=("Arial", 9, "bold"),
+                                     bg="gray", fg="white", cursor="hand2",
+                                     command=self.pulisci_risultati,
+                                     padx=5, pady=2)
+            self.clear_btn.pack()
+        
+        # TopBar per Info
         commands_config = {
             'show_info': self.mostra_info_controlli
         }
         
-        self.top_bar = TopBar(main_container, self.icon_manager, commands_config)
+        # Crea un frame per la TopBar e posizionalo a destra
+        topbar_container = tk.Frame(header_frame, bg=Style.BACKGROUND_COLOR)
+        topbar_container.pack(side="left", fill="x", expand=True)
+        
+        # Crea TopBar solo per Info (ma senza il frame esterno, solo i bottoni)
+        if 'show_info' in commands_config:
+            try:
+                info_img = self.icon_manager.load_icon('info.png')
+                info_frame = tk.Frame(icons_container, bg=Style.BACKGROUND_COLOR)
+                info_frame.pack(side="left", padx=15)
+                
+                info_btn = tk.Button(info_frame, image=info_img, bd=0, 
+                                   bg=Style.BACKGROUND_COLOR,
+                                   activebackground=Style.BACKGROUND_COLOR, 
+                                   cursor="hand2",
+                                   command=commands_config['show_info'])
+                info_btn.image = info_img
+                info_btn.pack()
+                
+                tk.Label(info_frame, text="Info", font=("Arial", 9, "bold"), 
+                       bg=Style.BACKGROUND_COLOR, fg=self.icon_manager.icon_color).pack(pady=(3, 0))
+            except Exception as e:
+                pass
 
-        # ==================== SELEZIONE CARTELLA ====================
-        folder_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
-        folder_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
+        # ==================== SELEZIONE CARTELLA E INFO (STESSA RIGA) ====================
+        selection_info_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
+        selection_info_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
+        
+        # Configurazione colonne: sinistra per selezione, destra per info
+        selection_info_frame.columnconfigure(0, weight=2)
+        selection_info_frame.columnconfigure(1, weight=1)
+        
+        # SINISTRA: Selezione cartella
+        folder_frame = tk.Frame(selection_info_frame, bg=Style.BACKGROUND_COLOR)
+        folder_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
         tk.Label(
             folder_frame,
@@ -94,9 +187,9 @@ class ControlloPrezziPage(tk.Frame):
         )
         browse_btn.pack(side="left")
 
-        # ==================== INFO FILE ====================
-        info_frame = tk.Frame(main_container, bg="#e8f4f8", relief="solid", borderwidth=1)
-        info_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
+        # DESTRA: Info file
+        info_frame = tk.Frame(selection_info_frame, bg="#e8f4f8", relief="solid", borderwidth=1)
+        info_frame.grid(row=0, column=1, sticky="nsew")
 
         self.info_label = tk.Label(
             info_frame,
@@ -106,41 +199,10 @@ class ControlloPrezziPage(tk.Frame):
             font=("Arial", 9),
             padx=10,
             pady=5,
-            wraplength=800,
+            wraplength=400,
             justify="left",
         )
-        self.info_label.pack(fill="x")
-
-        # ==================== PULSANTI ====================
-        action_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
-        action_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
-
-        self.start_btn = tk.Button(
-            action_frame,
-            text="▶️  Avvia Controllo",
-            command=self.avvia_controllo,
-            bg="#28a745",
-            fg="white",
-            font=("Arial", 11, "bold"),
-            padx=25,
-            pady=8,
-            state="disabled",
-            cursor="hand2",
-        )
-        self.start_btn.pack(side="left", padx=5)
-
-        self.clear_btn = tk.Button(
-            action_frame,
-            text="🗑️  Pulisci Risultati",
-            command=self.pulisci_risultati,
-            bg="#6c757d",
-            fg="white",
-            font=("Arial", 11),
-            padx=20,
-            pady=8,
-            cursor="hand2",
-        )
-        self.clear_btn.pack(side="left", padx=5)
+        self.info_label.pack(fill="both", expand=True)
 
         # ==================== TABELLA RISULTATI ====================
         table_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
