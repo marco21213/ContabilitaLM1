@@ -19,6 +19,11 @@ sys.path.append(os.path.join(project_root, "scripts"))   # <— IMPORTANTE
 from styles import Style
 from controller_manager import ControllerManager        # <— MANAGER ESTERNO
 
+# Import per l'header con icone
+sys.path.append(os.path.join(current_dir, 'modules'))
+from icon_manager import IconManager
+from ui_components import TopBar
+
 
 class ControlloPrezziPage(tk.Frame):
     """Pagina per il controllo prezzi da file XML."""
@@ -32,42 +37,29 @@ class ControlloPrezziPage(tk.Frame):
         self.xml_files = []
         self.controlli_results = []
         self.manager = ControllerManager()   # <— MANAGER CONTROLLI
+        
+        # Inizializza icon manager
+        self.icon_manager = IconManager()
 
         # Setup UI
         self.setup_ui()
 
     def setup_ui(self):
         """Crea l'interfaccia utente."""
-
-        # ==================== HEADER ====================
-        header_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
-        header_frame.pack(fill='x', padx=Style.CONTENT_PADDING, pady=Style.CONTENT_PADDING)
-
-        title_label = tk.Label(
-            header_frame,
-            text="📋 Controllo Prezzi da File XML",
-            font=("Arial", 18, "bold"),
-            bg=Style.BACKGROUND_COLOR,
-            fg=Style.MENU_HEADER_BG,
-        )
-        title_label.pack(side="left")
-
-        # Bottone Info
-        info_btn = tk.Button(
-            header_frame,
-            text="ℹ️ Info",
-            command=self.mostra_info_controlli,
-            bg="#17a2b8",
-            fg="white",
-            font=("Arial", 10, "bold"),
-            padx=15,
-            pady=5,
-            cursor="hand2",
-        )
-        info_btn.pack(side="right")
+        
+        # ==================== HEADER CON ICONE ====================
+        main_container = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=5, pady=5)
+        main_container.pack(fill="both", expand=True)
+        
+        # Crea la top bar con i comandi
+        commands_config = {
+            'show_info': self.mostra_info_controlli
+        }
+        
+        self.top_bar = TopBar(main_container, self.icon_manager, commands_config)
 
         # ==================== SELEZIONE CARTELLA ====================
-        folder_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
+        folder_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
         folder_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
 
         tk.Label(
@@ -103,7 +95,7 @@ class ControlloPrezziPage(tk.Frame):
         browse_btn.pack(side="left")
 
         # ==================== INFO FILE ====================
-        info_frame = tk.Frame(self, bg="#e8f4f8", relief="solid", borderwidth=1)
+        info_frame = tk.Frame(main_container, bg="#e8f4f8", relief="solid", borderwidth=1)
         info_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
 
         self.info_label = tk.Label(
@@ -120,7 +112,7 @@ class ControlloPrezziPage(tk.Frame):
         self.info_label.pack(fill="x")
 
         # ==================== PULSANTI ====================
-        action_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
+        action_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
         action_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
 
         self.start_btn = tk.Button(
@@ -151,7 +143,7 @@ class ControlloPrezziPage(tk.Frame):
         self.clear_btn.pack(side="left", padx=5)
 
         # ==================== TABELLA RISULTATI ====================
-        table_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
+        table_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
         table_frame.pack(fill="both", expand=True, padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
 
         table_header = tk.Frame(table_frame, bg=Style.MENU_HEADER_BG)
@@ -202,7 +194,7 @@ class ControlloPrezziPage(tk.Frame):
         self.tree.bind("<Double-1>", self.on_row_double_click)
 
         # ==================== STATUS ====================
-        status_frame = tk.Frame(self, bg="#f5f5f5", relief="sunken", borderwidth=1)
+        status_frame = tk.Frame(main_container, bg="#f5f5f5", relief="sunken", borderwidth=1)
         status_frame.pack(fill="x", side="bottom")
 
         self.status_label = tk.Label(

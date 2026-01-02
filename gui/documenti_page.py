@@ -210,7 +210,7 @@ class VistaScadenzeApp(tk.Frame):
                 btn.image = icon
                 btn.pack()
                 tk.Label(frame, text=text, bg=Style.BACKGROUND_COLOR,
-                         fg="#000000", font=("Arial", 10, "bold")).pack(pady=(8, 0))
+                         fg="#1f396a", font=("Arial", 10, "bold")).pack(pady=(8, 0))
             except Exception as e:
                 print(f"Errore caricamento icona {icon_name}: {e}")
                 btn = tk.Button(frame, text=text, command=command, bg=fallback_color,
@@ -222,9 +222,9 @@ class VistaScadenzeApp(tk.Frame):
             ("nuovo", "Nuovo", self.nuovo_documento, "#4CAF50"),
             ("modifica", "Modifica", self.modifica_documento, "#FF9800"),
             ("cancella", "Cancella", self.cancella_documento, "#f44336"),
-            ("importa", "Importa Acquisti", self.importa_acquisti, "#9C27B0"),
-            ("importa", "Importa Vendite", self.importa_vendite, "#9C27B0"),
-            ("importa", "Import Rapido", self.importa_rapido, "#00BCD4"),
+            ("import_acquisti", "Importa Acquisti", self.importa_acquisti, "#9C27B0"),
+            ("import_vendite", "Importa Vendite", self.importa_vendite, "#9C27B0"),
+            ("import_rapido", "Import Rapido", self.importa_rapido, "#00BCD4"),
             ("filtri", "Cancella filtri", self.clear_all_filters, "#607D8B")
         ]
         for icon, text, cmd, color in buttons:

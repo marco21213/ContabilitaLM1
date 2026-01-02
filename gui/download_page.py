@@ -169,7 +169,8 @@ class DownloadPage(tk.Frame):
             'fast_download': self.on_fast_download,
             'select_period': self.on_select_period,
             'monthly_purchases': self.on_monthly_purchases,
-            'monthly_sales': self.on_monthly_sales
+            'monthly_sales': self.on_monthly_sales,
+            'show_history': self.show_download_history
         }
         
         self.top_bar = TopBar(main_container, self.icon_manager, commands_config)
@@ -270,21 +271,6 @@ class DownloadPage(tk.Frame):
         # Frame per i pulsanti a destra
         right_buttons = tk.Frame(toolbar, bg=Style.WHITE)
         right_buttons.pack(side="right", pady=5)
-        
-        # Pulsante storico
-        self.history_button = tk.Button(
-            right_buttons,
-            text="📋 Storico",
-            font=("Arial", 9),
-            bg=getattr(Style, 'SECONDARY_COLOR', '#607D8B'),
-            fg="white",
-            relief="flat",
-            padx=15,
-            pady=3,
-            cursor="hand2",
-            command=self.show_download_history
-        )
-        self.history_button.pack(side="right", padx=(0, 15))
         
         # Pulsante stampa
         self.print_button = tk.Button(

@@ -118,6 +118,8 @@ class MainWindow:
         self.root.minsize(1024, 768)
         
         self.current_page: Optional[tk.Widget] = None
+        self.current_page_name: Optional[str] = None
+        self.menu_buttons: Dict[str, tk.Button] = {}  # Dizionario per tracciare i bottoni del menu
         
         self.main_frame = tk.Frame(
             self.root,
@@ -218,8 +220,9 @@ class MainWindow:
         )
         self.main_content_container.pack(side='left', fill='both', expand=True)
 
-        # Mostra la homepage all'avvio
+        # Mostra la homepage all'avvio (non evidenziare nessun bottone perché Home non è nel menu)
         self.show_page("Home")
+        # Nessun bottone evidenziato perché "Home" non è nel menu laterale
 
     def create_side_menu(self, parent: tk.Frame) -> None:
         # Sezione Contabilità
@@ -227,27 +230,34 @@ class MainWindow:
         menu_items_contabilita = ["Download", "Fatture Acquisto", "Fatture Vendita", "Verifica Ft Acquisto"]
 
         for item in menu_items_contabilita:
-            tk.Button(
+            btn = tk.Button(
                 parent,
                 text=item,
                 command=lambda i=item: self.show_page(i),
                 **Style.MENU_BUTTON_CONFIG
-            ).pack(fill='x', pady=2)
+            )
+            btn.pack(fill='x', pady=2)
+            self.menu_buttons[item] = btn
 
         # Sezione Laboratorio
         tk.Label(parent, text="CONTABILITA'", **Style.MENU_HEADER_CONFIG).pack(fill='x', pady=(20, 0))
         menu_items_laboratorio = ["Soggetti", "Documenti", "Pagamenti", "Libro Mastro","Dichiarazioni Intento", "Controllo Prezzi"]
 
         for item in menu_items_laboratorio:
-            tk.Button(
+            btn = tk.Button(
                 parent,
                 text=item,
                 command=lambda i=item: self.show_page(i),
                 **Style.MENU_BUTTON_CONFIG
-            ).pack(fill='x', pady=2)
+            )
+            btn.pack(fill='x', pady=2)
+            self.menu_buttons[item] = btn
 
     def show_page(self, page_name: str) -> None:
         """Mostra la pagina specificata"""
+        # Aggiorna l'evidenziazione del menu
+        self._update_menu_highlight(page_name)
+        
         for widget in self.main_content_container.inner_frame.winfo_children():
             widget.destroy()
 
@@ -275,6 +285,7 @@ class MainWindow:
             page_class = getattr(module, config["class"])
             self.current_page = page_class(self.main_content_container.inner_frame)
             self.current_page.pack(fill='both', expand=True)
+            self.current_page_name = page_name
         except ImportError as e:
             self._show_error_page(f"Modulo non trovato per {page_name}: {e}")
         except AttributeError as e:
@@ -282,6 +293,25 @@ class MainWindow:
         except Exception as e:
             self._show_error_page(f"Errore nel caricamento di {page_name}: {e}")
 
+    def _update_menu_highlight(self, page_name: str) -> None:
+        """Aggiorna l'evidenziazione del bottone del menu per la pagina corrente"""
+        # Ripristina lo stile di tutti i bottoni
+        for btn_name, btn in self.menu_buttons.items():
+            btn.config(
+                bg=Style.WHITE,
+                fg='#000000',
+                relief='flat'
+            )
+        
+        # Evidenzia il bottone della pagina corrente
+        if page_name in self.menu_buttons:
+            active_btn = self.menu_buttons[page_name]
+            active_btn.config(
+                bg='#1f396a',  # Colore blu scuro come nelle didascalie
+                fg='#ffffff',
+                relief='raised'
+            )
+    
     def _show_error_page(self, message: str) -> None:
         """Mostra una pagina di errore standardizzata"""
         error_frame = tk.Frame(self.main_content_container.inner_frame, bg=Style.WHITE)

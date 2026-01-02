@@ -198,7 +198,7 @@ class PagamentiUnificatiApp(tk.Frame):
                 btn.image = icon
                 btn.pack()
                 tk.Label(frame, text=text, bg=Style.BACKGROUND_COLOR,
-                         fg="#000000", font=("Arial", 10, "bold")).pack(pady=(8, 0))
+                         fg="#1f396a", font=("Arial", 10, "bold")).pack(pady=(8, 0))
             except Exception as e:
                 print(f"Errore caricamento icona {icon_name}: {e}")
                 btn = tk.Button(frame, text=text, command=command, bg=fallback_color,
@@ -806,36 +806,181 @@ class PagamentiUnificatiApp(tk.Frame):
                       width=10, command=win.destroy, cursor="hand2").pack(side="left")
         
         elif field_name == "soggetto":
-            # Menu a tendina per soggetto
-            try:
-                conn = sqlite3.connect(self.db_path)
-                cursor = conn.cursor()
-                cursor.execute("SELECT DISTINCT ragione_sociale FROM soggetti WHERE ragione_sociale IS NOT NULL AND ragione_sociale != '' ORDER BY ragione_sociale")
-                soggetti = [row[0] for row in cursor.fetchall()]
-                conn.close()
-            except Exception as e:
-                print(f"Errore recupero soggetti: {e}")
-                soggetti = []
+            # Autocompletamento con ricerca per soggetto (come in documenti_page.py)
+            win.geometry("400x350")
+            vals = sorted({r[field_name] for r in self.original_data if r[field_name]})
             
-            # Aggiungi valori dai dati originali se non sono nel DB
-            valori_esistenti = {row['soggetto'] for row in self.original_data if row['soggetto']}
-            soggetti = sorted(set(soggetti) | valori_esistenti)
+            # Frame per ricerca e lista
+            search_frame = tk.Frame(frame, bg=Style.WHITE)
+            search_frame.pack(fill="x", pady=(0, 10))
             
-            combo = ttk.Combobox(frame, values=[""] + soggetti, state="readonly", width=25)
-            combo.pack(pady=(0, 15))
+            tk.Label(search_frame, text="Cerca:", bg=Style.WHITE, 
+                    font=("Arial", 9)).pack(side="left", padx=(0, 5))
+            
+            search_entry = tk.Entry(search_frame, font=("Arial", 10), width=20)
+            search_entry.pack(side="left", fill="x", expand=True)
+            
+            # Focus dopo che la finestra è stata renderizzata
+            def set_focus():
+                search_entry.focus_set()
+            win.after(100, set_focus)
+            
+            # Listbox con scrollbar per i risultati filtrati
+            listbox_frame = tk.Frame(frame, bg=Style.WHITE)
+            listbox_frame.pack(fill="both", expand=True, pady=(0, 10))
+            
+            scrollbar = tk.Scrollbar(listbox_frame)
+            scrollbar.pack(side="right", fill="y")
+            
+            listbox = tk.Listbox(listbox_frame, font=("Arial", 10), 
+                                yscrollcommand=scrollbar.set, height=8)
+            listbox.pack(side="left", fill="both", expand=True)
+            scrollbar.config(command=listbox.yview)
+            
+            # Popola la listbox con tutti i valori
+            all_vals = [""] + vals
+            for val in all_vals:
+                listbox.insert(tk.END, val)
+            
+            # Variabile per il valore selezionato
+            selected_value = tk.StringVar()
+            
+            def filter_listbox(*args):
+                """Filtra la listbox in base al testo digitato"""
+                search_text = search_entry.get().lower()
+                listbox.delete(0, tk.END)
+                
+                if not search_text:
+                    # Mostra tutti i valori se non c'è ricerca
+                    filtered = [""] + vals
+                else:
+                    # Filtra i valori che contengono il testo cercato
+                    filtered = []
+                    for val in vals:
+                        if search_text in val.lower():
+                            filtered.append(val)
+                    
+                    # Se non ci sono risultati, mostra un messaggio
+                    if not filtered:
+                        listbox.insert(tk.END, "(Nessun risultato)")
+                        listbox.itemconfig(0, {'fg': '#999'})
+                        return
+                
+                for val in filtered:
+                    listbox.insert(tk.END, val)
+                
+                # Se c'è un solo risultato dopo il filtro, evidenzialo automaticamente
+                if len(filtered) == 1 and filtered[0]:
+                    listbox.selection_set(0)
+                    listbox.see(0)
+                elif len(filtered) > 1:
+                    # Seleziona il primo risultato se c'è più di un match
+                    listbox.selection_set(0)
+                    listbox.see(0)
+            
+            def on_listbox_select(event):
+                """Gestisce la selezione dalla listbox"""
+                selection = listbox.curselection()
+                if selection:
+                    selected_value.set(listbox.get(selection[0]))
+                    search_entry.delete(0, tk.END)
+                    search_entry.insert(0, selected_value.get())
+            
+            def on_listbox_double_click(event):
+                """Applica il filtro con doppio click"""
+                on_listbox_select(event)
+                apply_combo()
+            
+            def on_search_key(event):
+                """Gestisce i tasti nella ricerca"""
+                if event.keysym == 'Down':
+                    listbox.focus_set()
+                    if listbox.size() > 0:
+                        listbox.selection_set(0)
+                        listbox.see(0)
+                    return "break"
+                elif event.keysym == 'Return':
+                    # Se c'è una selezione nella listbox, usala
+                    selection = listbox.curselection()
+                    if selection:
+                        selected_value.set(listbox.get(selection[0]))
+                    apply_combo()
+                    return "break"
+            
+            def on_listbox_key(event):
+                """Gestisce i tasti nella listbox"""
+                if event.keysym == 'Return':
+                    apply_combo()
+                    return "break"
+                elif event.keysym == 'Escape':
+                    win.destroy()
+                    return "break"
+                elif event.keysym == 'Up' and listbox.curselection()[0] == 0:
+                    # Quando si arriva in cima, torna al campo ricerca
+                    search_entry.focus_set()
+                    return "break"
+            
+            search_entry.bind('<KeyRelease>', filter_listbox)
+            search_entry.bind('<KeyPress>', on_search_key)
+            listbox.bind('<<ListboxSelect>>', on_listbox_select)
+            listbox.bind('<Double-Button-1>', on_listbox_double_click)
+            listbox.bind('<KeyPress>', on_listbox_key)
+            
+            # Bind Escape per chiudere
+            win.bind('<Escape>', lambda e: win.destroy())
+            search_entry.bind('<Escape>', lambda e: win.destroy())
+            
+            # Mostra suggerimento
+            hint_label = tk.Label(frame, 
+                    text="💡 Digita per cercare, ↓↑ per navigare, Invio per applicare, Esc per chiudere", 
+                    bg=Style.WHITE, fg="#666", font=("Arial", 8, "italic"))
+            hint_label.pack(pady=(0, 5))
             
             # Imposta il valore corrente se presente
             filtro_attuale = active_filters.get(field_name, "")
             if filtro_attuale:
                 # Cerca il valore corrispondente (case-insensitive)
-                for val in soggetti:
+                for val in vals:
                     if val.lower() == filtro_attuale.lower():
-                        combo.set(val)
+                        search_entry.insert(0, val)
+                        filter_listbox()
+                        # Seleziona il valore nella listbox
+                        try:
+                            idx = list(all_vals).index(val)
+                            listbox.selection_set(idx)
+                            listbox.see(idx)
+                        except:
+                            pass
                         break
             
             def apply_combo():
-                valore_selezionato = combo.get()
-                active_filters[field_name] = valore_selezionato.lower() if valore_selezionato else ""
+                # Prendi il valore dalla listbox se c'è una selezione, altrimenti dal campo ricerca
+                selection = listbox.curselection()
+                if selection:
+                    val = listbox.get(selection[0])
+                    # Ignora se è il messaggio "Nessun risultato"
+                    if val == "(Nessun risultato)":
+                        return
+                else:
+                    val = search_entry.get().strip()
+                    # Verifica se il valore esiste nella lista
+                    if val not in vals:
+                        # Cerca il primo match parziale che inizia con il testo
+                        val_lower = val.lower()
+                        for v in vals:
+                            if v.lower().startswith(val_lower):
+                                val = v
+                                break
+                        else:
+                            # Se non trova un match che inizia, cerca qualsiasi match
+                            for v in vals:
+                                if val_lower in v.lower():
+                                    val = v
+                                    break
+                            else:
+                                val = ""  # Nessun match trovato
+                
+                active_filters[field_name] = val.lower() if val else ""
                 self.apply_filters()
                 win.destroy()
             

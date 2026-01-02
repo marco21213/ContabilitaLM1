@@ -13,11 +13,12 @@ from styles import Style
 
 
 class SoggettoDialog(tk.Toplevel):
-    def __init__(self, parent, db_path, soggetto_data=None):
+    def __init__(self, parent, db_path, soggetto_data=None, on_success=None):
         super().__init__(parent)
         self.parent = parent
         self.db_path = db_path
         self.soggetto_data = soggetto_data
+        self.on_success = on_success  # Callback per aggiornare la tabella
         
         self.title("Nuovo Soggetto" if soggetto_data is None else "Modifica Soggetto")
         self.geometry("600x500")
@@ -240,7 +241,10 @@ class SoggettoDialog(tk.Toplevel):
             messagebox.showinfo("Successo", message)
             self.destroy()
             
-            if hasattr(self.parent, 'load_data'):
+            # Chiama il callback se fornito, altrimenti prova con parent
+            if self.on_success:
+                self.on_success()
+            elif hasattr(self.parent, 'load_data'):
                 self.parent.load_data()
             
         except sqlite3.Error as e:
@@ -411,7 +415,7 @@ class SoggettiApp(tk.Frame):
             
             new_label = tk.Label(new_frame, text="Nuovo", 
                                 bg=Style.BACKGROUND_COLOR,
-                                fg="#000000",
+                                fg="#1f396a",
                                 font=("Arial", 10, "bold"))
             new_label.pack(pady=(8, 0))
             
@@ -447,7 +451,7 @@ class SoggettiApp(tk.Frame):
             
             edit_label = tk.Label(edit_frame, text="Modifica", 
                                  bg=Style.BACKGROUND_COLOR,
-                                 fg="#000000",
+                                 fg="#1f396a",
                                  font=("Arial", 10, "bold"))
             edit_label.pack(pady=(8, 0))
             
@@ -483,7 +487,7 @@ class SoggettiApp(tk.Frame):
             
             delete_label = tk.Label(delete_frame, text="Cancella", 
                                    bg=Style.BACKGROUND_COLOR,
-                                   fg="#000000",
+                                   fg="#1f396a",
                                    font=("Arial", 10, "bold"))
             delete_label.pack(pady=(8, 0))
             
@@ -549,7 +553,13 @@ class SoggettiApp(tk.Frame):
         """Mostra un menu di filtro per la colonna selezionata"""
         filter_window = tk.Toplevel(self)
         filter_window.title(f"Filtro - {column_title}")
-        filter_window.geometry("300x150")
+        
+        if field_name == "ragione_sociale":
+            # Autocompletamento con ricerca per ragione_sociale (come in documenti_page.py)
+            filter_window.geometry("400x350")
+        else:
+            filter_window.geometry("300x150")
+        
         filter_window.resizable(False, False)
         filter_window.configure(bg=Style.WHITE)
         
@@ -563,57 +573,318 @@ class SoggettiApp(tk.Frame):
                         bg=Style.WHITE, fg="#000000", font=("Arial", 10, "bold"))
         label.pack(pady=(0, 10))
         
-        if field_name == "tipo_soggetto":
+        if field_name == "ragione_sociale":
+            # Autocompletamento con ricerca per ragione_sociale
+            vals = sorted({r[field_name] for r in self.original_data if r[field_name]})
+            
+            # Frame per ricerca e lista
+            search_frame = tk.Frame(main_frame, bg=Style.WHITE)
+            search_frame.pack(fill="x", pady=(0, 10))
+            
+            tk.Label(search_frame, text="Cerca:", bg=Style.WHITE, 
+                    font=("Arial", 9)).pack(side="left", padx=(0, 5))
+            
+            search_entry = tk.Entry(search_frame, font=("Arial", 10), width=20)
+            search_entry.pack(side="left", fill="x", expand=True)
+            
+            # Focus dopo che la finestra è stata renderizzata
+            def set_focus():
+                search_entry.focus_set()
+            filter_window.after(100, set_focus)
+            
+            # Listbox con scrollbar per i risultati filtrati
+            listbox_frame = tk.Frame(main_frame, bg=Style.WHITE)
+            listbox_frame.pack(fill="both", expand=True, pady=(0, 10))
+            
+            scrollbar = tk.Scrollbar(listbox_frame)
+            scrollbar.pack(side="right", fill="y")
+            
+            listbox = tk.Listbox(listbox_frame, font=("Arial", 10), 
+                                yscrollcommand=scrollbar.set, height=8)
+            listbox.pack(side="left", fill="both", expand=True)
+            scrollbar.config(command=listbox.yview)
+            
+            # Popola la listbox con tutti i valori
+            all_vals = [""] + vals
+            for val in all_vals:
+                listbox.insert(tk.END, val)
+            
+            # Variabile per il valore selezionato
+            selected_value = tk.StringVar()
+            
+            def filter_listbox(*args):
+                """Filtra la listbox in base al testo digitato"""
+                search_text = search_entry.get().lower()
+                listbox.delete(0, tk.END)
+                
+                if not search_text:
+                    # Mostra tutti i valori se non c'è ricerca
+                    filtered = [""] + vals
+                else:
+                    # Filtra i valori che contengono il testo cercato
+                    filtered = []
+                    for val in vals:
+                        if search_text in val.lower():
+                            filtered.append(val)
+                    
+                    # Se non ci sono risultati, mostra un messaggio
+                    if not filtered:
+                        listbox.insert(tk.END, "(Nessun risultato)")
+                        listbox.itemconfig(0, {'fg': '#999'})
+                        return
+                
+                for val in filtered:
+                    listbox.insert(tk.END, val)
+                
+                # Se c'è un solo risultato dopo il filtro, evidenzialo automaticamente
+                if len(filtered) == 1 and filtered[0]:
+                    listbox.selection_set(0)
+                    listbox.see(0)
+                elif len(filtered) > 1:
+                    # Seleziona il primo risultato se c'è più di un match
+                    listbox.selection_set(0)
+                    listbox.see(0)
+            
+            def on_listbox_select(event):
+                """Gestisce la selezione dalla listbox"""
+                selection = listbox.curselection()
+                if selection:
+                    selected_value.set(listbox.get(selection[0]))
+                    search_entry.delete(0, tk.END)
+                    search_entry.insert(0, selected_value.get())
+            
+            def on_listbox_double_click(event):
+                """Applica il filtro con doppio click"""
+                on_listbox_select(event)
+                apply_filter()
+            
+            def on_search_key(event):
+                """Gestisce i tasti nella ricerca"""
+                if event.keysym == 'Down':
+                    listbox.focus_set()
+                    if listbox.size() > 0:
+                        listbox.selection_set(0)
+                        listbox.see(0)
+                    return "break"
+                elif event.keysym == 'Return':
+                    # Se c'è una selezione nella listbox, usala
+                    selection = listbox.curselection()
+                    if selection:
+                        selected_value.set(listbox.get(selection[0]))
+                    apply_filter()
+                    return "break"
+            
+            def on_listbox_key(event):
+                """Gestisce i tasti nella listbox"""
+                if event.keysym == 'Return':
+                    apply_filter()
+                    return "break"
+                elif event.keysym == 'Escape':
+                    filter_window.destroy()
+                    return "break"
+                elif event.keysym == 'Up' and listbox.curselection()[0] == 0:
+                    # Quando si arriva in cima, torna al campo ricerca
+                    search_entry.focus_set()
+                    return "break"
+            
+            search_entry.bind('<KeyRelease>', filter_listbox)
+            search_entry.bind('<KeyPress>', on_search_key)
+            listbox.bind('<<ListboxSelect>>', on_listbox_select)
+            listbox.bind('<Double-Button-1>', on_listbox_double_click)
+            listbox.bind('<KeyPress>', on_listbox_key)
+            
+            # Bind Escape per chiudere
+            filter_window.bind('<Escape>', lambda e: filter_window.destroy())
+            search_entry.bind('<Escape>', lambda e: filter_window.destroy())
+            
+            # Mostra suggerimento
+            hint_label = tk.Label(main_frame, 
+                    text="💡 Digita per cercare, ↓↑ per navigare, Invio per applicare, Esc per chiudere", 
+                    bg=Style.WHITE, fg="#666", font=("Arial", 8, "italic"))
+            hint_label.pack(pady=(0, 5))
+            
+            # Imposta il valore corrente se presente
+            filtro_attuale = self.active_filters.get(field_name, "")
+            if filtro_attuale:
+                # Cerca il valore corrispondente (case-insensitive)
+                for val in vals:
+                    if val.lower() == filtro_attuale.lower():
+                        search_entry.insert(0, val)
+                        filter_listbox()
+                        # Seleziona il valore nella listbox
+                        try:
+                            idx = list(all_vals).index(val)
+                            listbox.selection_set(idx)
+                            listbox.see(idx)
+                        except:
+                            pass
+                        break
+            
+            def apply_filter():
+                # Prendi il valore dalla listbox se c'è una selezione, altrimenti dal campo ricerca
+                selection = listbox.curselection()
+                if selection:
+                    val = listbox.get(selection[0])
+                    # Ignora se è il messaggio "Nessun risultato"
+                    if val == "(Nessun risultato)":
+                        return
+                else:
+                    val = search_entry.get().strip()
+                    # Verifica se il valore esiste nella lista
+                    if val not in vals:
+                        # Cerca il primo match parziale che inizia con il testo
+                        val_lower = val.lower()
+                        for v in vals:
+                            if v.lower().startswith(val_lower):
+                                val = v
+                                break
+                        else:
+                            # Se non trova un match che inizia, cerca qualsiasi match
+                            for v in vals:
+                                if val_lower in v.lower():
+                                    val = v
+                                    break
+                            else:
+                                val = ""  # Nessun match trovato
+                
+                self.active_filters[field_name] = val.lower() if val else ""
+                self.apply_filters()
+                filter_window.destroy()
+            
+            def clear_filter():
+                self.active_filters[field_name] = ""
+                self.apply_filters()
+                filter_window.destroy()
+            
+            button_frame = tk.Frame(main_frame, bg=Style.WHITE)
+            button_frame.pack(fill="x")
+            
+            btn_apply = tk.Button(button_frame, text="Applica", command=apply_filter,
+                                 bg="#4CAF50", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_apply.pack(side="left", padx=(0, 10))
+            
+            btn_clear = tk.Button(button_frame, text="Cancella", command=clear_filter,
+                                 bg="#f44336", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_clear.pack(side="left")
+            
+            # Bind Escape per chiudere
+            filter_window.bind('<Escape>', lambda e: filter_window.destroy())
+            return
+        
+        elif field_name == "tipo_soggetto":
             filter_entry = ttk.Combobox(main_frame, 
                                       values=["", "CLIENTE", "FORNITORE", "ENTRAMBI"],
                                       font=("Arial", 10),
                                       width=25)
             filter_entry.set(self.active_filters[field_name].upper())
+            filter_entry.pack(pady=(0, 15))
+            filter_entry.focus()
+            
+            button_frame = tk.Frame(main_frame, bg=Style.WHITE)
+            button_frame.pack(fill="x")
+            
+            def apply_filter():
+                filter_value = filter_entry.get().strip()
+                self.active_filters[field_name] = filter_value.lower()
+                self.apply_filters()
+                filter_window.destroy()
+            
+            def clear_filter():
+                self.active_filters[field_name] = ""
+                self.apply_filters()
+                filter_window.destroy()
+            
+            btn_apply = tk.Button(button_frame, text="Applica", command=apply_filter,
+                                 bg="#4CAF50", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_apply.pack(side="left", padx=(0, 10))
+            
+            btn_clear = tk.Button(button_frame, text="Cancella", command=clear_filter,
+                                 bg="#f44336", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_clear.pack(side="left")
+            
+            filter_entry.bind('<Return>', lambda e: apply_filter())
+            filter_window.bind('<Escape>', lambda e: filter_window.destroy())
+            return
+        
         elif field_name == "tipo_fattura":
             filter_entry = ttk.Combobox(main_frame, 
                                       values=["", "TD01", "TD24"],
                                       font=("Arial", 10),
                                       width=25)
             filter_entry.set(self.active_filters[field_name].upper())
+            filter_entry.pack(pady=(0, 15))
+            filter_entry.focus()
+            
+            button_frame = tk.Frame(main_frame, bg=Style.WHITE)
+            button_frame.pack(fill="x")
+            
+            def apply_filter():
+                filter_value = filter_entry.get().strip()
+                self.active_filters[field_name] = filter_value.lower()
+                self.apply_filters()
+                filter_window.destroy()
+            
+            def clear_filter():
+                self.active_filters[field_name] = ""
+                self.apply_filters()
+                filter_window.destroy()
+            
+            btn_apply = tk.Button(button_frame, text="Applica", command=apply_filter,
+                                 bg="#4CAF50", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_apply.pack(side="left", padx=(0, 10))
+            
+            btn_clear = tk.Button(button_frame, text="Cancella", command=clear_filter,
+                                 bg="#f44336", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_clear.pack(side="left")
+            
+            filter_entry.bind('<Return>', lambda e: apply_filter())
+            filter_window.bind('<Escape>', lambda e: filter_window.destroy())
+            return
+        
         else:
             filter_entry = tk.Entry(main_frame, font=("Arial", 10), width=25)
             current_filter = self.active_filters[field_name]
             if field_name != "email":
                 current_filter = current_filter.upper()
             filter_entry.insert(0, current_filter)
-        
-        filter_entry.pack(pady=(0, 15))
-        filter_entry.focus()
-        
-        button_frame = tk.Frame(main_frame, bg=Style.WHITE)
-        button_frame.pack(fill="x")
-        
-        def apply_filter():
-            filter_value = filter_entry.get().strip()
-            if field_name != "email":
-                self.active_filters[field_name] = filter_value.lower()
-            else:
-                self.active_filters[field_name] = filter_value.lower()
-            self.apply_filters()
-            filter_window.destroy()
-        
-        def clear_filter():
-            self.active_filters[field_name] = ""
-            self.apply_filters()
-            filter_window.destroy()
-        
-        btn_apply = tk.Button(button_frame, text="Applica", command=apply_filter,
-                             bg="#4CAF50", fg="white", font=("Arial", 10),
-                             width=10, cursor="hand2")
-        btn_apply.pack(side="left", padx=(0, 10))
-        
-        btn_clear = tk.Button(button_frame, text="Cancella", command=clear_filter,
-                             bg="#f44336", fg="white", font=("Arial", 10),
-                             width=10, cursor="hand2")
-        btn_clear.pack(side="left")
-        
-        filter_entry.bind('<Return>', lambda e: apply_filter())
-        filter_window.bind('<Escape>', lambda e: filter_window.destroy())
+            filter_entry.pack(pady=(0, 15))
+            filter_entry.focus()
+            
+            button_frame = tk.Frame(main_frame, bg=Style.WHITE)
+            button_frame.pack(fill="x")
+            
+            def apply_filter():
+                filter_value = filter_entry.get().strip()
+                if field_name != "email":
+                    self.active_filters[field_name] = filter_value.lower()
+                else:
+                    self.active_filters[field_name] = filter_value.lower()
+                self.apply_filters()
+                filter_window.destroy()
+            
+            def clear_filter():
+                self.active_filters[field_name] = ""
+                self.apply_filters()
+                filter_window.destroy()
+            
+            btn_apply = tk.Button(button_frame, text="Applica", command=apply_filter,
+                                 bg="#4CAF50", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_apply.pack(side="left", padx=(0, 10))
+            
+            btn_clear = tk.Button(button_frame, text="Cancella", command=clear_filter,
+                                 bg="#f44336", fg="white", font=("Arial", 10),
+                                 width=10, cursor="hand2")
+            btn_clear.pack(side="left")
+            
+            filter_entry.bind('<Return>', lambda e: apply_filter())
+            filter_window.bind('<Escape>', lambda e: filter_window.destroy())
 
     def configure_style(self):
         """Configura lo stile per la tabella usando gli stili definiti"""
@@ -853,7 +1124,8 @@ class SoggettiApp(tk.Frame):
     def nuovo_soggetto(self):
         """Apre una finestra per inserire un nuovo soggetto"""
         try:
-            dialog = SoggettoDialog(self.parent, self.db_path)
+            # Passa self come parent e un callback per aggiornare la tabella
+            dialog = SoggettoDialog(self, self.db_path, on_success=self.load_data)
             dialog.center_window()
             dialog.wait_window()
         except Exception as e:
@@ -893,7 +1165,8 @@ class SoggettiApp(tk.Frame):
                           'provincia', 'email', 'codice_univoco']
                 soggetto_data = dict(zip(columns, row))
                 
-                dialog = SoggettoDialog(self.parent, self.db_path, soggetto_data)
+                # Passa self come parent e un callback per aggiornare la tabella
+                dialog = SoggettoDialog(self, self.db_path, soggetto_data, on_success=self.load_data)
                 dialog.center_window()
                 dialog.wait_window()
             else:

@@ -23,36 +23,10 @@ class DichiarazioniIntentoPage(tk.Frame):
 
         self.configure(bg=Style.BACKGROUND_COLOR)
 
-        self.create_header()
         self.create_button_bar()
         self.create_table()
 
         self.load_data()
-
-    # --------------------------------------------------------
-    #                 HEADER PAGINA
-    # --------------------------------------------------------
-    def create_header(self):
-        header = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
-        header.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(Style.CONTENT_PADDING, 0))
-
-        label = tk.Label(
-            header,
-            text="📄 DICHIARAZIONI D'INTENTO",
-            font=("Arial", 16, "bold"),
-            bg=Style.BACKGROUND_COLOR,
-            fg="#000"
-        )
-        label.pack(side="left")
-
-        self.counter_label = tk.Label(
-            header,
-            text="",
-            font=("Arial", 10),
-            bg=Style.BACKGROUND_COLOR,
-            fg="#666"
-        )
-        self.counter_label.pack(side="right")
 
     # --------------------------------------------------------
     #                 BARRA PULSANTI
@@ -91,7 +65,7 @@ class DichiarazioniIntentoPage(tk.Frame):
                 btn.pack()
 
             tk.Label(f, text=text, bg=Style.BACKGROUND_COLOR,
-                     font=("Arial", 10, "bold")).pack(pady=(8, 0))
+                     fg="#1f396a", font=("Arial", 10, "bold")).pack(pady=(8, 0))
 
     # --------------------------------------------------------
     #                 TABELLA PRINCIPALE
@@ -177,8 +151,6 @@ class DichiarazioniIntentoPage(tk.Frame):
                 ),
                 tags=("evenrow" if n % 2 == 0 else "oddrow", f"id_{r[0]}")
             )
-
-        self.counter_label.config(text=f"{len(rows)} dichiarazioni trovate")
 
     # --------------------------------------------------------
     #                 UTILS DB

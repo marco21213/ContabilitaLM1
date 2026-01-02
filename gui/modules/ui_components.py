@@ -16,12 +16,49 @@ class TopBar:
         icons_container = tk.Frame(top_bar_frame, bg=self.parent.cget('bg'))
         icons_container.pack(side="left", padx=20)
         
-        icons_config = [
-            {'icon': 'icon-download1.png', 'text': 'Download Rapido Acquisti', 'command': self.commands['fast_download']},
-            {'icon': 'icon-download2.png', 'text': 'Download Periodo', 'command': self.commands['select_period']},
-            {'icon': 'icon-download3.png', 'text': 'Download Mensile Acquisti', 'command': self.commands['monthly_purchases']},
-            {'icon': 'icon-download4.png', 'text': 'Download Mensile Vendite', 'command': self.commands['monthly_sales']}
-        ]
+        icons_config = []
+        
+        # Aggiungi i bottoni download solo se i comandi sono disponibili
+        if 'fast_download' in self.commands:
+            icons_config.append({
+                'icon': 'icon-download1.png',
+                'text': 'Download Rapido Acquisti',
+                'command': self.commands['fast_download']
+            })
+        if 'select_period' in self.commands:
+            icons_config.append({
+                'icon': 'icon-download2.png',
+                'text': 'Download Periodo',
+                'command': self.commands['select_period']
+            })
+        if 'monthly_purchases' in self.commands:
+            icons_config.append({
+                'icon': 'icon-download3.png',
+                'text': 'Download Mensile Acquisti',
+                'command': self.commands['monthly_purchases']
+            })
+        if 'monthly_sales' in self.commands:
+            icons_config.append({
+                'icon': 'icon-download4.png',
+                'text': 'Download Mensile Vendite',
+                'command': self.commands['monthly_sales']
+            })
+        
+        # Aggiungi il bottone Cronologia se il comando è disponibile
+        if 'show_history' in self.commands:
+            icons_config.append({
+                'icon': 'cronologia.png',
+                'text': 'Cronologia',
+                'command': self.commands['show_history']
+            })
+        
+        # Aggiungi il bottone Info se il comando è disponibile
+        if 'show_info' in self.commands:
+            icons_config.append({
+                'icon': 'info.png',
+                'text': 'Info',
+                'command': self.commands['show_info']
+            })
         
         for config in icons_config:
             self.create_icon_button(icons_container, config)
