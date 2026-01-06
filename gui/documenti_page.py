@@ -1433,11 +1433,16 @@ class VistaScadenzeApp(tk.Frame):
         soggetto_id = None
         for tag in tags:
             if tag.startswith("soggetto_"):
-                soggetto_id = int(tag.split("_")[1])
-                break
+                try:
+                    # Il tag è formato come "soggetto_123"
+                    soggetto_id = int(tag.split("_")[1])
+                    break
+                except (ValueError, IndexError) as e:
+                    print(f"Errore nel parsing del tag: {tag}, errore: {e}")
+                    continue
         
         if not soggetto_id:
-            messagebox.showerror("Errore", "Impossibile identificare il cliente.")
+            messagebox.showerror("Errore", f"Impossibile identificare il cliente. Tag trovati: {tags}")
             return
         
         # Recupera i dati del cliente
@@ -1549,10 +1554,10 @@ class DettaglioFattureSospeseWindow(tk.Toplevel):
             has_segno = 'segno' in colonne_nomi
             
             # Query per recuperare le fatture sospese (stato = 'SOSPESO')
-            # Usiamo una subquery per filtrare correttamente
+            # Usiamo una CTE per poter filtrare correttamente per stato
             if has_segno:
                 query = """
-                    SELECT * FROM (
+                    WITH documenti_calcolati AS (
                         SELECT d.id, d.data_documento, d.tipo_documento, d.numero_documento,
                                substr(sc.data_scadenza,1,2)||'/'||substr(sc.data_scadenza,4,2)||'/'||substr(sc.data_scadenza,7,4) as data_scadenza,
                                SUM(sc.importo_scadenza) as importo_totale,
@@ -1591,12 +1596,16 @@ class DettaglioFattureSospeseWindow(tk.Toplevel):
                         JOIN scadenze sc ON d.id = sc.id_documento
                         WHERE d.soggetto_id = ? AND d.segno = 1
                         GROUP BY d.id
-                    ) WHERE stato = 'SOSPESO'
+                    )
+                    SELECT id, data_documento, tipo_documento, numero_documento, data_scadenza, 
+                           importo_totale, pagato, residuo, stato
+                    FROM documenti_calcolati
+                    WHERE stato = 'SOSPESO'
                     ORDER BY data_documento DESC
                 """
             else:
                 query = """
-                    SELECT * FROM (
+                    WITH documenti_calcolati AS (
                         SELECT d.id, d.data_documento, d.tipo_documento, d.numero_documento,
                                substr(sc.data_scadenza,1,2)||'/'||substr(sc.data_scadenza,4,2)||'/'||substr(sc.data_scadenza,7,4) as data_scadenza,
                                SUM(sc.importo_scadenza) as importo_totale,
@@ -1635,13 +1644,20 @@ class DettaglioFattureSospeseWindow(tk.Toplevel):
                         JOIN scadenze sc ON d.id = sc.id_documento
                         WHERE d.soggetto_id = ?
                         GROUP BY d.id
-                    ) WHERE stato = 'SOSPESO'
+                    )
+                    SELECT id, data_documento, tipo_documento, numero_documento, data_scadenza, 
+                           importo_totale, pagato, residuo, stato
+                    FROM documenti_calcolati
+                    WHERE stato = 'SOSPESO'
                     ORDER BY data_documento DESC
                 """
             
             cursor.execute(query, (self.soggetto_id,))
             rows = cursor.fetchall()
             conn.close()
+            
+            # Debug: stampa il numero di righe trovate
+            print(f"Fatture sospese trovate per soggetto_id {self.soggetto_id}: {len(rows)}")
             
             # Pulisci tabella
             for item in self.tree.get_children():
