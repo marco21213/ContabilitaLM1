@@ -83,7 +83,7 @@ try:
                 r = s.post('https://ivaservizi.agenziaentrate.gov.it/portale/scelta-utenza-lavoro?p_auth='+ p_auth + '&p_p_id=SceltaUtenzaLavoro_WAR_SceltaUtenzaLavoroportlet&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=1&_SceltaUtenzaLavoro_WAR_SceltaUtenzaLavoroportlet_javax.portlet.action=delegaDirettaAction', data=payload);
     
     else:
-                printi('PORCO CANE QUALCOSA E ANDATA STORTA!')
+                print('PORCO CANE QUALCOSA E ANDATA STORTA!')
 
     print('Aderisco al servizio')
     r = s.get('https://ivaservizi.agenziaentrate.gov.it/ser/api/fatture/v1/ul/me/adesione/stato/')
@@ -172,7 +172,7 @@ try:
                 fatturaFile = fattura['tipoInvio']+fattura['idFattura']
                 r = s.get('https://ivaservizi.agenziaentrate.gov.it/cons/cons-services/rs/fatture/file/'+fatturaFile+'?tipoFile=FILE_FATTURA&download=1&v='+unixTime() , headers = headers_token )
                 if r.status_code == 200:
-                    numero_fatture = numero_fatture + 1
+                    numero_fatture_disposizione = numero_fatture_disposizione + 1
                     d = r.headers['content-disposition']
                     fname = re.findall("filename=(.+)", d)
                     print('Downloading ' + fname[0])
@@ -203,7 +203,7 @@ try:
         pathp7m = path + '_p7m'
         if not os.path.exists(path):
             os.makedirs(path)
-        if not os.path.exists(path):
+        if not os.path.exists(pathp7m):
             os.makedirs(pathp7m)
 
         with open('fe_ricevute_'+ CF +'.json') as data_file:    
@@ -221,19 +221,21 @@ try:
                         d = r.headers['content-disposition']
                         fname = re.findall("filename=(.+)", d)
                         with open(path + '/' + fname[0], 'wb') as f:
-                            f.write(r.content)
-                            fmetadato = re.findall("filename=(.+)", d)
-                            with open(path + '/' + fname[0], 'wb') as f:
-                                pbar = tqdm(total=total_size, unit='B', unit_divisor=1024, unit_scale=True, ascii=True)
-                                pbar.set_description('Scarico la fattura: ' + fname[0])
-                                for chunk in r.iter_content(chunk_size=1024):
-                                    if chunk:  
-                                        f.write(chunk)
-                                        pbar.update(len(chunk))
-                                pbar.close()
+                            pbar = tqdm(total=total_size, unit='B', unit_divisor=1024, unit_scale=True, ascii=True)
+                            pbar.set_description('Scarico la fattura: ' + fname[0])
+                            for chunk in r.iter_content(chunk_size=1024):
+                                if chunk:  
+                                    f.write(chunk)
+                                    pbar.update(len(chunk))
+                            pbar.close()
                                
             # decrypt_p7m_files(path, pathp7m)# decodifica fattura p7m e copia in dir p7m
             print('Totale fatture PASSIVE RICEVUTE scaricate: ', numero_fatture_ricevute , ' e notifiche ' , numero_notifiche_ricevute)
+        
+        # Rimuovi i file JSON temporanei per le fatture ricevute
+        for f in os.listdir('.'):
+            if f.startswith('fe_ricevute') and f.endswith('.json'):
+                os.remove(f)
 
 
     #=============# FATTURE TRANSFRONTALIERE RICEVUTE=======#
@@ -262,13 +264,16 @@ try:
                     print('Totale Transfrontaliere fatture scaricate: ', numero_fatture)
                     with open(path + '/' + fname[0], 'wb') as f:
                         f.write(r.content)
-                        fmetadato = re.findall("filename=(.+)", d)
                 r = s.get('https://ivaservizi.agenziaentrate.gov.it/cons/cons-services/rs/fatture/file/'+fatturaFile+'?tipoFile=FILE_METADATI&download=1&v='+unixTime() , headers = headers_token )          
         print('Totale fatture Ricevute TRAN ricevute scaricate: ', numero_fatture)
         print('Totale notifiche scaricate fatture TRAN ricevute: ', numero_notifiche)
 
         print('Per il cliente: ', CF)
         print('Totale fatture TRANSFRONTALIERE RICEVUTE scaricate: ', numero_fatture)
+        
+        # Rimuovi i file JSON temporanei per le fatture transfrontaliere ricevute
+        if os.path.exists('fe_ricevutetr_'+ CF +'.json'):
+            os.remove('fe_ricevutetr_'+ CF +'.json')
 
 
     if VenOAcq != "A":
