@@ -38,6 +38,9 @@ class ControlloPrezziPage(tk.Frame):
         self.controlli_results = []
         self.manager = ControllerManager()   # <— MANAGER CONTROLLI
         
+        # Variabili per la selezione controlli
+        self.controlli_selezionati = {}  # Dict: nome_controllo -> BooleanVar
+        
         # Inizializza icon manager
         self.icon_manager = IconManager()
 
@@ -203,6 +206,37 @@ class ControlloPrezziPage(tk.Frame):
             justify="left",
         )
         self.info_label.pack(fill="both", expand=True)
+        
+        # ==================== SELEZIONE CONTROLLI ====================
+        controlli_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
+        controlli_frame.pack(fill="x", padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
+        
+        tk.Label(
+            controlli_frame,
+            text="Controlli da eseguire:",
+            bg=Style.BACKGROUND_COLOR,
+            font=("Arial", 10, "bold"),
+        ).pack(anchor="w", pady=(0, 5))
+        
+        # Frame per i checkbox
+        checkbox_frame = tk.Frame(controlli_frame, bg=Style.BACKGROUND_COLOR)
+        checkbox_frame.pack(fill="x")
+        
+        # Inizializza i checkbox per ogni controllo disponibile
+        lista_controlli = self.manager.get_lista_controlli()
+        for nome_controllo in lista_controlli:
+            var = tk.BooleanVar(value=True)  # Di default tutti selezionati
+            self.controlli_selezionati[nome_controllo] = var
+            
+            checkbox = tk.Checkbutton(
+                checkbox_frame,
+                text=nome_controllo,
+                variable=var,
+                bg=Style.BACKGROUND_COLOR,
+                font=("Arial", 9),
+                anchor="w"
+            )
+            checkbox.pack(side="left", padx=(0, 20))
 
         # ==================== TABELLA RISULTATI ====================
         table_frame = tk.Frame(main_container, bg=Style.BACKGROUND_COLOR)
@@ -460,7 +494,17 @@ class ControlloPrezziPage(tk.Frame):
         """
 
         try:
-            risultati = self.manager.esegui_controlli(xml_file)
+            # Ottieni la lista dei controlli selezionati
+            controlli_attivi = [
+                nome for nome, var in self.controlli_selezionati.items() 
+                if var.get()
+            ]
+            
+            # Se nessun controllo è selezionato, usa tutti
+            if not controlli_attivi:
+                controlli_attivi = None
+            
+            risultati = self.manager.esegui_controlli(xml_file, controlli_attivi)
 
             # Aggrega problemi
             problemi = []

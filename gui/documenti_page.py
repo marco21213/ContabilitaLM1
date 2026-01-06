@@ -184,6 +184,9 @@ class VistaScadenzeApp(tk.Frame):
                 self.sort_column = 'data'
                 self.sort_direction = 'desc'
         
+        # Aggiorna visibilità bottone dettaglio fatture sospese
+        self._update_dettaglio_sospese_button()
+        
         # Resetta i filtri quando cambi tab
         self.clear_all_filters(silent=True)
         
@@ -231,6 +234,12 @@ class VistaScadenzeApp(tk.Frame):
             frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
             frame.pack(side="left", padx=(0, 25))
             add_button(frame, icon, text, cmd, color)
+        
+        # Bottone per dettaglio fatture sospese (solo per scaduto clienti)
+        self.dettaglio_sospese_frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
+        self.dettaglio_sospese_frame.pack(side="left", padx=(0, 25))
+        self.dettaglio_sospese_btn = None
+        self._update_dettaglio_sospese_button()
         
         # Aggiungi pulsante ordinamento a destra
         sort_frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
@@ -1042,7 +1051,9 @@ class VistaScadenzeApp(tk.Frame):
             )
             
             tag = 'evenrow' if i % 2 == 0 else 'oddrow'
-            self.tree.insert("", tk.END, values=values, tags=(tag,))
+            # Salva soggetto_id come tag per poterlo recuperare dopo
+            tags = (tag, f"soggetto_{row['soggetto_id']}")
+            self.tree.insert("", tk.END, values=values, tags=tags)
         
         # Aggiorna il contatore
         tab_label = {
@@ -1370,6 +1381,321 @@ class VistaScadenzeApp(tk.Frame):
         except Exception as e:
             print(f"Errore in importa_rapido: {e}")
             messagebox.showerror("Errore", f"Errore durante l'importazione rapida:\n{str(e)}")
+    
+    def _update_dettaglio_sospese_button(self):
+        """Aggiorna la visibilità del bottone dettaglio fatture sospese"""
+        # Rimuovi il bottone esistente se presente
+        if self.dettaglio_sospese_btn:
+            self.dettaglio_sospese_btn.destroy()
+            for widget in self.dettaglio_sospese_frame.winfo_children():
+                widget.destroy()
+            self.dettaglio_sospese_btn = None
+        
+        # Mostra il bottone solo nel tab scaduto clienti
+        if self.current_tab_filter == 'scaduto_clienti':
+            icon_size = (32, 32)
+            button_size = 40
+            try:
+                img = Image.open("assets/icon/info.png")
+                img = img.resize(icon_size, Image.Resampling.LANCZOS)
+                icon = ImageTk.PhotoImage(img)
+                btn = tk.Button(self.dettaglio_sospese_frame, image=icon, 
+                                command=self.mostra_fatture_sospese,
+                                bg=Style.BACKGROUND_COLOR, relief="flat",
+                                cursor="hand2", width=button_size, height=button_size, borderwidth=0)
+                btn.image = icon
+                btn.pack()
+                tk.Label(self.dettaglio_sospese_frame, text="Fatture Sospese", 
+                        bg=Style.BACKGROUND_COLOR,
+                        fg="#1f396a", font=("Arial", 10, "bold")).pack(pady=(8, 0))
+                self.dettaglio_sospese_btn = btn
+            except Exception as e:
+                print(f"Errore caricamento icona info: {e}")
+                btn = tk.Button(self.dettaglio_sospese_frame, text="Fatture Sospese", 
+                               command=self.mostra_fatture_sospese, bg="#2196F3",
+                               fg="white", font=("Arial", 11, "bold"), cursor="hand2", width=12, height=2)
+                btn.pack()
+                self.dettaglio_sospese_btn = btn
+    
+    def mostra_fatture_sospese(self):
+        """Mostra il dettaglio delle fatture sospese per il cliente selezionato"""
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Attenzione", "Seleziona un cliente per visualizzare le fatture sospese.")
+            return
+        
+        if len(sel) > 1:
+            messagebox.showwarning("Attenzione", "Seleziona un solo cliente.")
+            return
+        
+        # Recupera il soggetto_id dal tag
+        tags = self.tree.item(sel[0], "tags")
+        soggetto_id = None
+        for tag in tags:
+            if tag.startswith("soggetto_"):
+                soggetto_id = int(tag.split("_")[1])
+                break
+        
+        if not soggetto_id:
+            messagebox.showerror("Errore", "Impossibile identificare il cliente.")
+            return
+        
+        # Recupera i dati del cliente
+        cliente_data = None
+        for row in self.original_data:
+            if row.get('soggetto_id') == soggetto_id:
+                cliente_data = row
+                break
+        
+        if not cliente_data:
+            messagebox.showerror("Errore", "Cliente non trovato.")
+            return
+        
+        # Apri la finestra di dettaglio
+        DettaglioFattureSospeseWindow(self, soggetto_id, cliente_data, self.db_path)
+
+
+class DettaglioFattureSospeseWindow(tk.Toplevel):
+    """Finestra per visualizzare il dettaglio delle fatture sospese per un cliente"""
+    
+    def __init__(self, parent, soggetto_id, cliente_data, db_path):
+        super().__init__(parent)
+        self.soggetto_id = soggetto_id
+        self.cliente_data = cliente_data
+        self.db_path = db_path
+        
+        self.title(f"Fatture Sospese - {cliente_data['ragione_sociale']}")
+        self.geometry("1200x600")
+        self.configure(bg=Style.BACKGROUND_COLOR)
+        self.transient(parent)
+        
+        # Frame principale
+        main_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR, padx=20, pady=20)
+        main_frame.pack(fill="both", expand=True)
+        
+        # Intestazione
+        header_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        header_frame.pack(fill="x", pady=(0, 20))
+        
+        tk.Label(header_frame, text=f"Fatture Sospese - {cliente_data['ragione_sociale']}", 
+                bg=Style.BACKGROUND_COLOR, fg="#1f396a", 
+                font=("Arial", 16, "bold")).pack(side="left")
+        
+        tk.Label(header_frame, text=f"Codice: {cliente_data['codice_soggetto']}", 
+                bg=Style.BACKGROUND_COLOR, fg="#666", 
+                font=("Arial", 10)).pack(side="right")
+        
+        # Tabella
+        table_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        table_frame.pack(fill="both", expand=True)
+        
+        columns = ("DATA", "TIPO", "NUMERO", "SCADENZA", "IMPORTO", "PAGATO", "RESIDUO", "STATO")
+        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
+        
+        for col in columns:
+            self.tree.heading(col, text=col)
+        
+        self.tree.column("DATA", width=100, anchor="center")
+        self.tree.column("TIPO", width=120, anchor="center")
+        self.tree.column("NUMERO", width=120, anchor="center")
+        self.tree.column("SCADENZA", width=100, anchor="center")
+        self.tree.column("IMPORTO", width=120, anchor="e")
+        self.tree.column("PAGATO", width=120, anchor="e")
+        self.tree.column("RESIDUO", width=120, anchor="e")
+        self.tree.column("STATO", width=100, anchor="center")
+        
+        scrollbar_y = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.tree.yview)
+        scrollbar_x = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
+        self.tree.configure(yscroll=scrollbar_y.set, xscroll=scrollbar_x.set)
+        
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
+        table_frame.grid_rowconfigure(0, weight=1)
+        table_frame.grid_columnconfigure(0, weight=1)
+        
+        self.tree.tag_configure('evenrow', background='#FFFFFF')
+        self.tree.tag_configure('oddrow', background='#E6F3FF')
+        
+        # Frame per totali
+        totali_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        totali_frame.pack(fill="x", pady=(10, 0))
+        
+        self.totale_label = tk.Label(totali_frame, text="", bg=Style.BACKGROUND_COLOR, 
+                                     fg="#1f396a", font=("Arial", 11, "bold"))
+        self.totale_label.pack(side="right")
+        
+        # Bottone chiudi
+        btn_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
+        btn_frame.pack(fill="x", pady=(10, 0))
+        
+        tk.Button(btn_frame, text="Chiudi", command=self.destroy,
+                 bg="#607D8B", fg="white", font=("Arial", 10, "bold"),
+                 cursor="hand2", padx=20, pady=5).pack(side="right")
+        
+        # Carica i dati
+        self.load_data()
+    
+    def load_data(self):
+        """Carica le fatture sospese per il cliente"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Verifica se la colonna segno esiste
+            cursor.execute("PRAGMA table_info(documenti)")
+            colonne_info = cursor.fetchall()
+            colonne_nomi = [col[1] for col in colonne_info]
+            has_segno = 'segno' in colonne_nomi
+            
+            # Query per recuperare le fatture sospese (stato = 'SOSPESO')
+            # Usiamo una subquery per filtrare correttamente
+            if has_segno:
+                query = """
+                    SELECT * FROM (
+                        SELECT d.id, d.data_documento, d.tipo_documento, d.numero_documento,
+                               substr(sc.data_scadenza,1,2)||'/'||substr(sc.data_scadenza,4,2)||'/'||substr(sc.data_scadenza,7,4) as data_scadenza,
+                               SUM(sc.importo_scadenza) as importo_totale,
+                               (SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'PAGAMENTO' THEN ap.importo_associato ELSE 0 END),0) 
+                                FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id) as pagato,
+                               CASE 
+                                   WHEN (UPPER(d.tipo_documento) LIKE '%NC_CLIENTE%' OR UPPER(d.tipo_documento) LIKE '%NOTA_CREDITO_CLIENTE%') AND d.segno = -1 THEN
+                                       ABS(SUM(sc.importo_scadenza)) - (SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                                                          FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                                   ELSE
+                                       SUM(sc.importo_scadenza)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'PAGAMENTO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                               END as residuo,
+                               CASE 
+                                   WHEN (UPPER(d.tipo_documento) LIKE '%NC_CLIENTE%' OR UPPER(d.tipo_documento) LIKE '%NOTA_CREDITO_CLIENTE%') AND d.segno = -1 THEN
+                                       CASE WHEN ABS(SUM(sc.importo_scadenza)) - (SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                                                                  FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id) <= 0 
+                                            THEN 'SALDATO'
+                                            WHEN MAX(date(substr(sc.data_scadenza,7,4)||'-'||substr(sc.data_scadenza,4,2)||'-'||substr(sc.data_scadenza,1,2)))<date('now')
+                                            THEN 'SCADUTO' 
+                                            ELSE 'SOSPESO' 
+                                       END
+                                   ELSE
+                                       CASE WHEN SUM(sc.importo_scadenza)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'PAGAMENTO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)<=0 THEN 'SALDATO'
+                                            WHEN MAX(date(substr(sc.data_scadenza,7,4)||'-'||substr(sc.data_scadenza,4,2)||'-'||substr(sc.data_scadenza,1,2)))<date('now')
+                                            THEN 'SCADUTO' ELSE 'SOSPESO' END
+                               END as stato
+                        FROM documenti d
+                        JOIN scadenze sc ON d.id = sc.id_documento
+                        WHERE d.soggetto_id = ? AND d.segno = 1
+                        GROUP BY d.id
+                    ) WHERE stato = 'SOSPESO'
+                    ORDER BY data_documento DESC
+                """
+            else:
+                query = """
+                    SELECT * FROM (
+                        SELECT d.id, d.data_documento, d.tipo_documento, d.numero_documento,
+                               substr(sc.data_scadenza,1,2)||'/'||substr(sc.data_scadenza,4,2)||'/'||substr(sc.data_scadenza,7,4) as data_scadenza,
+                               SUM(sc.importo_scadenza) as importo_totale,
+                               (SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'PAGAMENTO' THEN ap.importo_associato ELSE 0 END),0) 
+                                FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id) as pagato,
+                               CASE 
+                                   WHEN (UPPER(d.tipo_documento) LIKE '%NC_CLIENTE%' OR UPPER(d.tipo_documento) LIKE '%NOTA_CREDITO_CLIENTE%') THEN
+                                       ABS(SUM(sc.importo_scadenza)) - (SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                                                          FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                                   ELSE
+                                       SUM(sc.importo_scadenza)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'PAGAMENTO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                               END as residuo,
+                               CASE 
+                                   WHEN (UPPER(d.tipo_documento) LIKE '%NC_CLIENTE%' OR UPPER(d.tipo_documento) LIKE '%NOTA_CREDITO_CLIENTE%') THEN
+                                       CASE WHEN ABS(SUM(sc.importo_scadenza)) - (SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                                                                  FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id) <= 0 
+                                            THEN 'SALDATO'
+                                            WHEN MAX(date(substr(sc.data_scadenza,7,4)||'-'||substr(sc.data_scadenza,4,2)||'-'||substr(sc.data_scadenza,1,2)))<date('now')
+                                            THEN 'SCADUTO' 
+                                            ELSE 'SOSPESO' 
+                                       END
+                                   ELSE
+                                       CASE WHEN SUM(sc.importo_scadenza)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'PAGAMENTO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)
+                                       -(SELECT COALESCE(SUM(CASE WHEN ap.tipo_associazione = 'STORNO_NOTA_CREDITO' THEN ap.importo_associato ELSE 0 END),0) 
+                                         FROM associazioni_pagamenti ap WHERE ap.id_documento=d.id)<=0 THEN 'SALDATO'
+                                            WHEN MAX(date(substr(sc.data_scadenza,7,4)||'-'||substr(sc.data_scadenza,4,2)||'-'||substr(sc.data_scadenza,1,2)))<date('now')
+                                            THEN 'SCADUTO' ELSE 'SOSPESO' END
+                               END as stato
+                        FROM documenti d
+                        JOIN scadenze sc ON d.id = sc.id_documento
+                        WHERE d.soggetto_id = ?
+                        GROUP BY d.id
+                    ) WHERE stato = 'SOSPESO'
+                    ORDER BY data_documento DESC
+                """
+            
+            cursor.execute(query, (self.soggetto_id,))
+            rows = cursor.fetchall()
+            conn.close()
+            
+            # Pulisci tabella
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+            
+            totale_residuo = 0.0
+            totale_importo = 0.0
+            totale_pagato = 0.0
+            
+            # Inserisci i dati
+            for i, row in enumerate(rows):
+                data_str = row[1]
+                if data_str and '-' in data_str:
+                    try:
+                        data_str = datetime.strptime(data_str, "%Y-%m-%d").strftime("%d/%m/%Y")
+                    except:
+                        pass
+                elif data_str and '/' in data_str:
+                    # Già in formato DD/MM/YYYY
+                    pass
+                
+                importo = float(row[5]) if row[5] else 0.0
+                pagato = float(row[6]) if row[6] else 0.0
+                residuo = float(row[7]) if row[7] else 0.0
+                
+                totale_importo += importo
+                totale_pagato += pagato
+                totale_residuo += residuo
+                
+                values = (
+                    data_str or "",
+                    str(row[2]) or "",
+                    str(row[3]) or "",
+                    str(row[4]) or "",
+                    f"€ {importo:,.2f}",
+                    f"€ {pagato:,.2f}",
+                    f"€ {residuo:,.2f}",
+                    str(row[8]) or ""
+                )
+                
+                tag = 'evenrow' if i % 2 == 0 else 'oddrow'
+                self.tree.insert("", tk.END, values=values, tags=(tag,))
+            
+            # Aggiorna totali
+            self.totale_label.config(
+                text=f"Totale Importo: € {totale_importo:,.2f} | "
+                     f"Totale Pagato: € {totale_pagato:,.2f} | "
+                     f"Totale Residuo: € {totale_residuo:,.2f} | "
+                     f"Numero Fatture: {len(rows)}"
+            )
+            
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore nel caricamento dei dati:\n{str(e)}")
+            print(f"Errore caricamento fatture sospese: {e}")
 
 
 if __name__ == "__main__":

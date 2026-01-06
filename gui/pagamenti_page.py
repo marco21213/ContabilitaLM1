@@ -46,7 +46,7 @@ class PagamentiUnificatiApp(tk.Frame):
         self.filtered_data_pagamenti = []  # Dati filtrati per pagamenti (per cancellazione)
         
         # Filtro attivo per la tab corrente
-        self.current_tab_filter = "pagamenti"  # "pagamenti", "riba"
+        self.current_tab_filter = "pagamenti"  # "pagamenti", "riba", "distinte_riba"
         
         # Filtri per pagamenti
         self.active_filters_pagamenti = {
@@ -59,6 +59,7 @@ class PagamentiUnificatiApp(tk.Frame):
         
         # Componente RiBa tab (verrà creato quando necessario)
         self.riba_tab = None
+        self.distinte_riba_tab = None
         
         # Impostazioni di ordinamento
         self.sort_column = 'data'
@@ -69,8 +70,6 @@ class PagamentiUnificatiApp(tk.Frame):
         
         # Crea il sistema di tab
         self.create_tab_system()
-        
-        self.load_data()
 
     def create_tab_system(self):
         """Crea il sistema di navigazione a tab"""
@@ -108,7 +107,16 @@ class PagamentiUnificatiApp(tk.Frame):
             command=lambda: self.switch_tab('riba'),
             **tab_style
         )
-        self.tab_buttons['riba'].pack(side="left")
+        self.tab_buttons['riba'].pack(side="left", padx=(0, 5))
+        
+        # Tab Distinte RIBA
+        self.tab_buttons['distinte_riba'] = tk.Button(
+            tab_header_frame,
+            text="📄 DISTINTE RIBA",
+            command=lambda: self.switch_tab('distinte_riba'),
+            **tab_style
+        )
+        self.tab_buttons['distinte_riba'].pack(side="left")
         
         # Frame per contatore (a destra)
         right_frame = tk.Frame(tab_header_frame, bg=Style.BACKGROUND_COLOR)
@@ -169,9 +177,18 @@ class PagamentiUnificatiApp(tk.Frame):
             # Usa RibaTab invece di creare la tabella manualmente
             self.riba_tab = RibaTab(self.content_frame, self.db_path)
             self.riba_tab.pack(fill="both", expand=True)
+            # Mantieni distinte_riba_tab se esiste per aggiornare il riferimento
+            if self.distinte_riba_tab:
+                self.distinte_riba_tab.riba_tab = self.riba_tab
+        elif tab_name == 'distinte_riba':
+            # Crea la tab per gestione distinte
+            # Passa riba_tab se esiste, altrimenti None
+            from pagamenti_page_distinte_riba import DistinteRibaTab
+            self.distinte_riba_tab = DistinteRibaTab(self.content_frame, self.db_path, self.riba_tab)
+            self.distinte_riba_tab.pack(fill="both", expand=True)
         else:
             # Crea la tabella pagamenti
-            self.riba_tab = None
+            # Non distruggere riba_tab e distinte_riba_tab, solo non mostrarli
             self.switch_to_pagamenti_table()
             self.load_data()
         
@@ -213,15 +230,17 @@ class PagamentiUnificatiApp(tk.Frame):
                 ("cancella", "Cancella", self.cancella_pagamento, "#f44336"),
                 ("filtri", "Cancella filtri", self.clear_all_filters, "#607D8B")
             ]
-        else:  # riba
+        elif self.current_tab_filter == 'riba':
             # Delega i metodi a RibaTab
             buttons = [
                 ("nuovo", "Nuova Distinta", lambda: self.riba_tab.nuova_distinta() if self.riba_tab else None, "#4CAF50"),
-                ("modifica", "Gestisci Distinte", lambda: self.riba_tab.gestisci_distinte() if self.riba_tab else None, "#FF9800"),
                 ("pagamenti_riba", "Paga RiBa", lambda: self.riba_tab.paga_riba() if self.riba_tab else None, "#00BCD4"),
                 ("cancella", "Elimina", lambda: self.riba_tab.elimina_selezionati() if self.riba_tab else None, "#f44336"),
                 ("filtri", "Cancella filtri", self.clear_all_filters, "#607D8B")
             ]
+        else:  # distinte_riba
+            # La tab distinte_riba gestisce i propri pulsanti internamente
+            buttons = []
         
         for icon, text, cmd, color in buttons:
             frame = tk.Frame(self.button_frame, bg=Style.BACKGROUND_COLOR)

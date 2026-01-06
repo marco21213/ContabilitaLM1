@@ -30,14 +30,25 @@ class ControllerManager:
             ("Dichiarazione d'Intento", check_dichiarazione_intento)
         ]
 
-    def esegui_controlli(self, xml_file):
-        """Esegue tutti i controlli sul file XML."""
+    def esegui_controlli(self, xml_file, controlli_selezionati=None):
+        """
+        Esegue i controlli sul file XML.
+        
+        Args:
+            xml_file: Percorso del file XML da controllare
+            controlli_selezionati: Lista di nomi dei controlli da eseguire. 
+                                  Se None, esegue tutti i controlli.
+        """
         tree = ET.parse(xml_file)
         root = tree.getroot()
 
         risultati = []
 
         for nome_controllo, funzione in self.controlli:
+            # Se sono specificati controlli da eseguire, salta quelli non selezionati
+            if controlli_selezionati is not None and nome_controllo not in controlli_selezionati:
+                continue
+                
             problemi = funzione(root)
 
             risultati.append({
@@ -46,3 +57,7 @@ class ControllerManager:
             })
 
         return risultati
+    
+    def get_lista_controlli(self):
+        """Restituisce la lista dei nomi dei controlli disponibili."""
+        return [nome for nome, _ in self.controlli]

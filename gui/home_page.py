@@ -44,10 +44,40 @@ class HomePage(tk.Frame):
             tk.Label(self, text=f"Database non trovato: {db_path}", bg=Style.WHITE, fg="red").pack(pady=10)
             return
 
-        # === Connessione al database e lettura dati ===
+        # === Connessione al database e aggiornamento report_mensile ===
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
+            
+            # Aggiorna report_mensile con i dati più recenti
+            try:
+                # Prima svuota la tabella
+                cursor.execute("DELETE FROM report_mensile")
+                
+                # Calcola i totali mensili dalla tabella documenti
+                # data_documento è in formato DD/MM/YYYY
+                cursor.execute("""
+                    INSERT INTO report_mensile (mese, totale_acquisti, totale_vendite)
+                    SELECT 
+                        substr(data_documento, 7, 4) || '-' || substr(data_documento, 4, 2) AS mese,
+                        COALESCE(SUM(CASE WHEN segno = -1 THEN CAST(totale AS REAL) ELSE 0 END), 0) AS totale_acquisti,
+                        COALESCE(SUM(CASE WHEN segno = 1 THEN CAST(totale AS REAL) ELSE 0 END), 0) AS totale_vendite
+                    FROM documenti
+                    WHERE data_documento IS NOT NULL 
+                      AND data_documento != ''
+                      AND length(data_documento) >= 10
+                      AND substr(data_documento, 3, 1) = '/'
+                      AND substr(data_documento, 6, 1) = '/'
+                    GROUP BY substr(data_documento, 7, 4) || '-' || substr(data_documento, 4, 2)
+                    ORDER BY mese DESC
+                """)
+                conn.commit()
+            except Exception as e:
+                # Se la tabella non esiste o c'è un errore, continua comunque
+                print(f"Errore aggiornamento report_mensile: {e}")
+                conn.rollback()
+            
+            # Legge i dati aggiornati
             cursor.execute("""
                 SELECT mese, totale_acquisti, totale_vendite
                 FROM report_mensile
