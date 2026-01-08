@@ -8,13 +8,26 @@ import configparser
 sys.path.append('assets/style')
 from styles import Style
 
-# Tentativo di importare matplotlib
+# Tentativo di importare matplotlib (opzionale)
+MATPLOTLIB_AVAILABLE = False
+plt = None
+FigureCanvasTkAgg = None
+
 try:
+    # Prova a importare matplotlib in modo sicuro
+    import os
+    # Disabilita il backend interattivo per evitare problemi su Linux
+    os.environ['MPLBACKEND'] = 'Agg'
+    import matplotlib
+    matplotlib.use('Agg', force=True)  # Forza backend non interattivo
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     MATPLOTLIB_AVAILABLE = True
-except ImportError:
+except Exception as e:
+    # Se matplotlib non è disponibile o causa errori, continua senza
     MATPLOTLIB_AVAILABLE = False
+    import logging
+    logging.getLogger(__name__).warning(f"Matplotlib non disponibile: {e}")
 
 
 class HomePage(tk.Frame):

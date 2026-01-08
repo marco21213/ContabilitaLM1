@@ -43,6 +43,13 @@ class MatplotlibErrorFilter:
 # Installa il filtro solo se matplotlib è importato
 try:
     import matplotlib
+    # Configura matplotlib per usare un backend sicuro su Linux
+    import platform
+    if platform.system() != 'Windows':
+        try:
+            matplotlib.use('Agg')  # Backend non interattivo, più sicuro su Linux
+        except:
+            pass  # Se fallisce, usa il backend di default
     if not hasattr(sys.stderr, '_is_matplotlib_filter'):
         sys.stderr = MatplotlibErrorFilter()
         sys.stderr._is_matplotlib_filter = True
