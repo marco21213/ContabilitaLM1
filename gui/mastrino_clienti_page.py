@@ -8,11 +8,75 @@ import glob
 from lxml import etree
 import tempfile
 import pdfkit
-import win32api
-import win32print
+import platform
+import subprocess
+import shutil
+
+# Import opzionali per Windows
+try:
+    import win32api
+    import win32print
+    WIN32_AVAILABLE = True
+except ImportError:
+    WIN32_AVAILABLE = False
 
 sys.path.append('assets/style')
 from styles import Style
+
+def find_wkhtmltopdf():
+    """Trova il percorso di wkhtmltopdf in modo cross-platform."""
+    if platform.system() == 'Windows':
+        # Percorsi Windows comuni
+        possible_paths = [
+            r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe',
+            r'C:\Program Files (x86)\wkhtmltopdf\bin\wkhtmltopdf.exe',
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+    else:
+        # Linux/Mac: cerca nel PATH
+        wkhtmltopdf = shutil.which('wkhtmltopdf')
+        if wkhtmltopdf:
+            return wkhtmltopdf
+        # Percorsi comuni Linux
+        possible_paths = [
+            '/usr/bin/wkhtmltopdf',
+            '/usr/local/bin/wkhtmltopdf',
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+    return None
+
+def open_file_crossplatform(file_path):
+    """Apre un file in modo cross-platform."""
+    try:
+        if platform.system() == 'Windows':
+            os.startfile(file_path)
+        elif platform.system() == 'Darwin':  # macOS
+            subprocess.Popen(['open', file_path])
+        else:  # Linux e altri Unix
+            subprocess.Popen(['xdg-open', file_path])
+    except Exception as e:
+        raise Exception(f"Impossibile aprire il file: {e}")
+
+def print_pdf_crossplatform(pdf_path):
+    """Stampa un PDF in modo cross-platform."""
+    try:
+        if platform.system() == 'Windows' and WIN32_AVAILABLE:
+            printer_name = win32print.GetDefaultPrinter()
+            win32api.ShellExecute(0, "print", pdf_path, None, ".", 0)
+            return printer_name
+        elif platform.system() == 'Darwin':  # macOS
+            subprocess.Popen(['lpr', pdf_path])
+            return "Stampante predefinita"
+        else:  # Linux
+            # Prova con lp (CUPS)
+            subprocess.Popen(['lp', pdf_path])
+            return "Stampante predefinita"
+    except Exception as e:
+        raise Exception(f"Errore durante la stampa: {e}")
 
 class MastrinoClientiPage(tk.Frame):
     def __init__(self, parent):
@@ -29,23 +93,32 @@ class MastrinoClientiPage(tk.Frame):
         self.p7m_dir = get_cartella_stampa() or ''
         self.xsl_path = os.path.join(self.current_dir, '../documents/css_fatture', 'FoglioStileConDatiTrasmissione.xsl')
         
-        self.wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+        # Trova wkhtmltopdf in modo cross-platform
+        self.wkhtmltopdf_path = find_wkhtmltopdf()
         
-        # Configura PDFKit
-        try:
-            self.config = pdfkit.configuration(wkhtmltopdf=self.wkhtmltopdf_path)
-        except Exception as e:
-            messagebox.showerror("Errore", f"Configurazione PDFKit fallita: {str(e)}")
-            return
+        if not self.wkhtmltopdf_path:
+            messagebox.showwarning("Attenzione", 
+                "wkhtmltopdf non trovato. Alcune funzionalità potrebbero non essere disponibili.\n\n"
+                "Windows: Installa da https://wkhtmltopdf.org/downloads.html\n"
+                "Linux: sudo apt-get install wkhtmltopdf")
+            self.config = None
+        else:
+            # Configura PDFKit
+            try:
+                self.config = pdfkit.configuration(wkhtmltopdf=self.wkhtmltopdf_path)
+            except Exception as e:
+                messagebox.showerror("Errore", f"Configurazione PDFKit fallita: {str(e)}")
+                self.config = None
         
-        # Controlla la validità dei percorsi
-        if not all(os.path.exists(p) for p in [self.p7m_dir, self.xsl_path, self.wkhtmltopdf_path]):
+        # Controlla la validità dei percorsi (wkhtmltopdf è opzionale)
+        required_paths = [self.p7m_dir, self.xsl_path]
+        if not all(os.path.exists(p) for p in required_paths if p):
             messagebox.showerror("Errore", "File o directory mancanti!")
             return
             
         self.setup_ui()
         self.load_files()
-        
+    
     def setup_ui(self):
         self.grid_columnconfigure(1, weight=4)
         self.grid_rowconfigure(0, weight=1)
@@ -89,7 +162,7 @@ class MastrinoClientiPage(tk.Frame):
         
         self.html_frame = HtmlFrame(right_frame)
         self.html_frame.pack(fill="both", expand=True)
-        
+    
     def load_files(self):
         try:
             files = glob.glob(os.path.join(self.p7m_dir, '*.[xX][mM][lL]'))
@@ -133,14 +206,18 @@ class MastrinoClientiPage(tk.Frame):
             messagebox.showwarning("Attenzione", "Seleziona prima una fattura da stampare")
             return
         
+        if not self.config:
+            messagebox.showwarning("Attenzione", "wkhtmltopdf non configurato. Impossibile stampare.")
+            return
+        
         try:
             temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
             temp_pdf.close()
 
             pdfkit.from_string(self.current_html, temp_pdf.name, configuration=self.config)
 
-            printer_name = win32print.GetDefaultPrinter()
-            win32api.ShellExecute(0, "print", temp_pdf.name, None, ".", 0)
+            printer_name = print_pdf_crossplatform(temp_pdf.name)
+            messagebox.showinfo("Stampa", f"Fattura inviata alla stampante: {printer_name}")
 
             self.after(5000, lambda: os.unlink(temp_pdf.name))
         except Exception as e:
@@ -149,6 +226,10 @@ class MastrinoClientiPage(tk.Frame):
     def visualizza_pdf(self):
         if not self.current_html:
             messagebox.showwarning("Attenzione", "Seleziona prima una fattura")
+            return
+        
+        if not self.config:
+            messagebox.showwarning("Attenzione", "wkhtmltopdf non configurato. Impossibile creare il PDF.")
             return
             
         try:
@@ -159,7 +240,7 @@ class MastrinoClientiPage(tk.Frame):
             pdf_path = temp_html.name.replace('.html', '.pdf')
             pdfkit.from_file(temp_html.name, pdf_path, configuration=self.config)
 
-            os.startfile(pdf_path)
+            open_file_crossplatform(pdf_path)
 
             self.after(1000, lambda: [os.unlink(temp_html.name), os.unlink(pdf_path)])
         except Exception as e:

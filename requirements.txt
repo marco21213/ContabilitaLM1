@@ -1,0 +1,10 @@
+asn1crypto==1.5.1
+babel==2.17.0
+charset-normalizer==3.4.4
+lxml==6.0.2
+pdfkit==1.0.0
+pillow==12.1.0
+reportlab==4.4.7
+tkcalendar==1.6.1
+tkinterweb==4.14.7
+tkinterweb-tkhtml==2.1.0

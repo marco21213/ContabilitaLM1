@@ -5,6 +5,7 @@ import configparser
 from datetime import datetime
 import base64
 import tempfile
+import platform
 from asn1crypto import cms, util
 
 class P7MConverter:
@@ -150,6 +151,32 @@ class P7MConverter:
 
         return converted_count, error_count
 
+def find_openssl():
+    """Trova il percorso di OpenSSL in modo cross-platform."""
+    if platform.system() == 'Windows':
+        possible_paths = [
+            r'C:\Program Files\OpenSSL-Win64\bin\openssl.exe',
+            r'C:\Program Files (x86)\OpenSSL-Win32\bin\openssl.exe',
+            r'C:\OpenSSL-Win64\bin\openssl.exe',
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+    else:
+        # Linux/Mac: cerca nel PATH
+        openssl = shutil.which('openssl')
+        if openssl:
+            return openssl
+        # Percorsi comuni Linux
+        possible_paths = [
+            '/usr/bin/openssl',
+            '/usr/local/bin/openssl',
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+    return None
+
 def main():
     try:
         import sys
@@ -160,10 +187,20 @@ def main():
         cartella_emesse = get_cartella_emesse()
         cartella_ricevute = get_cartella_ricevute()
         
-        # openssl_path non è nella tabella parametri, lo leggiamo ancora da config.ini se necessario
+        # Trova OpenSSL in modo cross-platform
         config = configparser.ConfigParser()
         config.read('config.ini')
-        openssl_path = config.get('Parametri', 'openssl_path', fallback=r'C:\Program Files\OpenSSL-Win64\bin\openssl')
+        
+        # Prova prima dal config, poi cerca automaticamente
+        openssl_path = config.get('Parametri', 'openssl_path', fallback=None)
+        if not openssl_path or not os.path.exists(openssl_path):
+            openssl_path = find_openssl()
+        
+        if not openssl_path:
+            print("ERRORE: OpenSSL non trovato!")
+            print("Windows: Installa OpenSSL e configura il percorso in config.ini")
+            print("Linux: sudo apt-get install openssl")
+            return
         
         print("\nConvertitore P7M -> XML")
         print("-" * 50)

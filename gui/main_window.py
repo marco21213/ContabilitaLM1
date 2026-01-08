@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import os
 import sys
 import logging
+import platform
 from typing import Dict, Any, Optional, Callable
 
 # Aggiungi la directory radice del progetto al path
@@ -113,8 +114,19 @@ class MainWindow:
         self.root.title("Contabilità 3B")
         self.root.configure(bg=Style.BACKGROUND_COLOR)
         
-        # Imposta dimensioni responsive
-        self.root.state('zoomed')
+        # Imposta dimensioni responsive (cross-platform)
+        if platform.system() == 'Windows':
+            self.root.state('zoomed')
+        else:
+            # Linux/Mac: massimizza la finestra usando geometry (metodo più affidabile)
+            self.root.update_idletasks()
+            # Ottieni le dimensioni dello schermo
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            # Imposta la finestra a schermo intero
+            self.root.geometry(f'{screen_width}x{screen_height}+0+0')
+            # Rimuovi i bordi della finestra per un effetto fullscreen (opzionale)
+            # self.root.overrideredirect(True)  # decommentare se si vuole fullscreen senza barra
         self.root.minsize(1024, 768)
         
         self.current_page: Optional[tk.Widget] = None

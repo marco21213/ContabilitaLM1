@@ -44,7 +44,11 @@ class ConfigWindow:
         # Centra la finestra
         self.center_window()
         
-        self.config_file = "config.ini"
+        # Determina il percorso assoluto del file config.ini
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        self.config_file = os.path.join(project_root, "config.ini")
+        
         self.config = configparser.ConfigParser()
         self.create_widgets()
         self.load_settings()
@@ -498,8 +502,24 @@ class ConfigWindow:
             self.config.set('Backup', 'automatico', str(self.auto_backup.get()))
             
             # Salva sul file
-            with open(self.config_file, 'w', encoding='utf-8') as configfile:
-                self.config.write(configfile)
+            try:
+                # Assicurati che la directory esista
+                config_dir = os.path.dirname(self.config_file)
+                if config_dir and not os.path.exists(config_dir):
+                    os.makedirs(config_dir, exist_ok=True)
+                
+                with open(self.config_file, 'w', encoding='utf-8') as configfile:
+                    self.config.write(configfile)
+                logger.info(f"Configurazione salvata in: {self.config_file}")
+                messagebox.showinfo("Successo", "Configurazione salvata con successo!")
+            except PermissionError as e:
+                logger.error(f"Errore permessi nel salvataggio config: {e}")
+                messagebox.showerror("Errore", f"Impossibile salvare la configurazione: permessi negati.\n{self.config_file}")
+                return
+            except Exception as e:
+                logger.error(f"Errore nel salvataggio config: {e}")
+                messagebox.showerror("Errore", f"Errore nel salvataggio della configurazione: {e}")
+                return
 
             # Aggiorna parametri AdE nel database
             try:

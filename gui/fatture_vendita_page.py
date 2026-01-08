@@ -10,6 +10,8 @@ import webbrowser
 from datetime import datetime
 from lxml import etree
 import glob
+import platform
+import shutil
 
 # Aggiungi il percorso per importare lo stile
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets', 'style'))
@@ -45,6 +47,63 @@ except ImportError as e:
             return None
         def get_xml_files(self):
             return []
+
+def find_wkhtmltopdf():
+    """Trova il percorso di wkhtmltopdf in modo cross-platform."""
+    if platform.system() == 'Windows':
+        possible_paths = [
+            r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe',
+            r'C:\Program Files (x86)\wkhtmltopdf\bin\wkhtmltopdf.exe',
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+    else:
+        wkhtmltopdf = shutil.which('wkhtmltopdf')
+        if wkhtmltopdf:
+            return wkhtmltopdf
+        possible_paths = [
+            '/usr/bin/wkhtmltopdf',
+            '/usr/local/bin/wkhtmltopdf',
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+    return None
+
+def print_pdf_crossplatform(pdf_path):
+    """Stampa un PDF in modo cross-platform."""
+    try:
+        if platform.system() == 'Windows':
+            try:
+                import win32api
+                import win32print
+                printer_name = win32print.GetDefaultPrinter()
+                win32api.ShellExecute(0, "print", pdf_path, None, ".", 0)
+                return printer_name
+            except ImportError:
+                subprocess.run(['start', pdf_path], shell=True)
+                return "Stampante predefinita"
+        elif platform.system() == 'Darwin':  # macOS
+            subprocess.Popen(['lpr', pdf_path])
+            return "Stampante predefinita"
+        else:  # Linux
+            subprocess.Popen(['lp', pdf_path])
+            return "Stampante predefinita"
+    except Exception as e:
+        raise Exception(f"Errore durante la stampa: {e}")
+
+def open_file_crossplatform(file_path):
+    """Apre un file in modo cross-platform."""
+    try:
+        if platform.system() == 'Windows':
+            os.startfile(file_path)
+        elif platform.system() == 'Darwin':  # macOS
+            subprocess.Popen(['open', file_path])
+        else:  # Linux
+            subprocess.Popen(['xdg-open', file_path])
+    except Exception as e:
+        raise Exception(f"Impossibile aprire il file: {e}")
 
 class VenditeMensiliPage(tk.Frame):
     def __init__(self, parent):
@@ -497,10 +556,10 @@ class VenditeMensiliPage(tk.Frame):
             return
         
         try:
-            # Verifica se wkhtmltopdf è disponibile
-            wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+            # Trova wkhtmltopdf in modo cross-platform
+            wkhtmltopdf_path = find_wkhtmltopdf()
             
-            if not os.path.exists(wkhtmltopdf_path):
+            if not wkhtmltopdf_path:
                 # Fallback: apri nel browser per stampa manuale
                 messagebox.showinfo("Info", "wkhtmltopdf non trovato. Apertura nel browser per stampa manuale.")
                 self.print_invoice_browser()
@@ -511,7 +570,7 @@ class VenditeMensiliPage(tk.Frame):
                 import pdfkit
                 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
             except ImportError:
-                messagebox.showerror("Errore", "Libreria pdfkit non installada. Apertura nel browser.")
+                messagebox.showerror("Errore", "Libreria pdfkit non installata. Apertura nel browser.")
                 self.print_invoice_browser()
                 return
             
@@ -545,20 +604,13 @@ class VenditeMensiliPage(tk.Frame):
                 'no-outline': None
             })
             
-            # Stampa il PDF
+            # Stampa il PDF in modo cross-platform
             try:
-                import win32api
-                import win32print
-                
-                printer_name = win32print.GetDefaultPrinter()
-                win32api.ShellExecute(0, "print", temp_pdf_path, None, ".", 0)
-                
+                printer_name = print_pdf_crossplatform(temp_pdf_path)
                 messagebox.showinfo("Stampa", f"Fattura inviata alla stampante: {printer_name}")
-                
-            except ImportError:
-                # Se win32api non è disponibile, apri il PDF per stampa manuale
-                import subprocess
-                subprocess.run(['start', temp_pdf_path], shell=True)
+            except Exception as e:
+                # Se la stampa diretta fallisce, apri il PDF per stampa manuale
+                open_file_crossplatform(temp_pdf_path)
                 messagebox.showinfo("Stampa", "PDF aperto. Utilizzare Ctrl+P per stampare.")
             
             # Programma la rimozione del file temporaneo

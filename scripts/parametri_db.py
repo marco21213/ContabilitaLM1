@@ -8,24 +8,44 @@ def get_db_path(config_path: str = "config.ini") -> str:
     """
     Legge il percorso del database dalla sezione [Autenticazione] di config.ini.
     Resta il solo utilizzo di config.ini per la connessione al database.
+    Gestisce percorsi cross-platform e crea la directory se necessario.
     """
     config = configparser.ConfigParser()
     config.read(config_path, encoding="utf-8")
 
     if "Autenticazione" not in config or "percorso_database" not in config["Autenticazione"]:
         # Fallback minimale: database nella cartella del progetto
-        return str(Path("database.db").resolve())
-
-    db_path = config.get("Autenticazione", "percorso_database", fallback="database.db")
-    return db_path
+        db_path = Path("database.db").resolve()
+    else:
+        db_path_str = config.get("Autenticazione", "percorso_database", fallback="database.db")
+        db_path = Path(db_path_str).expanduser()
+        
+        # Se il percorso è relativo, risolvilo rispetto alla root del progetto
+        if not db_path.is_absolute():
+            project_root = Path(config_path).resolve().parent
+            db_path = project_root / db_path
+        else:
+            db_path = db_path.resolve()
+    
+    # Crea la directory se non esiste
+    db_dir = db_path.parent
+    if not db_dir.exists():
+        db_dir.mkdir(parents=True, exist_ok=True)
+    
+    return str(db_path)
 
 
 def _open_connection(config_path: str = "config.ini") -> sqlite3.Connection:
-    """Restituisce una connessione SQLite aperta usando il percorso del DB da config.ini."""
+    """Restituisce una connessione SQLite aperta usando il percorso del DB da config.ini.
+    Crea automaticamente la directory e il database se non esistono.
+    """
     db_path = get_db_path(config_path)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.Error as e:
+        raise sqlite3.Error(f"Impossibile aprire il database {db_path}: {e}")
 
 
 def carica_parametri(config_path: str = "config.ini") -> sqlite3.Row:

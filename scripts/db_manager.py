@@ -24,7 +24,24 @@ def _read_config(config_path: Optional[str|os.PathLike]=None) -> configparser.Co
 
 def get_connection(config_path: Optional[str|os.PathLike]=None) -> sqlite3.Connection:
     cfg = _read_config(config_path)
-    db_path = Path(cfg["Autenticazione"]["percorso_database"]).expanduser().resolve()
+    db_path_str = cfg["Autenticazione"]["percorso_database"]
+    
+    # Gestisci percorsi cross-platform
+    db_path = Path(db_path_str).expanduser()
+    
+    # Se il percorso è relativo, risolvilo rispetto alla root del progetto
+    if not db_path.is_absolute():
+        project_root = Path(__file__).resolve().parents[1]
+        db_path = project_root / db_path
+    
+    db_path = db_path.resolve()
+    
+    # Crea la directory se non esiste
+    db_dir = db_path.parent
+    if not db_dir.exists():
+        db_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Connetti al database (SQLite lo crea automaticamente se non esiste)
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     return conn
