@@ -16,9 +16,13 @@ else
 fi
 
 # Verifica che le dipendenze siano installate
-python3 -c "import PIL, tkcalendar" 2>/dev/null || {
+python3 -c "import PIL, tkcalendar, requests" 2>/dev/null || {
     echo "Installazione dipendenze mancanti..."
-    pip install -r requirements.txt 2>/dev/null || pip install tkcalendar pillow reportlab lxml tkinterweb pdfkit asn1crypto
+    if [ -f "requirements.txt" ]; then
+        pip install -r requirements.txt
+    else
+        pip install tkcalendar pillow reportlab lxml tkinterweb pdfkit asn1crypto requests pytz clint tqdm
+    fi
 }
 
 # Avvia l'applicazione
