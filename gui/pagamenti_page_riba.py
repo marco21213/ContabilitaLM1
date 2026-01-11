@@ -176,6 +176,7 @@ class RibaTab(tk.Frame):
             
             # Query che parte da scadenze per mostrare tutte le scadenze con tipo_pagamento = 'RIBA'
             # anche se non hanno ancora una riga in riba
+            # Filtra solo i clienti (le RiBa sono utilizzate solo per i clienti)
             query = f"""
                 SELECT {', '.join(select_parts)}
                 FROM scadenze sc
@@ -184,6 +185,7 @@ class RibaTab(tk.Frame):
                 LEFT JOIN riba r ON r.scadenza_id = sc.id
                 LEFT JOIN distinte_riba di ON r.distinta_id = di.id
                 WHERE sc.tipo_pagamento = 'RIBA'
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                 ORDER BY sc.data_scadenza DESC
             """
             
@@ -1008,6 +1010,7 @@ class RibaTab(tk.Frame):
             
             # Query che parte da scadenze per trovare tutte le scadenze con tipo_pagamento = 'RIBA'
             # e che non hanno ancora una riga in riba o hanno una riga con stato 'Da emettere' non assegnata a distinta
+            # Filtra solo i clienti (le RiBa sono utilizzate solo per i clienti)
             cur.execute("""
                 SELECT 
                     COALESCE(r.id, sc.id) AS riba_id,
@@ -1024,6 +1027,7 @@ class RibaTab(tk.Frame):
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
                 LEFT JOIN riba r ON r.scadenza_id = sc.id
                 WHERE sc.tipo_pagamento = 'RIBA'
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                   AND (
                       r.id IS NULL 
                       OR (r.stato = 'Da emettere' AND (r.distinta_id IS NULL OR r.distinta_id = 0))
@@ -1872,7 +1876,9 @@ class RibaTab(tk.Frame):
                     LEFT JOIN scadenze sc ON r.scadenza_id = sc.id
                     LEFT JOIN documenti d ON sc.id_documento = d.id
                     LEFT JOIN soggetti s ON d.soggetto_id = s.id
-                    WHERE r.stato = 'Da emettere' AND (r.distinta_id IS NULL OR r.distinta_id = 0)
+                    WHERE r.stato = 'Da emettere' 
+                      AND (r.distinta_id IS NULL OR r.distinta_id = 0)
+                      AND LOWER(s.tipo_soggetto) = 'cliente'
                     ORDER BY sc.data_scadenza
                 """)
                 rows_riba = cur_riba.fetchall()
@@ -2106,6 +2112,7 @@ class RibaTab(tk.Frame):
                     LEFT JOIN documenti d ON sc.id_documento = d.id
                     LEFT JOIN soggetti s ON d.soggetto_id = s.id
                     WHERE r.distinta_id = ?
+                      AND LOWER(s.tipo_soggetto) = 'cliente'
                     ORDER BY sc.data_scadenza
                 """, (distinta_id,))
                 rows = cur.fetchall()
@@ -2533,6 +2540,7 @@ class RibaTab(tk.Frame):
                 LEFT JOIN documenti d ON sc.id_documento = d.id
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
                 WHERE r.distinta_id = ?
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                 ORDER BY sc.data_scadenza
             """, (distinta_id,))
             rows = cur.fetchall(); conn.close()

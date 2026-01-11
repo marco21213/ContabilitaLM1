@@ -94,6 +94,11 @@ class ConfigWindow:
         notebook.add(backup_frame, text="Backup")
         self.create_backup_tab(backup_frame)
         
+        # Scheda Email
+        email_frame = ttk.Frame(notebook, padding="10")
+        notebook.add(email_frame, text="Email")
+        self.create_email_tab(email_frame)
+        
         # Pulsanti di azione
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill='x', pady=(20, 0))
@@ -316,45 +321,199 @@ class ConfigWindow:
     
     def create_backup_tab(self, parent: ttk.Frame) -> None:
         """Crea la scheda per le impostazioni di backup"""
-        # Cartella backup
-        ttk.Label(parent, text="Cartella backup:").grid(row=0, column=0, sticky='w', pady=5)
+        # Frame scrollabile per contenere tutte le opzioni
+        canvas = tk.Canvas(parent)
+        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
         
-        backup_frame = ttk.Frame(parent)
-        backup_frame.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
         
-        self.backup_folder = ttk.Entry(backup_frame, width=30)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        row = 0
+        
+        # === BACKUP LOCALE ===
+        ttk.Label(scrollable_frame, text="Backup Locale", font=("Arial", 12, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky='w', pady=(10, 5)
+        )
+        row += 1
+        
+        # Cartella backup locale
+        ttk.Label(scrollable_frame, text="Cartella backup locale:").grid(row=row, column=0, sticky='w', pady=5)
+        backup_frame = ttk.Frame(scrollable_frame)
+        backup_frame.grid(row=row, column=1, padx=5, pady=5, sticky='ew')
+        self.backup_folder = ttk.Entry(backup_frame, width=40)
         self.backup_folder.pack(side='left', fill='x', expand=True)
-        
         ttk.Button(
             backup_frame, 
             text="Sfoglia...", 
             command=lambda: self.browse_folder(self.backup_folder, "Seleziona cartella backup")
         ).pack(side='right', padx=(5, 0))
+        row += 1
         
         # Mantieni backup per
-        ttk.Label(parent, text="Mantieni backup per (giorni):").grid(row=1, column=0, sticky='w', pady=5)
-        self.keep_backup_days = ttk.Spinbox(
-            parent, 
-            from_=1, 
-            to=365, 
-            width=5
+        ttk.Label(scrollable_frame, text="Mantieni backup per (giorni):").grid(row=row, column=0, sticky='w', pady=5)
+        self.keep_backup_days = ttk.Spinbox(scrollable_frame, from_=1, to=365, width=5)
+        self.keep_backup_days.grid(row=row, column=1, padx=5, pady=5, sticky='w')
+        row += 1
+        
+        # Separatore
+        ttk.Separator(scrollable_frame, orient='horizontal').grid(
+            row=row, column=0, columnspan=2, sticky='ew', pady=15
         )
-        self.keep_backup_days.grid(row=1, column=1, padx=5, pady=5, sticky='w')
+        row += 1
         
-        # Backup automatico
-        self.auto_backup = tk.BooleanVar()
+        # === DROPBOX ===
+        ttk.Label(scrollable_frame, text="Backup Cloud (Dropbox)", font=("Arial", 12, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky='w', pady=(10, 5)
+        )
+        row += 1
+        
+        # Abilita Dropbox
+        self.dropbox_enabled = tk.BooleanVar()
         ttk.Checkbutton(
-            parent, 
-            text="Backup automatico giornaliero", 
-            variable=self.auto_backup
-        ).grid(row=2, column=0, columnspan=2, sticky='w', pady=5)
+            scrollable_frame, 
+            text="Abilita backup su Dropbox", 
+            variable=self.dropbox_enabled,
+            command=self.toggle_dropbox_fields
+        ).grid(row=row, column=0, columnspan=2, sticky='w', pady=5)
+        row += 1
         
+        # Dropbox Access Token
+        ttk.Label(scrollable_frame, text="Dropbox Access Token:").grid(row=row, column=0, sticky='w', pady=5)
+        dropbox_token_frame = ttk.Frame(scrollable_frame)
+        dropbox_token_frame.grid(row=row, column=1, padx=5, pady=5, sticky='ew')
+        self.dropbox_token = ttk.Entry(dropbox_token_frame, width=40, show='*')
+        self.dropbox_token.pack(side='left', fill='x', expand=True)
+        ttk.Button(
+            dropbox_token_frame,
+            text="Info",
+            command=self.show_dropbox_info
+        ).pack(side='right', padx=(5, 0))
+        row += 1
+        
+        # Dropbox Folder
+        ttk.Label(scrollable_frame, text="Cartella Dropbox:").grid(row=row, column=0, sticky='w', pady=5)
+        self.dropbox_folder = ttk.Entry(scrollable_frame, width=40)
+        self.dropbox_folder.grid(row=row, column=1, padx=5, pady=5, sticky='ew')
+        row += 1
+        
+        # Separatore
+        ttk.Separator(scrollable_frame, orient='horizontal').grid(
+            row=row, column=0, columnspan=2, sticky='ew', pady=15
+        )
+        row += 1
+        
+        # === MODALITÀ BACKUP ===
+        ttk.Label(scrollable_frame, text="Modalità Backup", font=("Arial", 12, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky='w', pady=(10, 5)
+        )
+        row += 1
+        
+        # Backup alla chiusura
+        self.backup_on_close = tk.BooleanVar()
+        ttk.Checkbutton(
+            scrollable_frame, 
+            text="Backup automatico alla chiusura dell'applicazione", 
+            variable=self.backup_on_close
+        ).grid(row=row, column=0, columnspan=2, sticky='w', pady=5)
+        row += 1
+        
+        # Backup schedulato
+        self.backup_scheduled = tk.BooleanVar()
+        schedule_frame = ttk.Frame(scrollable_frame)
+        schedule_frame.grid(row=row, column=0, columnspan=2, sticky='w', pady=5)
+        ttk.Checkbutton(
+            schedule_frame, 
+            text="Backup schedulato giornaliero alle:", 
+            variable=self.backup_scheduled
+        ).pack(side='left')
+        self.backup_schedule_time = ttk.Entry(schedule_frame, width=8)
+        self.backup_schedule_time.insert(0, "02:00")
+        self.backup_schedule_time.pack(side='left', padx=5)
+        ttk.Label(schedule_frame, text="(formato HH:MM)").pack(side='left', padx=5)
+        row += 1
+        
+        # Separatore
+        ttk.Separator(scrollable_frame, orient='horizontal').grid(
+            row=row, column=0, columnspan=2, sticky='ew', pady=15
+        )
+        row += 1
+        
+        # === AZIONI ===
         # Esegui backup ora
         ttk.Button(
-            parent, 
-            text="Esegui Backup Ora", 
+            scrollable_frame, 
+            text="🔄 Esegui Backup Ora", 
             command=self.execute_backup
-        ).grid(row=3, column=0, columnspan=2, pady=10)
+        ).grid(row=row, column=0, columnspan=2, pady=10)
+        row += 1
+        
+        # Lista backup
+        ttk.Button(
+            scrollable_frame,
+            text="📋 Visualizza Backup",
+            command=self.show_backup_list
+        ).grid(row=row, column=0, columnspan=2, pady=5)
+        
+        scrollable_frame.columnconfigure(1, weight=1)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        parent.columnconfigure(0, weight=1)
+    
+    def create_email_tab(self, parent: ttk.Frame) -> None:
+        """Crea la scheda per le impostazioni email"""
+        row = 0
+        
+        ttk.Label(parent, text="Configurazione Email", font=("Arial", 12, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky="w", pady=(0, 15)
+        )
+        row += 1
+        
+        # SMTP Server
+        ttk.Label(parent, text="SMTP Server:").grid(row=row, column=0, sticky="w", pady=5)
+        self.smtp_server_entry = ttk.Entry(parent, width=40)
+        self.smtp_server_entry.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+        row += 1
+        
+        # SMTP Porta
+        ttk.Label(parent, text="SMTP Porta:").grid(row=row, column=0, sticky="w", pady=5)
+        self.smtp_port_entry = ttk.Entry(parent, width=40)
+        self.smtp_port_entry.insert(0, "587")  # Default per TLS
+        self.smtp_port_entry.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+        row += 1
+        
+        # Email Mittente
+        ttk.Label(parent, text="Email Mittente:").grid(row=row, column=0, sticky="w", pady=5)
+        self.email_mittente_entry = ttk.Entry(parent, width=40)
+        self.email_mittente_entry.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+        row += 1
+        
+        # Password Email
+        ttk.Label(parent, text="Password Email:").grid(row=row, column=0, sticky="w", pady=5)
+        self.email_password_entry = ttk.Entry(parent, width=40, show="*")
+        self.email_password_entry.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+        row += 1
+        
+        # Email Destinatario Default
+        ttk.Label(parent, text="Email Destinatario Default:").grid(row=row, column=0, sticky="w", pady=5)
+        self.email_destinatario_entry = ttk.Entry(parent, width=40)
+        self.email_destinatario_entry.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+        row += 1
+        
+        # Note informative
+        info_text = (
+            "Nota: Per Gmail, usa 'smtp.gmail.com' porta 587 con TLS.\n"
+            "Potrebbe essere necessario generare una 'Password per app' nelle impostazioni Google."
+        )
+        ttk.Label(parent, text=info_text, font=("Arial", 9), foreground="gray", 
+                 wraplength=400, justify="left").grid(
+            row=row, column=0, columnspan=2, sticky="w", pady=(15, 5)
+        )
         
         parent.columnconfigure(1, weight=1)
     
@@ -456,9 +615,38 @@ class ConfigWindow:
                 logger.error(f"Errore nel caricamento dei parametri AdE dal database: {e}")
             
             # Backup (se esiste la sezione)
-            self.backup_folder.insert(0, self.config.get('Backup', 'cartella', fallback='C:/backup/contabilita'))
+            self.backup_folder.insert(0, self.config.get('Backup', 'cartella', fallback=''))
             self.keep_backup_days.set(self.config.get('Backup', 'giorni_ritenzione', fallback='30'))
-            self.auto_backup.set(self.config.getboolean('Backup', 'automatico', fallback=True))
+            
+            # Dropbox
+            if hasattr(self, 'dropbox_enabled'):
+                self.dropbox_enabled.set(self.config.getboolean('Backup', 'dropbox_enabled', fallback=False))
+                self.dropbox_token.insert(0, self.config.get('Backup', 'dropbox_token', fallback=''))
+                self.dropbox_folder.insert(0, self.config.get('Backup', 'dropbox_folder', fallback='/ContabilitaLM1/backup'))
+            
+            # Modalità backup
+            if hasattr(self, 'backup_on_close'):
+                self.backup_on_close.set(self.config.getboolean('Backup', 'backup_on_close', fallback=False))
+                self.backup_scheduled.set(self.config.getboolean('Backup', 'backup_scheduled', fallback=False))
+                schedule_time = self.config.get('Backup', 'backup_schedule_time', fallback='02:00')
+                if hasattr(self, 'backup_schedule_time'):
+                    self.backup_schedule_time.delete(0, tk.END)
+                    self.backup_schedule_time.insert(0, schedule_time)
+            
+            # Aggiorna stato campi Dropbox
+            if hasattr(self, 'dropbox_enabled'):
+                self.toggle_dropbox_fields()
+            
+            # Email
+            if hasattr(self, 'smtp_server_entry'):
+                self.smtp_server_entry.insert(0, self.config.get('Email', 'smtp_server', fallback=''))
+                port = self.config.get('Email', 'smtp_port', fallback='587')
+                if port:
+                    self.smtp_port_entry.delete(0, tk.END)
+                    self.smtp_port_entry.insert(0, port)
+                self.email_mittente_entry.insert(0, self.config.get('Email', 'email_mittente', fallback=''))
+                self.email_password_entry.insert(0, self.config.get('Email', 'email_password', fallback=''))
+                self.email_destinatario_entry.insert(0, self.config.get('Email', 'email_destinatario', fallback=''))
             
         except Exception as e:
             logger.error(f"Errore nel caricamento delle impostazioni: {e}")
@@ -472,6 +660,8 @@ class ConfigWindow:
                 self.config.add_section('Autenticazione')
             if not self.config.has_section('Backup'):
                 self.config.add_section('Backup')
+            if not self.config.has_section('Email'):
+                self.config.add_section('Email')
             
             # Autenticazione
             self.config.set('Autenticazione', 'percorso_database', self.db_entry.get())
@@ -499,7 +689,27 @@ class ConfigWindow:
             # Backup
             self.config.set('Backup', 'cartella', self.backup_folder.get())
             self.config.set('Backup', 'giorni_ritenzione', self.keep_backup_days.get())
-            self.config.set('Backup', 'automatico', str(self.auto_backup.get()))
+            
+            # Dropbox
+            if hasattr(self, 'dropbox_enabled'):
+                self.config.set('Backup', 'dropbox_enabled', str(self.dropbox_enabled.get()))
+                self.config.set('Backup', 'dropbox_token', self.dropbox_token.get())
+                self.config.set('Backup', 'dropbox_folder', self.dropbox_folder.get())
+            
+            # Modalità backup
+            if hasattr(self, 'backup_on_close'):
+                self.config.set('Backup', 'backup_on_close', str(self.backup_on_close.get()))
+                self.config.set('Backup', 'backup_scheduled', str(self.backup_scheduled.get()))
+                self.config.set('Backup', 'backup_schedule_time', self.backup_schedule_time.get())
+            
+            # Email
+            if not self.config.has_section('Email'):
+                self.config.add_section('Email')
+            self.config.set('Email', 'smtp_server', self.smtp_server_entry.get().strip())
+            self.config.set('Email', 'smtp_port', self.smtp_port_entry.get().strip())
+            self.config.set('Email', 'email_mittente', self.email_mittente_entry.get().strip())
+            self.config.set('Email', 'email_password', self.email_password_entry.get().strip())
+            self.config.set('Email', 'email_destinatario', self.email_destinatario_entry.get().strip())
             
             # Salva sul file
             try:
@@ -584,7 +794,21 @@ class ConfigWindow:
                 self.import_rapido_entry.insert(0, default_import_rapido)
                 self.backup_folder.insert(0, default_backup)
                 self.keep_backup_days.set("30")
-                self.auto_backup.set(True)
+                
+                # Reset opzioni Dropbox
+                if hasattr(self, 'dropbox_enabled'):
+                    self.dropbox_enabled.set(False)
+                    self.dropbox_token.delete(0, tk.END)
+                    self.dropbox_folder.delete(0, tk.END)
+                    self.dropbox_folder.insert(0, '/ContabilitaLM1/backup')
+                    self.toggle_dropbox_fields()
+                
+                # Reset modalità backup
+                if hasattr(self, 'backup_on_close'):
+                    self.backup_on_close.set(False)
+                    self.backup_scheduled.set(False)
+                    self.backup_schedule_time.delete(0, tk.END)
+                    self.backup_schedule_time.insert(0, '02:00')
                 
                 messagebox.showinfo("Successo", "Impostazioni predefinite ripristinate!")
                 
@@ -611,34 +835,146 @@ class ConfigWindow:
     
     def execute_backup(self) -> None:
         """Esegue un backup manuale"""
-        # Qui implementeresti la logica di backup reale
-        db_path = self.db_entry.get()
-        backup_path = self.backup_folder.get()
-        
-        if not db_path or not backup_path:
-            messagebox.showerror("Errore", "Specificare il percorso del database e della cartella di backup!")
-            return
-            
         try:
-            # Simulazione backup (sostituire con logica reale)
-            import shutil
-            import datetime
+            import sys
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from scripts.backup_manager import BackupManager
             
-            if not os.path.exists(backup_path):
-                os.makedirs(backup_path)
+            # Salva le impostazioni prima di eseguire il backup
+            self.save_settings()
             
-            backup_file = os.path.join(
-                backup_path, 
-                f"backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-            )
+            # Crea il manager
+            manager = BackupManager(self.config_file)
             
-            # Copia il file database (simulazione)
-            if os.path.exists(db_path):
-                shutil.copy2(db_path, backup_file)
-                messagebox.showinfo("Backup", f"Backup eseguito correttamente!\nFile: {backup_file}")
+            # Mostra progresso
+            progress_window = tk.Toplevel(self.window)
+            progress_window.title("Backup in corso...")
+            progress_window.geometry("400x100")
+            progress_label = tk.Label(progress_window, text="Creazione backup in corso...", font=("Arial", 10))
+            progress_label.pack(pady=20)
+            progress_window.update()
+            
+            # Esegui backup
+            upload_to_dropbox = hasattr(self, 'dropbox_enabled') and self.dropbox_enabled.get()
+            success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=upload_to_dropbox)
+            
+            progress_window.destroy()
+            
+            if success:
+                msg = "Backup eseguito con successo!\n\n"
+                if local_path:
+                    msg += f"Locale: {local_path}\n"
+                if dropbox_path:
+                    msg += f"Dropbox: {dropbox_path}\n"
+                else:
+                    # Controlla se Dropbox era abilitato ma non è riuscito
+                    if upload_to_dropbox:
+                        msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
+                messagebox.showinfo("Backup Completato", msg)
             else:
-                messagebox.showerror("Errore", f"File database non trovato: {db_path}")
+                messagebox.showerror("Errore", "Errore durante la creazione del backup")
                 
         except Exception as e:
             logger.error(f"Errore nell'esecuzione del backup: {e}")
             messagebox.showerror("Errore", f"Errore durante il backup: {e}")
+    
+    def toggle_dropbox_fields(self) -> None:
+        """Abilita/disabilita i campi Dropbox in base al checkbox"""
+        enabled = self.dropbox_enabled.get() if hasattr(self, 'dropbox_enabled') else False
+        if hasattr(self, 'dropbox_token'):
+            self.dropbox_token.config(state='normal' if enabled else 'disabled')
+        if hasattr(self, 'dropbox_folder'):
+            self.dropbox_folder.config(state='normal' if enabled else 'disabled')
+    
+    def show_dropbox_info(self) -> None:
+        """Mostra informazioni su come ottenere il token Dropbox"""
+        info_text = """Come configurare Dropbox per i backup:
+
+1. Vai su https://www.dropbox.com/developers/apps
+2. Clicca su "Create app"
+3. Configura l'app:
+   - App name: scegli un nome (es. "ContabilitaLM1 Backup")
+   - Type of access: "Full Dropbox"
+   - App folder: lascia vuoto o scegli una cartella
+4. IMPORTANTE - Vai alla scheda "Permissions":
+   - Abilita "files.content.write" (obbligatorio per upload)
+   - Abilita "files.content.read" (opzionale, per download)
+   - Salva le modifiche
+5. Vai alla scheda "Settings" → "Generate access token"
+6. Copia il token generato e incollalo qui
+
+⚠️ IMPORTANTE: Se ricevi errori di permessi, verifica che lo scope 
+'files.content.write' sia abilitato nella scheda Permissions dell'app.
+
+NOTA: Il token è sensibile, tienilo al sicuro!"""
+        messagebox.showinfo("Informazioni Dropbox Token", info_text)
+    
+    def show_backup_list(self) -> None:
+        """Mostra la lista dei backup disponibili"""
+        try:
+            import sys
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            from scripts.backup_manager import BackupManager
+            
+            manager = BackupManager(self.config_file)
+            local_backups, dropbox_backups = manager.list_backups()
+            
+            # Crea finestra per visualizzare i backup
+            list_window = tk.Toplevel(self.window)
+            list_window.title("Lista Backup")
+            list_window.geometry("700x500")
+            
+            # Notebook per separare backup locali e Dropbox
+            notebook = ttk.Notebook(list_window)
+            notebook.pack(fill='both', expand=True, padx=10, pady=10)
+            
+            # Tab backup locali
+            local_frame = ttk.Frame(notebook)
+            notebook.add(local_frame, text=f"Backup Locali ({len(local_backups)})")
+            
+            local_tree = ttk.Treeview(local_frame, columns=('Data', 'Dimensione'), show='tree headings', height=15)
+            local_tree.heading('#0', text='Nome File')
+            local_tree.heading('Data', text='Data')
+            local_tree.heading('Dimensione', text='Dimensione')
+            local_tree.column('#0', width=300)
+            local_tree.column('Data', width=150)
+            local_tree.column('Dimensione', width=100)
+            
+            for backup in local_backups:
+                size_mb = backup['size'] / (1024 * 1024)
+                local_tree.insert('', 'end', text=backup['name'], 
+                                values=(backup['date'].strftime('%Y-%m-%d %H:%M:%S'), 
+                                       f"{size_mb:.2f} MB"))
+            
+            local_scrollbar = ttk.Scrollbar(local_frame, orient='vertical', command=local_tree.yview)
+            local_tree.configure(yscrollcommand=local_scrollbar.set)
+            local_tree.pack(side='left', fill='both', expand=True)
+            local_scrollbar.pack(side='right', fill='y')
+            
+            # Tab backup Dropbox
+            dropbox_frame = ttk.Frame(notebook)
+            notebook.add(dropbox_frame, text=f"Backup Dropbox ({len(dropbox_backups)})")
+            
+            dropbox_tree = ttk.Treeview(dropbox_frame, columns=('Data', 'Dimensione'), show='tree headings', height=15)
+            dropbox_tree.heading('#0', text='Nome File')
+            dropbox_tree.heading('Data', text='Data')
+            dropbox_tree.heading('Dimensione', text='Dimensione')
+            dropbox_tree.column('#0', width=300)
+            dropbox_tree.column('Data', width=150)
+            dropbox_tree.column('Dimensione', width=100)
+            
+            for backup in dropbox_backups:
+                size_mb = backup['size'] / (1024 * 1024)
+                from datetime import datetime as dt
+                date_str = backup['date'].strftime('%Y-%m-%d %H:%M:%S') if isinstance(backup['date'], dt) else str(backup['date'])
+                dropbox_tree.insert('', 'end', text=backup['name'], 
+                                  values=(date_str, f"{size_mb:.2f} MB"))
+            
+            dropbox_scrollbar = ttk.Scrollbar(dropbox_frame, orient='vertical', command=dropbox_tree.yview)
+            dropbox_tree.configure(yscrollcommand=dropbox_scrollbar.set)
+            dropbox_tree.pack(side='left', fill='both', expand=True)
+            dropbox_scrollbar.pack(side='right', fill='y')
+            
+        except Exception as e:
+            logger.error(f"Errore visualizzazione backup: {e}")
+            messagebox.showerror("Errore", f"Errore nel caricamento dei backup: {e}")

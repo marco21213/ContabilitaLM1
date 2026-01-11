@@ -675,6 +675,7 @@ class DistinteRibaTab(tk.Frame):
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
                 LEFT JOIN riba r ON r.scadenza_id = sc.id
                 WHERE sc.tipo_pagamento = 'RIBA'
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                   AND (
                       r.id IS NULL 
                       OR (r.stato = 'Da emettere' AND (r.distinta_id IS NULL OR r.distinta_id = 0))
@@ -1346,6 +1347,7 @@ class DistinteRibaTab(tk.Frame):
                 LEFT JOIN documenti d ON sc.id_documento = d.id
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
                 WHERE r.distinta_id = ?
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                 ORDER BY sc.data_scadenza
             """, (distinta_id,))
             rows = cur.fetchall()
@@ -1608,6 +1610,7 @@ class DistinteRibaTab(tk.Frame):
                 LEFT JOIN documenti d ON sc.id_documento = d.id
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
                 WHERE r.distinta_id = ?
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                 ORDER BY sc.data_scadenza
             """, (distinta_id,))
             rows_riba_nella_distinta = cur_riba.fetchall()
@@ -1626,6 +1629,7 @@ class DistinteRibaTab(tk.Frame):
                 LEFT JOIN soggetti s ON d.soggetto_id = s.id
                 LEFT JOIN riba r ON r.scadenza_id = sc.id
                 WHERE sc.tipo_pagamento = 'RIBA'
+                  AND LOWER(s.tipo_soggetto) = 'cliente'
                   AND (
                       r.id IS NULL 
                       OR (r.stato = 'Da emettere' AND (r.distinta_id IS NULL OR r.distinta_id = 0))

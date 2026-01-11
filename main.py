@@ -131,8 +131,52 @@ def show_login_window():
 
 def start_main_application():
     """Avvia l'applicazione principale"""
+    # Avvia lo scheduler per backup giornalieri
+    try:
+        config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+        from scripts.backup_scheduler import start_backup_scheduler
+        start_backup_scheduler(config_path)
+    except Exception as e:
+        print(f"Errore avvio scheduler backup: {e}")
+    
     root = tk.Tk()
     app = MainWindow(root)
+    
+    # Configura backup alla chiusura
+    def on_closing():
+        try:
+            import configparser
+            config = configparser.ConfigParser()
+            config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+            if os.path.exists(config_path):
+                config.read(config_path, encoding='utf-8')
+                backup_on_close = config.getboolean('Backup', 'backup_on_close', fallback=False)
+                
+                if backup_on_close:
+                    from scripts.backup_manager import BackupManager
+                    manager = BackupManager(config_path)
+                    dropbox_enabled = config.getboolean('Backup', 'dropbox_enabled', fallback=False)
+                    success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=dropbox_enabled)
+                    if success:
+                        msg = f"Backup alla chiusura completato: {local_path}"
+                        if dropbox_enabled and not dropbox_path:
+                            msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
+                        print(msg)
+                    else:
+                        print("Errore nel backup alla chiusura")
+        except Exception as e:
+            print(f"Errore backup alla chiusura: {e}")
+        
+        # Ferma lo scheduler
+        try:
+            from scripts.backup_scheduler import stop_backup_scheduler
+            stop_backup_scheduler()
+        except Exception as e:
+            print(f"Errore stop scheduler: {e}")
+        
+        root.destroy()
+    
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
 
 if __name__ == "__main__":
