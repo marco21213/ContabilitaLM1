@@ -26,6 +26,30 @@ from scripts.parametri_db import (
     set_import_vendite,
     set_import_rapido,
 )
+from scripts.email_config_db import (
+    carica_email_config,
+    aggiorna_email_config,
+    get_email_config_decrypted,
+    get_smtp_server,
+    get_smtp_port,
+    get_email_mittente,
+    get_email_password_decrypted,
+    get_email_destinatario,
+)
+from scripts.backup_config_db import (
+    carica_backup_config,
+    aggiorna_backup_config,
+    get_backup_config_dict,
+    get_backup_cartella,
+    get_backup_giorni_ritenzione,
+    get_backup_automatico,
+    get_backup_dropbox_enabled,
+    get_backup_dropbox_token,
+    get_backup_dropbox_folder,
+    get_backup_on_close,
+    get_backup_scheduled,
+    get_backup_schedule_time,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -614,39 +638,80 @@ class ConfigWindow:
             except Exception as e:
                 logger.error(f"Errore nel caricamento dei parametri AdE dal database: {e}")
             
-            # Backup (se esiste la sezione)
-            self.backup_folder.insert(0, self.config.get('Backup', 'cartella', fallback=''))
-            self.keep_backup_days.set(self.config.get('Backup', 'giorni_ritenzione', fallback='30'))
+            # Backup - carica dal database
+            try:
+                backup_cartella = get_backup_cartella()
+                if backup_cartella:
+                    self.backup_folder.insert(0, backup_cartella)
+                
+                giorni_ritenzione = get_backup_giorni_ritenzione()
+                if giorni_ritenzione:
+                    self.keep_backup_days.set(str(giorni_ritenzione))
+                else:
+                    self.keep_backup_days.set('30')
+                
+                # Dropbox
+                if hasattr(self, 'dropbox_enabled'):
+                    self.dropbox_enabled.set(get_backup_dropbox_enabled())
+                    dropbox_token = get_backup_dropbox_token()
+                    if dropbox_token:
+                        self.dropbox_token.insert(0, dropbox_token)
+                    dropbox_folder = get_backup_dropbox_folder()
+                    if dropbox_folder:
+                        self.dropbox_folder.insert(0, dropbox_folder)
+                    else:
+                        self.dropbox_folder.insert(0, '/ContabilitaLM1/backup')
+                
+                # Modalità backup
+                if hasattr(self, 'backup_on_close'):
+                    self.backup_on_close.set(get_backup_on_close())
+                    self.backup_scheduled.set(get_backup_scheduled())
+                    schedule_time = get_backup_schedule_time()
+                    if hasattr(self, 'backup_schedule_time'):
+                        self.backup_schedule_time.delete(0, tk.END)
+                        self.backup_schedule_time.insert(0, schedule_time)
+                
+                # Aggiorna stato campi Dropbox
+                if hasattr(self, 'dropbox_enabled'):
+                    self.toggle_dropbox_fields()
+            except Exception as e:
+                logger.debug(f"Errore nel caricamento configurazione backup dal database: {e}")
+                # Se non esiste la tabella o il record, usa valori di default
+                if not self.backup_folder.get():
+                    self.backup_folder.insert(0, '')
+                if self.keep_backup_days.get() == '':
+                    self.keep_backup_days.set('30')
             
-            # Dropbox
-            if hasattr(self, 'dropbox_enabled'):
-                self.dropbox_enabled.set(self.config.getboolean('Backup', 'dropbox_enabled', fallback=False))
-                self.dropbox_token.insert(0, self.config.get('Backup', 'dropbox_token', fallback=''))
-                self.dropbox_folder.insert(0, self.config.get('Backup', 'dropbox_folder', fallback='/ContabilitaLM1/backup'))
-            
-            # Modalità backup
-            if hasattr(self, 'backup_on_close'):
-                self.backup_on_close.set(self.config.getboolean('Backup', 'backup_on_close', fallback=False))
-                self.backup_scheduled.set(self.config.getboolean('Backup', 'backup_scheduled', fallback=False))
-                schedule_time = self.config.get('Backup', 'backup_schedule_time', fallback='02:00')
-                if hasattr(self, 'backup_schedule_time'):
-                    self.backup_schedule_time.delete(0, tk.END)
-                    self.backup_schedule_time.insert(0, schedule_time)
-            
-            # Aggiorna stato campi Dropbox
-            if hasattr(self, 'dropbox_enabled'):
-                self.toggle_dropbox_fields()
-            
-            # Email
+            # Email - carica dal database
             if hasattr(self, 'smtp_server_entry'):
-                self.smtp_server_entry.insert(0, self.config.get('Email', 'smtp_server', fallback=''))
-                port = self.config.get('Email', 'smtp_port', fallback='587')
-                if port:
-                    self.smtp_port_entry.delete(0, tk.END)
-                    self.smtp_port_entry.insert(0, port)
-                self.email_mittente_entry.insert(0, self.config.get('Email', 'email_mittente', fallback=''))
-                self.email_password_entry.insert(0, self.config.get('Email', 'email_password', fallback=''))
-                self.email_destinatario_entry.insert(0, self.config.get('Email', 'email_destinatario', fallback=''))
+                try:
+                    smtp_server = get_smtp_server()
+                    if smtp_server:
+                        self.smtp_server_entry.insert(0, smtp_server)
+                    
+                    smtp_port = get_smtp_port()
+                    if smtp_port:
+                        self.smtp_port_entry.delete(0, tk.END)
+                        self.smtp_port_entry.insert(0, str(smtp_port))
+                    else:
+                        # Default se non presente
+                        self.smtp_port_entry.delete(0, tk.END)
+                        self.smtp_port_entry.insert(0, "587")
+                    
+                    email_mittente = get_email_mittente()
+                    if email_mittente:
+                        self.email_mittente_entry.insert(0, email_mittente)
+                    
+                    email_password = get_email_password_decrypted()
+                    if email_password:
+                        self.email_password_entry.insert(0, email_password)
+                    
+                    email_destinatario = get_email_destinatario()
+                    if email_destinatario:
+                        self.email_destinatario_entry.insert(0, email_destinatario)
+                except Exception as e:
+                    logger.debug(f"Errore nel caricamento configurazione email dal database: {e}")
+                    # Se non esiste la tabella o il record, lascia i campi vuoti
             
         except Exception as e:
             logger.error(f"Errore nel caricamento delle impostazioni: {e}")
@@ -686,30 +751,39 @@ class ConfigWindow:
                 messagebox.showerror("Errore", f"Errore nel salvataggio parametri import nel database: {e}")
                 return
             
-            # Backup
-            self.config.set('Backup', 'cartella', self.backup_folder.get())
-            self.config.set('Backup', 'giorni_ritenzione', self.keep_backup_days.get())
+            # Backup - salva nel database
+            try:
+                giorni_ritenzione_val = int(self.keep_backup_days.get()) if self.keep_backup_days.get().strip() else 30
+                
+                aggiorna_backup_config(
+                    cartella=self.backup_folder.get().strip() or None,
+                    giorni_ritenzione=giorni_ritenzione_val,
+                    automatico=True,  # Sempre True se configurato
+                    dropbox_enabled=self.dropbox_enabled.get() if hasattr(self, 'dropbox_enabled') else None,
+                    dropbox_token=self.dropbox_token.get().strip() if hasattr(self, 'dropbox_token') else None,
+                    dropbox_folder=self.dropbox_folder.get().strip() if hasattr(self, 'dropbox_folder') else None,
+                    backup_on_close=self.backup_on_close.get() if hasattr(self, 'backup_on_close') else None,
+                    backup_scheduled=self.backup_scheduled.get() if hasattr(self, 'backup_scheduled') else None,
+                    backup_schedule_time=self.backup_schedule_time.get().strip() if hasattr(self, 'backup_schedule_time') else None,
+                )
+            except Exception as e:
+                logger.error(f"Errore nel salvataggio della configurazione backup nel database: {e}")
+                messagebox.showerror("Errore", f"Errore nel salvataggio configurazione backup nel database: {e}")
+                return
             
-            # Dropbox
-            if hasattr(self, 'dropbox_enabled'):
-                self.config.set('Backup', 'dropbox_enabled', str(self.dropbox_enabled.get()))
-                self.config.set('Backup', 'dropbox_token', self.dropbox_token.get())
-                self.config.set('Backup', 'dropbox_folder', self.dropbox_folder.get())
-            
-            # Modalità backup
-            if hasattr(self, 'backup_on_close'):
-                self.config.set('Backup', 'backup_on_close', str(self.backup_on_close.get()))
-                self.config.set('Backup', 'backup_scheduled', str(self.backup_scheduled.get()))
-                self.config.set('Backup', 'backup_schedule_time', self.backup_schedule_time.get())
-            
-            # Email
-            if not self.config.has_section('Email'):
-                self.config.add_section('Email')
-            self.config.set('Email', 'smtp_server', self.smtp_server_entry.get().strip())
-            self.config.set('Email', 'smtp_port', self.smtp_port_entry.get().strip())
-            self.config.set('Email', 'email_mittente', self.email_mittente_entry.get().strip())
-            self.config.set('Email', 'email_password', self.email_password_entry.get().strip())
-            self.config.set('Email', 'email_destinatario', self.email_destinatario_entry.get().strip())
+            # Email - salva nel database
+            try:
+                aggiorna_email_config(
+                    smtp_server=self.smtp_server_entry.get().strip() or None,
+                    smtp_port=int(self.smtp_port_entry.get().strip()) if self.smtp_port_entry.get().strip() else None,
+                    email_mittente=self.email_mittente_entry.get().strip() or None,
+                    email_password=self.email_password_entry.get().strip() or None,
+                    email_destinatario=self.email_destinatario_entry.get().strip() or None,
+                )
+            except Exception as e:
+                logger.error(f"Errore nel salvataggio della configurazione email nel database: {e}")
+                messagebox.showerror("Errore", f"Errore nel salvataggio configurazione email nel database: {e}")
+                return
             
             # Salva sul file
             try:

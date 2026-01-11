@@ -12,6 +12,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import per configurazione backup dal database
+try:
+    from scripts.backup_config_db import (
+        get_backup_cartella,
+        get_backup_giorni_ritenzione,
+        get_backup_dropbox_enabled,
+        get_backup_dropbox_token,
+        get_backup_dropbox_folder,
+        get_backup_on_close,
+        get_backup_scheduled,
+        get_backup_schedule_time,
+    )
+except ImportError:
+    logger.warning("Impossibile importare backup_config_db, uso config.ini come fallback")
+    get_backup_cartella = None
+
 # Import opzionale per Dropbox
 try:
     import dropbox
@@ -31,20 +47,35 @@ class BackupManager:
         self.config = configparser.ConfigParser()
         self.config.read(config_path, encoding='utf-8')
         
-        # Leggi configurazione backup
+        # Leggi configurazione backup dal database (con fallback a config.ini)
         self.db_path = self._get_db_path()
         self.backup_folder = self._get_backup_folder()
-        self.keep_days = int(self.config.get('Backup', 'giorni_ritenzione', fallback='30'))
         
-        # Configurazione Dropbox
-        self.dropbox_enabled = self.config.getboolean('Backup', 'dropbox_enabled', fallback=False)
-        self.dropbox_token = self.config.get('Backup', 'dropbox_token', fallback='')
-        self.dropbox_folder = self.config.get('Backup', 'dropbox_folder', fallback='/ContabilitaLM1/backup')
-        
-        # Tipo di backup
-        self.backup_on_close = self.config.getboolean('Backup', 'backup_on_close', fallback=False)
-        self.backup_scheduled = self.config.getboolean('Backup', 'backup_scheduled', fallback=False)
-        self.backup_schedule_time = self.config.get('Backup', 'backup_schedule_time', fallback='02:00')
+        # Prova a leggere dal database, altrimenti usa config.ini
+        try:
+            if get_backup_cartella:
+                backup_cartella = get_backup_cartella(config_path)
+                if backup_cartella:
+                    self.backup_folder = backup_cartella
+                self.keep_days = get_backup_giorni_ritenzione(config_path) or 30
+                self.dropbox_enabled = get_backup_dropbox_enabled(config_path)
+                self.dropbox_token = get_backup_dropbox_token(config_path) or ''
+                self.dropbox_folder = get_backup_dropbox_folder(config_path) or '/ContabilitaLM1/backup'
+                self.backup_on_close = get_backup_on_close(config_path)
+                self.backup_scheduled = get_backup_scheduled(config_path)
+                self.backup_schedule_time = get_backup_schedule_time(config_path) or '02:00'
+            else:
+                raise ImportError("backup_config_db non disponibile")
+        except Exception as e:
+            logger.debug(f"Errore nel caricamento configurazione backup dal database, uso config.ini: {e}")
+            # Fallback a config.ini
+            self.keep_days = int(self.config.get('Backup', 'giorni_ritenzione', fallback='30'))
+            self.dropbox_enabled = self.config.getboolean('Backup', 'dropbox_enabled', fallback=False)
+            self.dropbox_token = self.config.get('Backup', 'dropbox_token', fallback='')
+            self.dropbox_folder = self.config.get('Backup', 'dropbox_folder', fallback='/ContabilitaLM1/backup')
+            self.backup_on_close = self.config.getboolean('Backup', 'backup_on_close', fallback=False)
+            self.backup_scheduled = self.config.getboolean('Backup', 'backup_scheduled', fallback=False)
+            self.backup_schedule_time = self.config.get('Backup', 'backup_schedule_time', fallback='02:00')
         
         self.dbx = None
         if self.dropbox_enabled and DROPBOX_AVAILABLE and self.dropbox_token:
@@ -65,6 +96,16 @@ class BackupManager:
     
     def _get_backup_folder(self) -> str:
         """Ottiene la cartella di backup locale."""
+        # Prova prima dal database
+        try:
+            if get_backup_cartella:
+                folder = get_backup_cartella(self.config_path)
+                if folder:
+                    return folder
+        except Exception:
+            pass
+        
+        # Fallback a config.ini
         folder = self.config.get('Backup', 'cartella', fallback='')
         if not folder:
             # Fallback: cartella backup nella stessa directory del database

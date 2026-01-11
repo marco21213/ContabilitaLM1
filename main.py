@@ -145,25 +145,35 @@ def start_main_application():
     # Configura backup alla chiusura
     def on_closing():
         try:
-            import configparser
-            config = configparser.ConfigParser()
             config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
-            if os.path.exists(config_path):
-                config.read(config_path, encoding='utf-8')
-                backup_on_close = config.getboolean('Backup', 'backup_on_close', fallback=False)
-                
-                if backup_on_close:
-                    from scripts.backup_manager import BackupManager
-                    manager = BackupManager(config_path)
-                    dropbox_enabled = config.getboolean('Backup', 'dropbox_enabled', fallback=False)
-                    success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=dropbox_enabled)
-                    if success:
-                        msg = f"Backup alla chiusura completato: {local_path}"
-                        if dropbox_enabled and not dropbox_path:
-                            msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
-                        print(msg)
-                    else:
-                        print("Errore nel backup alla chiusura")
+            
+            # Prova a leggere dal database, altrimenti usa config.ini
+            try:
+                from scripts.backup_config_db import get_backup_on_close
+                backup_on_close = get_backup_on_close(config_path)
+            except Exception:
+                # Fallback a config.ini
+                import configparser
+                config = configparser.ConfigParser()
+                if os.path.exists(config_path):
+                    config.read(config_path, encoding='utf-8')
+                    backup_on_close = config.getboolean('Backup', 'backup_on_close', fallback=False)
+                else:
+                    backup_on_close = False
+            
+            if backup_on_close:
+                from scripts.backup_manager import BackupManager
+                manager = BackupManager(config_path)
+                # Usa la configurazione già caricata nel BackupManager
+                dropbox_enabled = manager.dropbox_enabled
+                success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=dropbox_enabled)
+                if success:
+                    msg = f"Backup alla chiusura completato: {local_path}"
+                    if dropbox_enabled and not dropbox_path:
+                        msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
+                    print(msg)
+                else:
+                    print("Errore nel backup alla chiusura")
         except Exception as e:
             print(f"Errore backup alla chiusura: {e}")
         

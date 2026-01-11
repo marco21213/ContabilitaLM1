@@ -17,6 +17,17 @@ except ImportError:
     logger.error("Impossibile importare BackupManager")
     BackupManager = None
 
+# Import per configurazione backup dal database
+try:
+    from scripts.backup_config_db import (
+        get_backup_scheduled,
+        get_backup_schedule_time,
+        get_backup_dropbox_enabled,
+    )
+except ImportError:
+    logger.warning("Impossibile importare backup_config_db, uso config.ini come fallback")
+    get_backup_scheduled = None
+
 
 class BackupScheduler:
     """Gestisce lo scheduling dei backup automatici."""
@@ -51,17 +62,22 @@ class BackupScheduler:
         """Esegue lo scheduler in un loop."""
         while self.running:
             try:
-                # Ricarica configurazione
-                if os.path.exists(self.config_path):
-                    self.config.read(self.config_path, encoding='utf-8')
-                
-                # Verifica se il backup schedulato è abilitato
-                backup_scheduled = self.config.getboolean('Backup', 'backup_scheduled', fallback=False)
+                # Verifica se il backup schedulato è abilitato (dal database o config.ini)
+                try:
+                    if get_backup_scheduled:
+                        backup_scheduled = get_backup_scheduled(self.config_path)
+                        schedule_time = get_backup_schedule_time(self.config_path) or '02:00'
+                    else:
+                        raise ImportError("backup_config_db non disponibile")
+                except Exception as e:
+                    logger.debug(f"Errore nel caricamento configurazione dal database, uso config.ini: {e}")
+                    # Fallback a config.ini
+                    if os.path.exists(self.config_path):
+                        self.config.read(self.config_path, encoding='utf-8')
+                    backup_scheduled = self.config.getboolean('Backup', 'backup_scheduled', fallback=False)
+                    schedule_time = self.config.get('Backup', 'backup_schedule_time', fallback='02:00')
                 
                 if backup_scheduled:
-                    # Ottieni l'orario
-                    schedule_time = self.config.get('Backup', 'backup_schedule_time', fallback='02:00')
-                    
                     # Rimuovi job esistenti
                     schedule.clear()
                     
@@ -90,7 +106,8 @@ class BackupScheduler:
                 return
             
             manager = BackupManager(self.config_path)
-            dropbox_enabled = self.config.getboolean('Backup', 'dropbox_enabled', fallback=False)
+            # Usa la configurazione già caricata nel BackupManager
+            dropbox_enabled = manager.dropbox_enabled
             
             success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=dropbox_enabled)
             

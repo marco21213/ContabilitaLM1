@@ -23,6 +23,13 @@ import sys
 sys.path.append('assets/style')
 from styles import Style
 
+# Importa funzioni per configurazione email dal database
+import sys
+import os
+# Aggiungi il percorso alla root del progetto per importare scripts
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.email_config_db import get_email_config_decrypted
+
 
 class RicettaLaboratorioDialog(tk.Toplevel):
     """Dialog per creare/modificare una ricetta (colore) del laboratorio"""
@@ -1065,19 +1072,17 @@ class VisualizzaRicettaDialog(tk.Toplevel):
     def invia_email_pdf(self):
         """Invia il PDF della ricetta ricalcolata via email"""
         try:
-            # Carica configurazione email
-            config = configparser.ConfigParser()
-            config.read("config.ini", encoding="utf-8")
-            
-            if not config.has_section('Email'):
-                messagebox.showerror("Errore", "Configurazione email non trovata. Configura le impostazioni email nella finestra di configurazione.")
+            # Carica configurazione email dal database
+            try:
+                email_config = get_email_config_decrypted()
+                smtp_server = email_config.get('smtp_server', '')
+                smtp_port = email_config.get('smtp_port', 587)
+                email_mittente = email_config.get('email_mittente', '')
+                email_password = email_config.get('email_password', '')
+                email_destinatario = email_config.get('email_destinatario', '')
+            except Exception as e:
+                messagebox.showerror("Errore", f"Configurazione email non trovata nel database. Configura le impostazioni email nella finestra di configurazione.\n\nErrore: {str(e)}")
                 return
-            
-            smtp_server = config.get('Email', 'smtp_server', fallback='')
-            smtp_port = config.get('Email', 'smtp_port', fallback='587')
-            email_mittente = config.get('Email', 'email_mittente', fallback='')
-            email_password = config.get('Email', 'email_password', fallback='')
-            email_destinatario = config.get('Email', 'email_destinatario', fallback='')
             
             if not smtp_server or not email_mittente or not email_password:
                 messagebox.showerror("Errore", "Configurazione email incompleta. Verifica le impostazioni nella finestra di configurazione.")
@@ -1133,7 +1138,7 @@ class VisualizzaRicettaDialog(tk.Toplevel):
                     msg = MIMEMultipart()
                     msg['From'] = email_mittente
                     msg['To'] = destinatario
-                    msg['Subject'] = f"Ricetta Laboratorio - {self.ricetta_data.get('nome', '')}"
+                    msg['Subject'] = self.ricetta_data.get('codice', '')
                     
                     body = f"""
 Ricetta: {self.ricetta_data.get('nome', '')}
@@ -1287,18 +1292,17 @@ class RicetteLaboratorioPage(tk.Frame):
         table_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
         table_frame.pack(fill="both", expand=True, padx=Style.CONTENT_PADDING, pady=(0, Style.CONTENT_PADDING))
         
-        columns = ("ID", "DATA", "CODICE", "NOME", "RIFERIMENTO", "CATEGORIA", "NOTE")
+        columns = ("DATA", "CODICE", "CATEGORIA", "COLORE", "RIFERIMENTO", "NOTE")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
         
         for col in columns:
             self.tree.heading(col, text=col)
         
-        self.tree.column("ID", width=80, anchor="center")
         self.tree.column("DATA", width=120, anchor="center")
         self.tree.column("CODICE", width=150, anchor="w")
-        self.tree.column("NOME", width=200, anchor="w")
-        self.tree.column("RIFERIMENTO", width=200, anchor="w")
         self.tree.column("CATEGORIA", width=200, anchor="w")
+        self.tree.column("COLORE", width=200, anchor="w")
+        self.tree.column("RIFERIMENTO", width=200, anchor="w")
         self.tree.column("NOTE", width=300, anchor="w")
         
         scrollbar_y = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.tree.yview)
@@ -1463,12 +1467,11 @@ class RicetteLaboratorioPage(tk.Frame):
                 note_display = note_display[:50] + "..."
             
             values = [
-                row['id'],
                 row['data'],
                 row['codice'],
+                row['categoria_desc'] if row['categoria_desc'] else '-',
                 row['nome'],
                 row['riferimento_desc'] if row['riferimento_desc'] else '-',
-                row['categoria_desc'] if row['categoria_desc'] else '-',
                 note_display
             ]
             tag = 'evenrow' if i % 2 == 0 else 'oddrow'
