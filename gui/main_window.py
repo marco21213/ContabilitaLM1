@@ -225,8 +225,8 @@ class MainWindow:
         self.side_menu_container.pack(side='left', fill='y', padx=(0, Style.SECTIONS_SPACING))
         self.side_menu_container.pack_propagate(False)
         
-        # Crea un frame scrollabile per il menu
-        self.create_scrollable_menu()
+        # Crea il menu direttamente nel frame
+        self.create_side_menu(self.side_menu_container.inner_frame)
 
         self.main_content_container = RoundedFrame(
             self.content_frame, 
@@ -237,67 +237,6 @@ class MainWindow:
         # Mostra la homepage all'avvio (non evidenziare nessun bottone perché Home non è nel menu)
         self.show_page("Home")
         # Nessun bottone evidenziato perché "Home" non è nel menu laterale
-
-    def create_scrollable_menu(self) -> None:
-        """Crea un menu laterale scrollabile"""
-        # Canvas e scrollbar per il menu scrollabile
-        canvas = tk.Canvas(
-            self.side_menu_container.inner_frame,
-            bg=Style.BACKGROUND_COLOR,
-            highlightthickness=0
-        )
-        scrollbar = ttk.Scrollbar(
-            self.side_menu_container.inner_frame,
-            orient="vertical",
-            command=canvas.yview
-        )
-        
-        # Frame scrollabile che conterrà tutti i widget del menu
-        scrollable_menu_frame = tk.Frame(canvas, bg=Style.BACKGROUND_COLOR)
-        
-        # Configura il binding per aggiornare la scrollregion quando il contenuto cambia
-        scrollable_menu_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-        
-        # Crea la finestra nel canvas
-        canvas.create_window((0, 0), window=scrollable_menu_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-        
-        # Pack canvas e scrollbar
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-        
-        # Configura lo scroll con la rotella del mouse
-        def on_mousewheel(event):
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        
-        # Bind per Windows e Linux
-        canvas.bind_all("<MouseWheel>", on_mousewheel)
-        # Bind per Linux con Button-4 e Button-5
-        canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
-        canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
-        
-        # Crea il menu nel frame scrollabile
-        self.create_side_menu(scrollable_menu_frame)
-        
-        # Aggiorna la scrollregion dopo che il menu è stato creato
-        def update_scrollregion():
-            canvas.update_idletasks()
-            canvas.configure(scrollregion=canvas.bbox("all"))
-        
-        scrollable_menu_frame.after(100, update_scrollregion)
-        
-        # Configura il canvas per ridimensionarsi correttamente
-        def configure_canvas_width(event):
-            canvas_width = event.width
-            # Trova la finestra creata nel canvas
-            canvas_window = canvas.find_all()
-            if canvas_window:
-                canvas.itemconfig(canvas_window[0], width=canvas_width)
-        
-        canvas.bind('<Configure>', configure_canvas_width)
 
     def create_side_menu(self, parent: tk.Frame) -> None:
         # Sezione FATTURE

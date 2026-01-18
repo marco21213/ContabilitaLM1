@@ -227,13 +227,13 @@ class RicettaLaboratorioDialog(tk.Toplevel):
                                       padx=10, pady=2, cursor="hand2")
         btn_aggiungi_riga.pack(side="left", padx=2)
         
-        # Bottoni
+        # Bottoni - spostati in una riga separata più in basso
         button_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
-        button_frame.grid(row=6, column=0, columnspan=3, pady=20, sticky="e")
+        button_frame.grid(row=7, column=0, columnspan=3, pady=(20, 20), sticky="e")
         
         btn_annulla = tk.Button(button_frame, text="Annulla", 
                                command=self.destroy,
-                               bg="#666666", fg="white",
+                               bg="#f44336", fg="white",
                                font=("Arial", 10, "bold"),
                                padx=20, pady=5, cursor="hand2")
         btn_annulla.pack(side="right", padx=5)
@@ -1212,6 +1212,14 @@ class RicetteLaboratorioPage(tk.Frame):
         
         self.original_data = []
         
+        # Filtri attivi
+        self.active_filters = {
+            'codice': '',
+            'categoria': '',
+            'colore': '',
+            'riferimento': ''
+        }
+        
         self.configure_style()
         self.configure(bg=Style.BACKGROUND_COLOR)
         
@@ -1269,7 +1277,8 @@ class RicetteLaboratorioPage(tk.Frame):
             ("modifica", "Modifica", self.modifica_ricetta, "#FF9800"),
             ("cancella", "Cancella", self.cancella_ricetta, "#f44336"),
             ("cronologia", "Visualizza", self.visualizza_ricetta, "#2196F3"),
-            ("info", "Categorie", self.apri_categorie, "#9C27B0")
+            ("info", "Categorie", self.apri_categorie, "#9C27B0"),
+            ("filtri", "Cancella filtri", self.clear_all_filters, "#607D8B")
         ]
         
         for icon, text, cmd, color in buttons:
@@ -1295,8 +1304,13 @@ class RicetteLaboratorioPage(tk.Frame):
         columns = ("DATA", "CODICE", "CATEGORIA", "COLORE", "RIFERIMENTO", "NOTE")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
         
+        # Configurazione header con filtri per colonne filtrabili
         for col in columns:
-            self.tree.heading(col, text=col)
+            field_key = col.lower()
+            if field_key in ['codice', 'categoria', 'colore', 'riferimento']:
+                self.tree.heading(col, text=f"{col} ⧗", command=lambda f=field_key, c=col: self.show_filter_menu(f, c))
+            else:
+                self.tree.heading(col, text=col)
         
         self.tree.column("DATA", width=120, anchor="center")
         self.tree.column("CODICE", width=150, anchor="w")
@@ -1448,19 +1462,51 @@ class RicetteLaboratorioPage(tk.Frame):
                     'note': row['note'] or ''
                 })
             
-            self.update_table_display()
+            self.apply_filters()
             
         except sqlite3.OperationalError as e:
             messagebox.showerror("Errore", f"Errore nel caricamento dei dati: {str(e)}")
         except Exception as e:
             messagebox.showerror("Errore", f"Errore nel caricamento dei dati: {str(e)}")
     
-    def update_table_display(self):
+    def apply_filters(self):
+        """Applica i filtri ai dati e aggiorna la visualizzazione"""
+        filtered_data = []
+        
+        for row in self.original_data:
+            match = True
+            for field_name, filter_value in self.active_filters.items():
+                if filter_value:
+                    # Mappa i nomi dei campi ai campi effettivi nei dati
+                    if field_name == 'codice':
+                        cell_value = str(row.get('codice', '')).lower()
+                    elif field_name == 'categoria':
+                        cell_value = str(row.get('categoria_desc', '')).lower()
+                    elif field_name == 'colore':
+                        cell_value = str(row.get('nome', '')).lower()
+                    elif field_name == 'riferimento':
+                        cell_value = str(row.get('riferimento_desc', '')).lower()
+                    else:
+                        cell_value = str(row.get(field_name, '')).lower()
+                    
+                    if filter_value not in cell_value:
+                        match = False
+                        break
+            
+            if match:
+                filtered_data.append(row)
+        
+        self.update_table_display(filtered_data)
+    
+    def update_table_display(self, data=None):
         """Aggiorna la visualizzazione della tabella"""
+        if data is None:
+            data = self.original_data
+        
         for item in self.tree.get_children():
             self.tree.delete(item)
         
-        for i, row in enumerate(self.original_data):
+        for i, row in enumerate(data):
             # Tronca le note se troppo lunghe
             note_display = row['note']
             if len(note_display) > 50:
@@ -1477,7 +1523,224 @@ class RicetteLaboratorioPage(tk.Frame):
             tag = 'evenrow' if i % 2 == 0 else 'oddrow'
             self.tree.insert("", tk.END, values=values, tags=(tag, f"id_{row['id']}"))
         
-        self.counter_label.config(text=f"{len(self.original_data)} ricette visualizzate")
+        self.counter_label.config(text=f"{len(data)} ricette visualizzate")
+    
+    def clear_all_filters(self):
+        """Cancella tutti i filtri"""
+        for key in self.active_filters.keys():
+            self.active_filters[key] = ""
+        self.apply_filters()
+        messagebox.showinfo("Filtri", "Tutti i filtri sono stati rimossi.")
+    
+    def show_filter_menu(self, field_name, column_title):
+        """Mostra il menu di filtro per una colonna"""
+        win = tk.Toplevel(self)
+        win.title(f"Filtro - {column_title}")
+        # Dimensioni maggiori per categorie e riferimenti (con listbox)
+        if field_name in ("categoria", "riferimento"):
+            win.geometry("400x350")
+        else:
+            win.geometry("320x200")
+        win.configure(bg=Style.WHITE)
+        win.resizable(False, False)
+        win.transient(self)
+        win.grab_set()
+        
+        frame = tk.Frame(win, bg=Style.WHITE, padx=20, pady=20)
+        frame.pack(fill="both", expand=True)
+
+        tk.Label(frame, text=f"Filtro per {column_title}:", bg=Style.WHITE,
+                 fg="#000", font=("Arial", 10, "bold")).pack(pady=(0, 10))
+
+        if field_name in ("categoria", "riferimento"):
+            # Usa listbox con ricerca per categoria e riferimento
+            vals = sorted({r.get('categoria_desc' if field_name == 'categoria' else 'riferimento_desc', '') 
+                          for r in self.original_data 
+                          if r.get('categoria_desc' if field_name == 'categoria' else 'riferimento_desc', '')})
+            
+            # Frame per ricerca e lista
+            search_frame = tk.Frame(frame, bg=Style.WHITE)
+            search_frame.pack(fill="x", pady=(0, 10))
+            
+            tk.Label(search_frame, text="Cerca:", bg=Style.WHITE, 
+                    font=("Arial", 9)).pack(side="left", padx=(0, 5))
+            
+            search_entry = tk.Entry(search_frame, font=("Arial", 10), width=20)
+            search_entry.pack(side="left", fill="x", expand=True)
+            
+            # Focus dopo che la finestra è stata renderizzata
+            def set_focus():
+                search_entry.focus_set()
+            win.after(100, set_focus)
+            
+            # Listbox con scrollbar per i risultati filtrati
+            listbox_frame = tk.Frame(frame, bg=Style.WHITE)
+            listbox_frame.pack(fill="both", expand=True, pady=(0, 10))
+            
+            scrollbar = tk.Scrollbar(listbox_frame)
+            scrollbar.pack(side="right", fill="y")
+            
+            listbox = tk.Listbox(listbox_frame, font=("Arial", 10), 
+                                yscrollcommand=scrollbar.set, height=8)
+            listbox.pack(side="left", fill="both", expand=True)
+            scrollbar.config(command=listbox.yview)
+            
+            # Popola la listbox con tutti i valori
+            all_vals = [""] + vals
+            for val in all_vals:
+                listbox.insert(tk.END, val)
+            
+            # Variabile per il valore selezionato
+            selected_value = tk.StringVar()
+            
+            def filter_listbox(*args):
+                """Filtra la listbox in base al testo digitato"""
+                search_text = search_entry.get().lower()
+                listbox.delete(0, tk.END)
+                
+                if not search_text:
+                    # Mostra tutti i valori se non c'è ricerca
+                    filtered = [""] + vals
+                else:
+                    # Filtra i valori che contengono il testo cercato
+                    filtered = []
+                    for val in vals:
+                        if search_text in val.lower():
+                            filtered.append(val)
+                    
+                    # Se non ci sono risultati, mostra un messaggio
+                    if not filtered:
+                        listbox.insert(tk.END, "(Nessun risultato)")
+                        listbox.itemconfig(0, {'fg': '#999'})
+                        return
+                
+                for val in filtered:
+                    listbox.insert(tk.END, val)
+                
+                # Se c'è un solo risultato dopo il filtro, evidenzialo automaticamente
+                if len(filtered) == 1 and filtered[0]:
+                    listbox.selection_set(0)
+                    listbox.see(0)
+                elif len(filtered) > 1:
+                    # Seleziona il primo risultato se c'è più di un match
+                    listbox.selection_set(0)
+                    listbox.see(0)
+            
+            def on_listbox_select(event):
+                """Gestisce la selezione dalla listbox"""
+                selection = listbox.curselection()
+                if selection:
+                    selected_value.set(listbox.get(selection[0]))
+                    search_entry.delete(0, tk.END)
+                    search_entry.insert(0, selected_value.get())
+            
+            def on_listbox_double_click(event):
+                """Applica il filtro con doppio click"""
+                on_listbox_select(event)
+                apply_combo()
+            
+            def on_search_key(event):
+                """Gestisce i tasti nella ricerca"""
+                if event.keysym == 'Down':
+                    listbox.focus_set()
+                    if listbox.size() > 0:
+                        listbox.selection_set(0)
+                        listbox.see(0)
+                    return "break"
+                elif event.keysym == 'Return':
+                    # Se c'è una selezione nella listbox, usala
+                    selection = listbox.curselection()
+                    if selection:
+                        selected_value.set(listbox.get(selection[0]))
+                    apply_combo()
+                    return "break"
+            
+            def on_listbox_key(event):
+                """Gestisce i tasti nella listbox"""
+                if event.keysym == 'Return':
+                    apply_combo()
+                    return "break"
+                elif event.keysym == 'Escape':
+                    win.destroy()
+                    return "break"
+                elif event.keysym == 'Up' and listbox.curselection() and listbox.curselection()[0] == 0:
+                    # Quando si arriva in cima, torna al campo ricerca
+                    search_entry.focus_set()
+                    return "break"
+            
+            search_entry.bind('<KeyRelease>', filter_listbox)
+            search_entry.bind('<KeyPress>', on_search_key)
+            listbox.bind('<<ListboxSelect>>', on_listbox_select)
+            listbox.bind('<Double-Button-1>', on_listbox_double_click)
+            listbox.bind('<KeyPress>', on_listbox_key)
+            
+            # Bind Escape per chiudere
+            win.bind('<Escape>', lambda e: win.destroy())
+            search_entry.bind('<Escape>', lambda e: win.destroy())
+            
+            # Mostra suggerimento
+            hint_label = tk.Label(frame, 
+                    text="💡 Digita per cercare, ↓↑ per navigare, Invio per applicare, Esc per chiudere", 
+                    bg=Style.WHITE, fg="#666", font=("Arial", 8, "italic"))
+            hint_label.pack(pady=(0, 5))
+            
+            def apply_combo():
+                # Prendi il valore dalla listbox se c'è una selezione, altrimenti dal campo ricerca
+                selection = listbox.curselection()
+                if selection:
+                    val = listbox.get(selection[0])
+                    # Ignora se è il messaggio "Nessun risultato"
+                    if val == "(Nessun risultato)":
+                        return
+                else:
+                    val = search_entry.get().strip()
+                    # Verifica se il valore esiste nella lista
+                    if val not in vals:
+                        # Cerca il primo match parziale che inizia con il testo
+                        val_lower = val.lower()
+                        for v in vals:
+                            if v.lower().startswith(val_lower):
+                                val = v
+                                break
+                        else:
+                            # Se non trova un match che inizia, cerca qualsiasi match
+                            for v in vals:
+                                if val_lower in v.lower():
+                                    val = v
+                                    break
+                            else:
+                                val = ""  # Nessun match trovato
+                
+                self.active_filters[field_name] = val.lower() if val else ""
+                self.apply_filters()
+                win.destroy()
+            
+            button_frame = tk.Frame(frame, bg=Style.WHITE)
+            button_frame.pack(pady=(10, 0))
+            
+            tk.Button(button_frame, text="Applica", bg="#4CAF50", fg="white",
+                      width=10, command=apply_combo, cursor="hand2").pack(side="left", padx=5)
+            tk.Button(button_frame, text="Chiudi", bg="#f44336", fg="white",
+                      width=10, command=win.destroy, cursor="hand2").pack(side="left")
+        else:
+            # Per codice e colore, usa un semplice Entry
+            entry = tk.Entry(frame, font=("Arial", 10), width=25)
+            entry.insert(0, self.active_filters.get(field_name, ""))
+            entry.pack(pady=(0, 15))
+            entry.focus()
+            
+            def apply_text():
+                self.active_filters[field_name] = entry.get().strip().lower()
+                self.apply_filters()
+                win.destroy()
+            
+            tk.Button(frame, text="Applica", bg="#4CAF50", fg="white",
+                      width=10, command=apply_text, cursor="hand2").pack(side="left", padx=5)
+            tk.Button(frame, text="Chiudi", bg="#f44336", fg="white",
+                      width=10, command=win.destroy, cursor="hand2").pack(side="left")
+            
+            entry.bind('<Return>', lambda e: apply_text())
+            win.bind('<Escape>', lambda e: win.destroy())
     
     def apri_categorie(self):
         """Apre una finestra con la pagina categorie"""
