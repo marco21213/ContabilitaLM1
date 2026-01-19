@@ -208,7 +208,7 @@ class MainWindow:
         # Icona Laboratorio
         laboratorio_icon = IconButton(
             icons_frame, 
-            "assets/icon/icon3.png", 
+            "assets/icon/laboratorio.png", 
             Style.ICON_SIZE, 
             lambda: self.show_page("Ricette"), 
             Style.BACKGROUND_COLOR

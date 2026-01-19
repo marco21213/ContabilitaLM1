@@ -992,19 +992,42 @@ class VisualizzaRicettaDialog(tk.Toplevel):
             c.drawString(x_margin, y, "RICETTA LABORATORIO")
             y -= 25
             
+            # Prima parte con valori in grassetto
             c.setFont('Helvetica', 10)
-            c.drawString(x_margin, y, f"Nome: {self.ricetta_data.get('nome', '')}")
+            c.drawString(x_margin, y, "Colore: ")
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(x_margin + 60, y, self.ricetta_data.get('nome', ''))
             y -= 15
-            c.drawString(x_margin, y, f"Codice: {self.ricetta_data.get('codice', '')}")
+            
+            c.setFont('Helvetica', 10)
+            c.drawString(x_margin, y, "Codice: ")
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(x_margin + 60, y, self.ricetta_data.get('codice', ''))
             y -= 15
-            c.drawString(x_margin, y, f"Data: {self.ricetta_data.get('data', '')}")
+            
+            c.setFont('Helvetica', 10)
+            c.drawString(x_margin, y, "Data: ")
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(x_margin + 60, y, self.ricetta_data.get('data', ''))
             y -= 15
-            c.drawString(x_margin, y, f"Riferimento: {self.ricetta_data.get('riferimento_desc', '-')}")
+            
+            c.setFont('Helvetica', 10)
+            c.drawString(x_margin, y, "Riferimento: ")
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(x_margin + 100, y, self.ricetta_data.get('riferimento_desc', '-'))
             y -= 15
-            c.drawString(x_margin, y, f"Categoria: {self.ricetta_data.get('categoria_desc', '-')}")
+            
+            c.setFont('Helvetica', 10)
+            c.drawString(x_margin, y, "Categoria: ")
+            c.setFont('Helvetica-Bold', 10)
+            c.drawString(x_margin + 80, y, self.ricetta_data.get('categoria_desc', '-'))
             y -= 15
+            
             if self.ricetta_data.get('note'):
-                c.drawString(x_margin, y, f"Note: {self.ricetta_data.get('note', '')}")
+                c.setFont('Helvetica', 10)
+                c.drawString(x_margin, y, "Note: ")
+                c.setFont('Helvetica-Bold', 10)
+                c.drawString(x_margin + 50, y, self.ricetta_data.get('note', ''))
                 y -= 15
             y -= 10
             
@@ -1012,36 +1035,13 @@ class VisualizzaRicettaDialog(tk.Toplevel):
             c.line(x_margin, y, width - x_margin, y)
             y -= 20
             
-            # Informazioni ricalcolo
+            # Righe colori con formato unica colonna e separatori
             c.setFont('Helvetica-Bold', 11)
-            c.drawString(x_margin, y, "RICETTA RICALCOLATA")
-            y -= 15
-            c.setFont('Helvetica', 10)
-            c.drawString(x_margin, y, f"Quantità Totale Originale: {quantita_totale_attuale:.2f}")
-            y -= 15
-            c.drawString(x_margin, y, f"Quantità Totale Ricalcolata: {nuova_quantita_totale:.2f}")
-            y -= 15
-            c.drawString(x_margin, y, f"Approssimazione: {approssimazione}")
-            y -= 15
-            c.drawString(x_margin, y, f"Data generazione: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+            c.drawString(x_margin, y, "RICETTA CALCOLATA")
             y -= 20
             
-            # Linea separatrice
-            c.line(x_margin, y, width - x_margin, y)
-            y -= 20
-            
-            # Intestazione colonne
-            c.setFont('Helvetica-Bold', 10)
-            c.drawString(x_margin, y, "Colore")
-            c.drawString(x_margin + 250, y, "Quantità Originale")
-            c.drawString(x_margin + 400, y, "Quantità Ricalcolata")
-            y -= 15
-            c.line(x_margin, y, width - x_margin, y)
-            y -= 10
-            
-            # Righe colori
             c.setFont('Helvetica', 9)
-            for riga in self.righe_colori:
+            for i, riga in enumerate(self.righe_colori):
                 if y < 80:
                     c.showPage()
                     y = height - 40
@@ -1057,10 +1057,20 @@ class VisualizzaRicettaDialog(tk.Toplevel):
                 else:
                     decimali = 1
                 
-                c.drawString(x_margin, y, riga['descrizione'][:40])
-                c.drawString(x_margin + 250, y, f"{riga['quantita']:.2f}")
-                c.drawString(x_margin + 400, y, f"{nuova_quantita_arrotondata:.{decimali}f}")
+                # Colore
+                c.setFont('Helvetica-Bold', 10)
+                c.drawString(x_margin, y, riga['descrizione'][:50])
                 y -= 15
+                
+                # Quantità
+                c.setFont('Helvetica', 10)
+                c.drawString(x_margin, y, f"Quantità: {nuova_quantita_arrotondata:.{decimali}f}")
+                y -= 15
+                
+                # Separatore (tranne per l'ultimo elemento)
+                if i < len(self.righe_colori) - 1:
+                    c.line(x_margin, y, width - x_margin, y)
+                    y -= 15
             
             c.save()
             return filename
