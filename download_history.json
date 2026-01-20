@@ -1,6 +1,112 @@
 {
   "downloads": [
     {
+      "data": "2026-01-20",
+      "ora": "22:01:48",
+      "fatture": [
+        {
+          "numero": "09",
+          "soggetto": "CDL ITALIA SRL",
+          "data": "13/01/2026"
+        },
+        {
+          "numero": "7331301495",
+          "soggetto": "Groz-Beckert Italia Srl",
+          "data": "14/01/2026"
+        },
+        {
+          "numero": "36",
+          "soggetto": "ABITALIA INC",
+          "data": "16/01/2026"
+        },
+        {
+          "numero": "26000",
+          "soggetto": "RAYS S.P.A.",
+          "data": "15/01/2026"
+        },
+        {
+          "numero": "26-VI000327",
+          "soggetto": "Fratelli Vitale S.r.l.",
+          "data": "12/01/2026"
+        },
+        {
+          "numero": "1",
+          "soggetto": "NUOVASALMER DI FRANCESCO STARACE",
+          "data": "09/01/2026"
+        },
+        {
+          "numero": "797",
+          "soggetto": "NUOVA ACCOPPIATURA SRL",
+          "data": "29/12/2025"
+        },
+        {
+          "numero": "V1-832",
+          "soggetto": "SPARCO S.P.A.",
+          "data": "16/01/2026"
+        },
+        {
+          "numero": "7X00413642",
+          "soggetto": "TIM  S.p.A.",
+          "data": "13/01/2026"
+        },
+        {
+          "numero": "8S00016645",
+          "soggetto": "TIM  S.p.A.",
+          "data": "13/01/2026"
+        },
+        {
+          "numero": "005402851445",
+          "soggetto": "Enel Energia S.p.A.",
+          "data": "11/01/2026"
+        },
+        {
+          "numero": "202685",
+          "soggetto": "Ditta Individuale Galdi Carlo",
+          "data": "05/01/2026"
+        },
+        {
+          "numero": "26-VI000801",
+          "soggetto": "Fratelli Vitale S.r.l.",
+          "data": "19/01/2026"
+        },
+        {
+          "numero": "195",
+          "soggetto": "EDIL CENTRO DI ZECCA ANTONIO S.R.L.",
+          "data": "31/12/2025"
+        },
+        {
+          "numero": "1261001131",
+          "soggetto": "DIADORA S.p.A. Società a socio Unico",
+          "data": "15/01/2026"
+        },
+        {
+          "numero": "006648A",
+          "soggetto": "AUTOTRASPORTI MORETTI S.R.L.",
+          "data": "31/12/2025"
+        },
+        {
+          "numero": "0039801411",
+          "soggetto": "Maiora SpA SB",
+          "data": "12/01/2026"
+        },
+        {
+          "numero": "8S00016595",
+          "soggetto": "TIM  S.p.A.",
+          "data": "13/01/2026"
+        },
+        {
+          "numero": "FPR926",
+          "soggetto": "Leucoran di Tarcisio Leucci",
+          "data": "12/01/2026"
+        },
+        {
+          "numero": "52026",
+          "soggetto": "TECON SRL",
+          "data": "09/01/2026"
+        }
+      ]
+    },
+    {
       "data": "2026-01-08",
       "ora": "22:07:33",
       "fatture": [
@@ -316,5 +422,5 @@
       ]
     }
   ],
-  "last_updated": "2026-01-08T22:07:33.349905"
+  "last_updated": "2026-01-20T22:01:48.827873"
 }

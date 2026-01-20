@@ -2017,3 +2017,48 @@
 [2026-01-08 22:09:58] File IT02046570426_dI2G1.xml.xml archiviato come 2025-12-00172190449-006202A.xml
 [2026-01-08 22:09:58] File IT0164179070220256_0cx3p.xml archiviato come 2025-12-13155970018-80.xml
 [2026-01-08 22:09:58] File IT02628170751BNXBB_000D2.xml.xml archiviato come 2025-12-02628170751-65.xml
+[2026-01-20 22:01:47] File IT01879020517A2026_au05K.xml.xml archiviato come 2026-01-03731350751-09.xml
+[2026-01-20 22:01:47] File 2026-01-03731350751-09.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File 2025-12-11644491000-32362025C.xml già presente in archivio - rimuovo il file sorgente
+[2026-01-20 22:01:47] File 2026-01-04838640755-4.xml già presente in archivio - rimuovo il file sorgente
+[2026-01-20 22:01:47] File IT07155170157_293np.xml archiviato come 2026-01-00822010153-7331301495.xml
+[2026-01-20 22:01:47] File 2026-01-00822010153-7331301495.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT01901381200_00GHK.xml archiviato come 2026-01-01375300439-36.xml
+[2026-01-20 22:01:47] File 2026-01-01375300439-36.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT0164179070220267_00zZg.xml archiviato come 2026-01-01316780426-26000.xml
+[2026-01-20 22:01:47] File 2026-01-01316780426-26000.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT00251590642_04UDX.xml.xml archiviato come 2026-01-00251590642-26-VI000327.xml
+[2026-01-20 22:01:47] File 2026-01-00251590642-26-VI000327.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT04489370751_02323.xml.xml archiviato come 2026-01-04489370751-1.xml
+[2026-01-20 22:01:47] File 2026-01-04489370751-1.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT01162630444_00GE8.xml.xml archiviato come 2025-12-01162630444-797.xml
+[2026-01-20 22:01:47] File 2025-12-01162630444-797.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT016417907022026y_00zdj.xml archiviato come 2026-01-13122640157-V1-832.xml
+[2026-01-20 22:01:47] File 2026-01-13122640157-V1-832.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT00488410010_qy7AM.xml.xml archiviato come 2026-01-00488410010-7X00413642.xml
+[2026-01-20 22:01:47] File 2026-01-00488410010-7X00413642.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT00488410010_r1WSB.xml.xml archiviato come 2026-01-00488410010-8S00016645.xml
+[2026-01-20 22:01:47] File 2026-01-00488410010-8S00016645.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT06655971007_drFUj.xml.xml archiviato come 2026-01-15844561009-005402851445.xml
+[2026-01-20 22:01:47] File 2026-01-15844561009-005402851445.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File ITGLDCRL82L13H703O_HVF9T.xml archiviato come 2026-01-04532000652-202685.xml
+[2026-01-20 22:01:47] File 2026-01-04532000652-202685.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File 2025-12-00056730385-7516.xml già presente in archivio - rimuovo il file sorgente
+[2026-01-20 22:01:47] File IT00251590642_04USM.xml.xml archiviato come 2026-01-00251590642-26-VI000801.xml
+[2026-01-20 22:01:47] File 2026-01-00251590642-26-VI000801.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File 2025-12-03370590758-D10698.xml già presente in archivio - rimuovo il file sorgente
+[2026-01-20 22:01:47] File 2025-12-01015700444-219.xml già presente in archivio - rimuovo il file sorgente
+[2026-01-20 22:01:47] File IT03293970756_OU0Q5.xml archiviato come 2025-12-03293970756-195.xml
+[2026-01-20 22:01:47] File 2025-12-03293970756-195.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT0164179070220267_00w7I.xml archiviato come 2026-01-04308510264-1261001131.xml
+[2026-01-20 22:01:47] File 2026-01-04308510264-1261001131.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT02046570426_dSuyb.xml.xml archiviato come 2025-12-00172190449-006648A.xml
+[2026-01-20 22:01:47] File 2025-12-00172190449-006648A.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT01378570350_npO0y.xml archiviato come 2026-01-07390770720-0039801411.xml
+[2026-01-20 22:01:47] File 2026-01-07390770720-0039801411.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT00488410010_r1WJJ.xml.xml archiviato come 2026-01-00488410010-8S00016595.xml
+[2026-01-20 22:01:47] File 2026-01-00488410010-8S00016595.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT01879020517A2026_ao4ED.xml.xml archiviato come 2026-01-04029800754-FPR926.xml
+[2026-01-20 22:01:47] File 2026-01-04029800754-FPR926.xml copiato in cartella stampa
+[2026-01-20 22:01:47] File IT00954060521_00E8B.xml.xml archiviato come 2026-01-00954060521-52026.xml
+[2026-01-20 22:01:47] File 2026-01-00954060521-52026.xml copiato in cartella stampa

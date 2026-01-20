@@ -114,6 +114,8 @@ class VenditeMensiliPage(tk.Frame):
         self.config = load_config()
         self.current_html = None
         self.xsl_path = None
+        self.current_xml_file = None  # Memorizza il file XML corrente
+        self.xsl_files = []  # Lista dei file XSL disponibili
         self.selected_year = None
         self.selected_month = None
         
@@ -134,19 +136,46 @@ class VenditeMensiliPage(tk.Frame):
             messagebox.showerror("Errore", f"Errore nel caricamento del percorso dal database: {e}")
             return
         
-        self.setup_ui()
+        # Carica i file XSL prima di creare l'UI per avere i valori disponibili nel combobox
         self.setup_xsl_path()
+        self.setup_ui()
         self.load_years()
 
     def setup_xsl_path(self):
-        """Configura il percorso del foglio di stile XSL."""
+        """Configura il percorso del foglio di stile XSL e carica tutti i file disponibili."""
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            self.xsl_path = os.path.join(current_dir, '../documents/css_fatture', 'FoglioStileConDatiTrasmissione.xsl')
+            css_folder = os.path.join(current_dir, '../documents/css_fatture')
             
-            if not os.path.exists(self.xsl_path):
-                messagebox.showwarning("Attenzione", f"Foglio di stile XSL non trovato: {self.xsl_path}")
+            # Carica tutti i file .xsl dalla cartella
+            if os.path.exists(css_folder):
+                self.xsl_files = [f for f in os.listdir(css_folder) if f.endswith('.xsl')]
+                self.xsl_files.sort()  # Ordina alfabeticamente
+                
+                if not self.xsl_files:
+                    messagebox.showwarning("Attenzione", f"Nessun file XSL trovato nella cartella: {css_folder}")
+                    self.xsl_path = None
+                    return
+                
+                # Imposta il file di default (se esiste)
+                default_file = 'FoglioStileConDatiTrasmissione.xsl'
+                if default_file in self.xsl_files:
+                    self.xsl_path = os.path.join(css_folder, default_file)
+                else:
+                    # Usa il primo file disponibile
+                    self.xsl_path = os.path.join(css_folder, self.xsl_files[0])
+                
+                # Aggiorna il menu a tendina se esiste già
+                if hasattr(self, 'xsl_combo'):
+                    self.xsl_combo['values'] = self.xsl_files
+                    # Imposta il valore corrente
+                    current_file = os.path.basename(self.xsl_path) if self.xsl_path else ''
+                    if current_file in self.xsl_files:
+                        self.xsl_combo.set(current_file)
+            else:
+                messagebox.showwarning("Attenzione", f"Cartella CSS non trovata: {css_folder}")
                 self.xsl_path = None
+                
         except Exception as e:
             messagebox.showerror("Errore", f"Errore nel caricamento del foglio di stile: {e}")
             self.xsl_path = None
@@ -273,19 +302,45 @@ class VenditeMensiliPage(tk.Frame):
         self.invoice_files = []
 
     def create_html_viewer(self, parent):
-        """Crea il visualizzatore HTML con pulsante stampa."""
+        """Crea il visualizzatore HTML con pulsante stampa e menu foglio di stile."""
         html_frame = tk.Frame(parent, bg=Style.WHITE, relief="solid", bd=1)
         html_frame.pack(fill="both", expand=True)
         
-        # Barra superiore con pulsante stampa
+        # Barra superiore con pulsante stampa e menu foglio di stile
         toolbar = tk.Frame(html_frame, bg=Style.WHITE, height=35)
         toolbar.pack(fill="x", padx=5, pady=(5, 0))
         toolbar.pack_propagate(False)
         
-        # Pulsante stampa allineato a destra
+        # Frame per i controlli a sinistra (foglio di stile)
+        left_controls = tk.Frame(toolbar, bg=Style.WHITE)
+        left_controls.pack(side="left", pady=5)
+        
+        # Label e menu a tendina per il foglio di stile
+        ttk.Label(left_controls, text="Foglio di stile:", font=("Arial", 9), background=Style.WHITE).pack(side="left", padx=(0, 5))
+        self.xsl_combo = ttk.Combobox(
+            left_controls,
+            values=self.xsl_files,
+            state="readonly",
+            width=35,
+            font=("Arial", 9)
+        )
+        self.xsl_combo.pack(side="left")
+        self.xsl_combo.bind("<<ComboboxSelected>>", self.on_xsl_changed)
+        
+        # Imposta il valore corrente se disponibile
+        if self.xsl_path:
+            current_file = os.path.basename(self.xsl_path)
+            if current_file in self.xsl_files:
+                self.xsl_combo.set(current_file)
+        
+        # Frame per i pulsanti a destra
+        right_buttons = tk.Frame(toolbar, bg=Style.WHITE)
+        right_buttons.pack(side="right", pady=5)
+        
+        # Pulsante stampa
         self.print_button = tk.Button(
-            toolbar,
-            text="🖨 Stampa",
+            right_buttons,
+            text="🖨 Stampa (Ctrl+P)",
             font=("Arial", 9),
             bg=getattr(Style, 'PRIMARY_COLOR', '#007ACC'),
             fg="white",
@@ -294,9 +349,9 @@ class VenditeMensiliPage(tk.Frame):
             pady=3,
             cursor="hand2",
             command=self.print_invoice,
-            state="disabled"
+            state="disabled"  # Inizialmente disabilitato
         )
-        self.print_button.pack(side="right", pady=5)
+        self.print_button.pack(side="right")
         
         # Container principale per l'HTML viewer
         container = tk.Frame(html_frame, bg=Style.WHITE)
@@ -530,6 +585,8 @@ class VenditeMensiliPage(tk.Frame):
     def display_formatted_xml(self, file_path):
         """Visualizza il file XML formattato con il foglio di stile XSL."""
         try:
+            self.current_xml_file = file_path  # Memorizza il file corrente
+            
             if not self.xsl_path:
                 # Usa il metodo del parser per ottenere il contenuto XML
                 xml_content = self.xml_parser.get_full_xml_content(file_path)
@@ -548,78 +605,53 @@ class VenditeMensiliPage(tk.Frame):
             error_html = f"<html><body><h1>Errore</h1><p>{str(e)}</p></body></html>"
             self.html_frame.load_html(error_html)
             self.current_html = None
+    
+    def on_xsl_changed(self, event=None):
+        """Gestisce il cambio del foglio di stile XSL."""
+        try:
+            selected_file = self.xsl_combo.get()
+            if not selected_file:
+                return
+            
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            css_folder = os.path.join(current_dir, '../documents/css_fatture')
+            new_xsl_path = os.path.join(css_folder, selected_file)
+            
+            if os.path.exists(new_xsl_path):
+                self.xsl_path = new_xsl_path
+                
+                # Ricarica la fattura corrente se c'è una selezione
+                if self.current_xml_file and os.path.exists(self.current_xml_file):
+                    self.display_formatted_xml(self.current_xml_file)
+            else:
+                messagebox.showerror("Errore", f"File XSL non trovato: {new_xsl_path}")
+                
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante il cambio del foglio di stile: {e}")
 
     def print_invoice(self):
-        """Stampa direttamente la fattura corrente usando wkhtmltopdf."""
+        """Stampa la fattura corrente."""
         if not self.current_html:
             messagebox.showwarning("Attenzione", "Nessuna fattura selezionata per la stampa.")
             return
-        
+
         try:
-            # Trova wkhtmltopdf in modo cross-platform
-            wkhtmltopdf_path = find_wkhtmltopdf()
+            # Crea un file HTML temporaneo
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as temp_file:
+                # Usa direttamente l'HTML generato dal foglio di stile XSL,
+                # lasciando la gestione degli stili alla trasformazione XSL scelta dall'utente
+                full_html = self.current_html
+                temp_file.write(full_html)
+                temp_file_path = temp_file.name
             
-            if not wkhtmltopdf_path:
-                # Fallback: apri nel browser per stampa manuale
-                messagebox.showinfo("Info", "wkhtmltopdf non trovato. Apertura nel browser per stampa manuale.")
-                self.print_invoice_browser()
-                return
+            # Apri nel browser predefinito per la stampa
+            webbrowser.open('file://' + temp_file_path.replace('\\', '/'))
             
-            # Configura pdfkit
-            try:
-                import pdfkit
-                config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-            except ImportError:
-                messagebox.showerror("Errore", "Libreria pdfkit non installata. Apertura nel browser.")
-                self.print_invoice_browser()
-                return
-            
-            # Crea PDF temporaneo
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
-                temp_pdf_path = temp_pdf.name
-            
-            # Aggiungi CSS per stampa ottimale
-            print_css = """
-            <style>
-                @page { margin: 1cm; }
-                body { font-family: Arial, sans-serif; font-size: 11px; }
-                table { border-collapse: collapse; width: 100%; margin: 5px 0; }
-                th, td { border: 1px solid #000; padding: 4px; font-size: 10px; }
-                th { background-color: #f0f0f0; font-weight: bold; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .no-break { page-break-inside: avoid; }
-            </style>
-            """
-            
-            html_for_pdf = f"<html><head>{print_css}</head><body>{self.current_html}</body></html>"
-            
-            # Genera PDF
-            pdfkit.from_string(html_for_pdf, temp_pdf_path, configuration=config, options={
-                'page-size': 'A4',
-                'margin-top': '1cm',
-                'margin-right': '1cm',
-                'margin-bottom': '1cm',
-                'margin-left': '1cm',
-                'encoding': "UTF-8",
-                'no-outline': None
-            })
-            
-            # Stampa il PDF in modo cross-platform
-            try:
-                printer_name = print_pdf_crossplatform(temp_pdf_path)
-                messagebox.showinfo("Stampa", f"Fattura inviata alla stampante: {printer_name}")
-            except Exception as e:
-                # Se la stampa diretta fallisce, apri il PDF per stampa manuale
-                open_file_crossplatform(temp_pdf_path)
-                messagebox.showinfo("Stampa", "PDF aperto. Utilizzare Ctrl+P per stampare.")
-            
-            # Programma la rimozione del file temporaneo
-            self.after(10000, lambda: self._cleanup_temp_file(temp_pdf_path))
+            # Programma la rimozione del file temporaneo dopo un ritardo
+            self.after(10000, lambda: self._cleanup_temp_file(temp_file_path))
             
         except Exception as e:
-            messagebox.showerror("Errore", f"Errore durante la stampa: {e}")
-            # Fallback su stampa browser
-            self.print_invoice_browser()
+            messagebox.showerror("Errore", f"Errore durante la preparazione per la stampa: {e}")
 
     def print_invoice_browser(self):
         """Metodo di fallback per stampa tramite browser."""
