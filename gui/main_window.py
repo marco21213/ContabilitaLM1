@@ -216,6 +216,17 @@ class MainWindow:
         if laboratorio_button := laboratorio_icon.create():
             laboratorio_button.pack(side='left', padx=5)
 
+        # Icona Appunti
+        appunti_icon = IconButton(
+            icons_frame, 
+            "assets/icon/info.png", 
+            Style.ICON_SIZE, 
+            lambda: self.show_page("Appunti"), 
+            Style.BACKGROUND_COLOR
+        )
+        if appunti_button := appunti_icon.create():
+            appunti_button.pack(side='left', padx=5)
+
     def create_main_containers(self) -> None:
         self.side_menu_container = RoundedFrame(
             self.content_frame, 
@@ -289,6 +300,7 @@ class MainWindow:
             "Controllo Prezzi": {"module": "controllo_prezzi_page", "class": "ControlloPrezziPage"},
             "Categorie": {"module": "laboratorio_categorie_page", "class": "CategorieLaboratorioPage"},
             "Ricette": {"module": "laboratorio_ricette_page", "class": "RicetteLaboratorioPage"},
+            "Appunti": {"module": "appunti_page", "class": "AppuntiPage"},
         }
 
         config = page_config.get(page_name)
