@@ -7,6 +7,7 @@ from tkinter import ttk, messagebox, simpledialog, filedialog
 import sqlite3
 import os
 import sys
+import platform
 from datetime import datetime
 from typing import Optional
 import re
@@ -195,18 +196,10 @@ class AppuntiPage(tk.Frame):
         
         # Contenuto - usa HtmlFrame se disponibile, altrimenti Text widget
         if HTML_SUPPORT:
-            # Usa HtmlFrame per visualizzare HTML con handler per aprire link nel browser
-            def open_link_in_browser(url):
-                """Apre il link nel browser esterno"""
-                try:
-                    webbrowser.open(url)
-                except Exception as e:
-                    messagebox.showerror("Errore", f"Impossibile aprire il link: {e}")
-            
+            # Usa HtmlFrame per visualizzare HTML
             self.dettaglio_contenuto_html = HtmlFrame(
                 content_frame, 
-                messages_enabled=False,
-                on_link_click=open_link_in_browser
+                messages_enabled=False
             )
             self.dettaglio_contenuto_html.pack(fill='both', expand=True)
             self.dettaglio_contenuto = None  # Non usato in modalità HTML
@@ -299,6 +292,7 @@ class AppuntiPage(tk.Frame):
                         html_content = f"<div style='padding: 10px; font-family: Arial;'>{html_content.replace(chr(10), '<br>')}</div>"
                     elif not html_content:
                         html_content = "<div style='padding: 10px;'>Nessun contenuto</div>"
+                    
                     self.dettaglio_contenuto_html.load_html(f"<html><body>{html_content}</body></html>")
                 elif self.dettaglio_contenuto:
                     # Fallback a Text widget
@@ -448,19 +442,6 @@ class AppuntoDialog(tk.Toplevel):
         # Pulsanti formattazione
         tk.Button(
             toolbar_frame,
-            text="🔗 Link",
-            command=self.insert_link,
-            bg="#2196F3",
-            fg="white",
-            font=("Arial", 9),
-            cursor="hand2",
-            relief=tk.FLAT,
-            padx=8,
-            pady=4
-        ).pack(side='left', padx=2)
-        
-        tk.Button(
-            toolbar_frame,
             text="B",
             command=lambda: self.wrap_selection("<b>", "</b>"),
             bg="#666",
@@ -586,36 +567,6 @@ class AppuntoDialog(tk.Toplevel):
         except Exception as e:
             print(f"Errore nell'inserimento tag: {e}")
     
-    def insert_link(self):
-        """Inserisce un link HTML"""
-        try:
-            # Chiedi URL e testo del link
-            url = simpledialog.askstring("Inserisci Link", "URL del link:")
-            if not url:
-                return
-            
-            text = simpledialog.askstring("Inserisci Link", "Testo del link (lascia vuoto per usare l'URL):")
-            if text is None:  # Utente ha annullato
-                return
-            if not text:
-                text = url
-            
-            # Costruisci il tag link
-            link_html = f'<a href="{url}">{text}</a>'
-            
-            if self.contenuto_text.tag_ranges(tk.SEL):
-                # Sostituisci la selezione con il link
-                start = self.contenuto_text.index(tk.SEL_FIRST)
-                end = self.contenuto_text.index(tk.SEL_LAST)
-                self.contenuto_text.delete(start, end)
-                self.contenuto_text.insert(start, link_html)
-            else:
-                # Inserisci alla posizione del cursore
-                cursor_pos = self.contenuto_text.index(tk.INSERT)
-                self.contenuto_text.insert(cursor_pos, link_html)
-        except Exception as e:
-            messagebox.showerror("Errore", f"Errore nell'inserimento del link: {e}")
-    
     def insert_image(self):
         """Inserisce un'immagine nel contenuto"""
         try:
@@ -648,10 +599,20 @@ class AppuntoDialog(tk.Toplevel):
             alt_text = simpledialog.askstring("Testo Alternativo", "Testo alternativo per l'immagine (opzionale):")
             
             # Costruisci il tag immagine
-            # Usa percorso file:// per HtmlFrame
-            img_html = '<img src="'
-            img_html += f'file://{dest_path}'
-            img_html += '"'
+            # Normalizza il percorso per file:// (cross-platform)
+            if platform.system() == 'Windows':
+                # Su Windows, converti backslash in forward slash per URL
+                file_url = dest_path.replace('\\', '/')
+                # Aggiungi file:/// (3 slash) per percorsi assoluti
+                if file_url.startswith('/'):
+                    file_url = f'file:///{file_url}'
+                else:
+                    file_url = f'file:///{file_url}'
+            else:
+                # Linux/Mac: usa file:// con forward slash
+                file_url = f'file://{dest_path}'
+            
+            img_html = f'<img src="{file_url}"'
             
             if width:
                 try:

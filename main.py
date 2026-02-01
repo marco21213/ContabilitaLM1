@@ -131,13 +131,6 @@ def show_login_window():
 
 def start_main_application():
     """Avvia l'applicazione principale"""
-    # Inizializza tutte le tabelle del database
-    try:
-        from scripts.init_all_tables import init_all_database_tables
-        init_all_database_tables()
-    except Exception as e:
-        print(f"[WARNING] Errore inizializzazione tabelle database: {e}")
-    
     # Avvia lo scheduler per backup giornalieri
     try:
         config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
