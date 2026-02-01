@@ -30,3 +30,4 @@ tkinterweb-tkhtml==2.1.0
 tqdm==4.67.1
 urllib3==2.6.3
 cryptography==43.0.3
+python-telegram-bot==21.0.1

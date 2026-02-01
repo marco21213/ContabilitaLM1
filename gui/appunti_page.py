@@ -47,12 +47,19 @@ class AppuntiPage(tk.Frame):
         
         # Variabili
         self.selected_appunto_id = None
+        self.telegram_bot_manager = None
         
         # Crea l'interfaccia
         self.create_ui()
         
         # Carica gli appunti
         self.refresh_appunti()
+        
+        # Inizializza il bot manager
+        self.init_telegram_bot()
+        
+        # Avvia aggiornamento periodico se il bot è attivo
+        self.start_periodic_refresh()
     
     def init_database(self):
         """Inizializza la tabella appunti se non esiste"""
@@ -76,8 +83,28 @@ class AppuntiPage(tk.Frame):
             fg=Style.MENU_HEADER_BG
         ).pack(side='left')
         
+        # Frame pulsanti header
+        buttons_frame = tk.Frame(header_frame, bg=Style.BACKGROUND_COLOR)
+        buttons_frame.pack(side='right')
+        
+        # Pulsante Telegram Bot
+        self.telegram_btn = tk.Button(
+            buttons_frame,
+            text="🤖 Telegram",
+            command=self.toggle_telegram_bot,
+            bg="#0088cc",
+            fg="white",
+            font=("Arial", 11),
+            cursor="hand2",
+            relief=tk.FLAT,
+            padx=15,
+            pady=10
+        )
+        self.telegram_btn.pack(side='left', padx=(0, 10))
+        
+        # Pulsante nuovo appunto
         tk.Button(
-            header_frame,
+            buttons_frame,
             text="+ Nuovo Appunto",
             command=self.nuovo_appunto,
             bg="#4CAF50",
@@ -87,7 +114,7 @@ class AppuntiPage(tk.Frame):
             relief=tk.FLAT,
             padx=20,
             pady=10
-        ).pack(side='right')
+        ).pack(side='left')
         
         # Frame principale con layout orizzontale
         main_frame = tk.Frame(self, bg=Style.BACKGROUND_COLOR)
@@ -381,6 +408,152 @@ class AppuntiPage(tk.Frame):
                 messagebox.showinfo("Successo", "Appunto eliminato con successo")
             except Exception as e:
                 messagebox.showerror("Errore", f"Errore nell'eliminazione: {e}")
+    
+    def init_telegram_bot(self):
+        """Inizializza il manager del bot Telegram"""
+        try:
+            # Prova prima la versione semplice (solo requests)
+            try:
+                from scripts.telegram_bot_simple import TelegramBotManagerSimple
+                config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.ini')
+                self.telegram_bot_manager = TelegramBotManagerSimple(config_path)
+                print("[INFO] Usando bot Telegram versione semplice (requests)")
+                self.update_telegram_button()
+                return
+            except ImportError as e:
+                print(f"[INFO] Versione semplice non disponibile: {e}")
+            
+            # Fallback: prova la versione completa (python-telegram-bot)
+            try:
+                import telegram
+                from scripts.telegram_bot import TelegramBotManager, TELEGRAM_AVAILABLE
+                
+                if not TELEGRAM_AVAILABLE:
+                    raise ImportError("python-telegram-bot non disponibile")
+                
+                config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.ini')
+                self.telegram_bot_manager = TelegramBotManager(config_path)
+                print("[INFO] Usando bot Telegram versione completa (python-telegram-bot)")
+                self.update_telegram_button()
+                return
+            except ImportError:
+                print("[WARNING] Nessuna versione del bot disponibile")
+                self.telegram_bot_manager = None
+                if hasattr(self, 'telegram_btn'):
+                    self.telegram_btn.config(state='disabled', text="⚠️ Telegram (non disponibile)")
+                return
+            
+        except Exception as e:
+            print(f"Errore inizializzazione bot Telegram: {e}")
+            import traceback
+            traceback.print_exc()
+            self.telegram_bot_manager = None
+            if hasattr(self, 'telegram_btn'):
+                self.telegram_btn.config(state='disabled', text="⚠️ Telegram (errore)")
+    
+    def update_telegram_button(self):
+        """Aggiorna il testo e lo stato del pulsante Telegram"""
+        if not hasattr(self, 'telegram_btn') or not self.telegram_btn:
+            return
+        
+        if self.telegram_bot_manager and self.telegram_bot_manager.is_bot_running():
+            self.telegram_btn.config(
+                text="🟢 Telegram ON",
+                bg="#4CAF50"
+            )
+        else:
+            self.telegram_btn.config(
+                text="🔴 Telegram OFF",
+                bg="#f44336"
+            )
+    
+    def toggle_telegram_bot(self):
+        """Avvia o ferma il bot Telegram"""
+        if not self.telegram_bot_manager:
+            # Prova a reinizializzare
+            try:
+                self.init_telegram_bot()
+                if not self.telegram_bot_manager:
+                    # Verifica se il problema è l'installazione
+                    try:
+                        import requests
+                    except ImportError:
+                        messagebox.showerror(
+                            "Libreria Non Installata",
+                            "requests non è installato.\n\n"
+                            "Per installarlo, esegui nel terminale:\n\n"
+                            "pip install requests\n\n"
+                            "Oppure se usi un ambiente virtuale:\n"
+                            "source venv/bin/activate\n"
+                            "pip install requests"
+                        )
+                    else:
+                        messagebox.showerror(
+                            "Errore",
+                            "Bot Telegram non disponibile.\n\n"
+                            "Errore nell'inizializzazione.\n"
+                            "Controlla la console per dettagli."
+                        )
+                    return
+            except Exception as e:
+                messagebox.showerror("Errore", f"Errore nell'inizializzazione del bot: {e}")
+                return
+        
+        try:
+            if self.telegram_bot_manager.is_bot_running():
+                # Ferma il bot
+                self.telegram_bot_manager.stop_bot()
+                messagebox.showinfo("Bot Telegram", "Bot Telegram fermato")
+            else:
+                # Avvia il bot
+                token = self.telegram_bot_manager.get_bot_token()
+                if not token:
+                    messagebox.showwarning(
+                        "Configurazione Richiesta",
+                        "Token bot non configurato.\n\n"
+                        "Aggiungi in config.ini:\n"
+                        "[Telegram]\n"
+                        "bot_token = IL_TUO_TOKEN_QUI\n\n"
+                        "Ottieni il token da @BotFather su Telegram"
+                    )
+                    return
+                
+                if self.telegram_bot_manager.start_bot():
+                    messagebox.showinfo("Bot Telegram", "Bot Telegram avviato con successo!")
+                else:
+                    messagebox.showerror("Errore", "Impossibile avviare il bot Telegram")
+            
+            self.update_telegram_button()
+            
+            # Aggiorna la lista appunti dopo un breve delay (per eventuali nuovi appunti)
+            self.after(2000, self.refresh_appunti)
+            
+            # Avvia/ferma aggiornamento periodico
+            if self.telegram_bot_manager.is_bot_running():
+                self.start_periodic_refresh()
+            else:
+                self.stop_periodic_refresh()
+            
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore nella gestione del bot: {e}")
+    
+    def start_periodic_refresh(self):
+        """Avvia l'aggiornamento periodico della lista appunti"""
+        self.stop_periodic_refresh()  # Ferma eventuali refresh già attivi
+        if self.telegram_bot_manager and self.telegram_bot_manager.is_bot_running():
+            self.refresh_timer = self.after(5000, self.periodic_refresh)  # Aggiorna ogni 5 secondi
+    
+    def stop_periodic_refresh(self):
+        """Ferma l'aggiornamento periodico"""
+        if hasattr(self, 'refresh_timer'):
+            self.after_cancel(self.refresh_timer)
+            self.refresh_timer = None
+    
+    def periodic_refresh(self):
+        """Aggiorna periodicamente la lista appunti se il bot è attivo"""
+        if self.telegram_bot_manager and self.telegram_bot_manager.is_bot_running():
+            self.refresh_appunti()
+            self.refresh_timer = self.after(5000, self.periodic_refresh)  # Riprogramma
 
 
 class AppuntoDialog(tk.Toplevel):
@@ -402,7 +575,6 @@ class AppuntoDialog(tk.Toplevel):
         
         # Centra la finestra
         self.transient(parent)
-        self.grab_set()
         
         # Frame principale
         main_frame = tk.Frame(self, bg=Style.WHITE)
@@ -544,6 +716,20 @@ class AppuntoDialog(tk.Toplevel):
         # Carica i dati se in modalità modifica
         if appunto_id:
             self.load_appunto()
+        
+        # Assicurati che la finestra sia renderizzata prima di fare grab
+        self.update_idletasks()
+        
+        # Centra la finestra sullo schermo
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Ora che la finestra è visibile, puoi fare grab
+        self.grab_set()
         
         # Focus sul titolo
         self.titolo_entry.focus()
