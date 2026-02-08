@@ -171,6 +171,7 @@ def start_main_application():
                     msg = f"Backup alla chiusura completato: {local_path}"
                     if dropbox_enabled and not dropbox_path:
                         msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
+                    # La pulizia automatica viene eseguita automaticamente durante create_backup
                     print(msg)
                 else:
                     print("Errore nel backup alla chiusura")

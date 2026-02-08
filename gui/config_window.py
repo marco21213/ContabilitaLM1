@@ -43,6 +43,7 @@ from scripts.backup_config_db import (
     get_backup_cartella,
     get_backup_giorni_ritenzione,
     get_backup_automatico,
+    get_backup_locale_enabled,
     get_backup_dropbox_enabled,
     get_backup_dropbox_token,
     get_backup_dropbox_folder,
@@ -366,6 +367,15 @@ class ConfigWindow:
         )
         row += 1
         
+        # Abilita backup locale
+        self.backup_locale_enabled = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            scrollable_frame,
+            text="Abilita backup locale",
+            variable=self.backup_locale_enabled
+        ).grid(row=row, column=0, columnspan=2, sticky='w', pady=5, padx=5)
+        row += 1
+        
         # Cartella backup locale
         ttk.Label(scrollable_frame, text="Cartella backup locale:").grid(row=row, column=0, sticky='w', pady=5)
         backup_frame = ttk.Frame(scrollable_frame)
@@ -413,17 +423,48 @@ class ConfigWindow:
         dropbox_token_frame.grid(row=row, column=1, padx=5, pady=5, sticky='ew')
         self.dropbox_token = ttk.Entry(dropbox_token_frame, width=40, show='*')
         self.dropbox_token.pack(side='left', fill='x', expand=True)
+        
+        # Frame per i bottoni
+        token_buttons_frame = ttk.Frame(dropbox_token_frame)
+        token_buttons_frame.pack(side='right', padx=(5, 0))
+        
         ttk.Button(
-            dropbox_token_frame,
-            text="Info",
+            token_buttons_frame,
+            text="📖 Guida",
             command=self.show_dropbox_info
-        ).pack(side='right', padx=(5, 0))
+        ).pack(side='left', padx=2)
+        
+        ttk.Button(
+            token_buttons_frame,
+            text="✓ Test",
+            command=self.test_dropbox_token
+        ).pack(side='left', padx=2)
+        
         row += 1
         
         # Dropbox Folder
         ttk.Label(scrollable_frame, text="Cartella Dropbox:").grid(row=row, column=0, sticky='w', pady=5)
-        self.dropbox_folder = ttk.Entry(scrollable_frame, width=40)
-        self.dropbox_folder.grid(row=row, column=1, padx=5, pady=5, sticky='ew')
+        dropbox_folder_frame = ttk.Frame(scrollable_frame)
+        dropbox_folder_frame.grid(row=row, column=1, padx=5, pady=5, sticky='ew')
+        self.dropbox_folder = ttk.Entry(dropbox_folder_frame, width=40)
+        self.dropbox_folder.pack(side='left', fill='x', expand=True)
+        ttk.Button(
+            dropbox_folder_frame,
+            text="ℹ️ Info Condivisione",
+            command=self.show_dropbox_sharing_info
+        ).pack(side='right', padx=(5, 0))
+        row += 1
+        
+        # Nota sulla pulizia automatica
+        cleanup_note = ttk.Label(
+            scrollable_frame,
+            text="ℹ️ I backup Dropbox vengono eliminati automaticamente dopo il numero di giorni impostato sopra",
+            font=("Arial", 8),
+            foreground="gray",
+            wraplength=400,
+            justify="left"
+        )
+        cleanup_note.grid(row=row, column=0, columnspan=2, sticky='w', pady=(0, 5), padx=5)
         row += 1
         
         # Separatore
@@ -650,6 +691,10 @@ class ConfigWindow:
                 else:
                     self.keep_backup_days.set('30')
                 
+                # Backup locale enabled
+                if hasattr(self, 'backup_locale_enabled'):
+                    self.backup_locale_enabled.set(get_backup_locale_enabled())
+                
                 # Dropbox
                 if hasattr(self, 'dropbox_enabled'):
                     self.dropbox_enabled.set(get_backup_dropbox_enabled())
@@ -759,6 +804,7 @@ class ConfigWindow:
                     cartella=self.backup_folder.get().strip() or None,
                     giorni_ritenzione=giorni_ritenzione_val,
                     automatico=True,  # Sempre True se configurato
+                    backup_locale_enabled=self.backup_locale_enabled.get() if hasattr(self, 'backup_locale_enabled') else None,
                     dropbox_enabled=self.dropbox_enabled.get() if hasattr(self, 'dropbox_enabled') else None,
                     dropbox_token=self.dropbox_token.get().strip() if hasattr(self, 'dropbox_token') else None,
                     dropbox_folder=self.dropbox_folder.get().strip() if hasattr(self, 'dropbox_folder') else None,
@@ -943,6 +989,16 @@ class ConfigWindow:
             upload_to_dropbox = hasattr(self, 'dropbox_enabled') and self.dropbox_enabled.get()
             success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=upload_to_dropbox)
             
+            # La pulizia automatica Dropbox viene eseguita automaticamente durante create_backup
+            # se upload_to_dropbox è True. Eseguiamo anche la pulizia locale.
+            if success:
+                try:
+                    local_removed, dropbox_removed = manager.cleanup_old_backups()
+                    if local_removed > 0 or dropbox_removed > 0:
+                        logger.info(f"Pulizia backup: {local_removed} locali, {dropbox_removed} Dropbox rimossi")
+                except Exception as cleanup_error:
+                    logger.warning(f"Errore durante pulizia backup: {cleanup_error}")
+            
             # Mostra messaggio di risultato (solo se la finestra è ancora valida)
             try:
                 if hasattr(self, 'window') and self.window.winfo_exists():
@@ -1012,27 +1068,448 @@ class ConfigWindow:
             self.dropbox_folder.config(state='normal' if enabled else 'disabled')
     
     def show_dropbox_info(self) -> None:
-        """Mostra informazioni su come ottenere il token Dropbox"""
-        info_text = """Come configurare Dropbox per i backup:
+        """Mostra informazioni dettagliate su come ottenere il token Dropbox"""
+        # Crea una finestra personalizzata con scrollbar
+        info_window = tk.Toplevel(self.window)
+        info_window.title("Guida Completa: Configurazione Dropbox")
+        info_window.geometry("700x600")
+        info_window.transient(self.window)
+        info_window.grab_set()
+        
+        # Frame principale
+        main_frame = ttk.Frame(info_window, padding="10")
+        main_frame.pack(fill='both', expand=True)
+        
+        # Titolo
+        title_label = tk.Label(
+            main_frame,
+            text="🔧 GUIDA COMPLETA: Configurazione Dropbox per Backup",
+            font=("Arial", 14, "bold"),
+            justify="center"
+        )
+        title_label.pack(pady=(0, 10))
+        
+        # Frame con scrollbar per il testo
+        text_frame = ttk.Frame(main_frame)
+        text_frame.pack(fill='both', expand=True)
+        
+        # Scrollbar
+        scrollbar = ttk.Scrollbar(text_frame)
+        scrollbar.pack(side='right', fill='y')
+        
+        # Text widget con scrollbar
+        text_widget = tk.Text(
+            text_frame,
+            wrap='word',
+            font=("Courier", 10),
+            yscrollcommand=scrollbar.set,
+            padx=10,
+            pady=10,
+            bg='#f5f5f5',
+            relief='flat'
+        )
+        text_widget.pack(side='left', fill='both', expand=True)
+        scrollbar.config(command=text_widget.yview)
+        
+        # Inserisci il testo
+        info_text = """🔧 GUIDA COMPLETA: Configurazione Dropbox per Backup
 
-1. Vai su https://www.dropbox.com/developers/apps
-2. Clicca su "Create app"
-3. Configura l'app:
-   - App name: scegli un nome (es. "ContabilitaLM1 Backup")
-   - Type of access: "Full Dropbox"
-   - App folder: lascia vuoto o scegli una cartella
-4. IMPORTANTE - Vai alla scheda "Permissions":
-   - Abilita "files.content.write" (obbligatorio per upload)
-   - Abilita "files.content.read" (opzionale, per download)
-   - Salva le modifiche
-5. Vai alla scheda "Settings" → "Generate access token"
-6. Copia il token generato e incollalo qui
+═══════════════════════════════════════════════════════
 
-⚠️ IMPORTANTE: Se ricevi errori di permessi, verifica che lo scope 
-'files.content.write' sia abilitato nella scheda Permissions dell'app.
+📋 PASSO 1: Accedi a Dropbox Developers
+─────────────────────────────────────────
+1. Apri il browser e vai su:
+   https://www.dropbox.com/developers/apps
 
-NOTA: Il token è sensibile, tienilo al sicuro!"""
-        messagebox.showinfo("Informazioni Dropbox Token", info_text)
+2. Accedi con il tuo account Dropbox (se non sei già loggato)
+
+═══════════════════════════════════════════════════════
+
+📋 PASSO 2: Crea una Nuova App
+─────────────────────────────────────────
+1. Clicca sul pulsante "Create app" (in alto a destra)
+
+2. Compila il form di creazione:
+   
+   ✓ Choose an API:
+     → Seleziona "Scoped access" (raccomandato)
+     → Oppure "Full Dropbox" (più permessi)
+   
+   ✓ Choose the type of access you need:
+     → Seleziona "Full Dropbox"
+     → (Non scegliere "App folder" a meno che non serva)
+   
+   ✓ Name your app:
+     → Inserisci un nome (es. "ContabilitaLM1 Backup")
+     → Questo nome sarà visibile solo a te
+   
+3. Clicca su "Create app"
+
+═══════════════════════════════════════════════════════
+
+📋 PASSO 3: Configura i Permessi (IMPORTANTE!)
+─────────────────────────────────────────
+1. Nella pagina dell'app appena creata, vai alla scheda:
+   "Permissions" (o "Permessi" in italiano)
+
+2. Nella sezione "Files and folders", abilita:
+   
+   ✓ files.content.write  → OBBLIGATORIO per upload
+   ✓ files.content.read    → Opzionale (per download)
+   ✓ files.metadata.read   → Opzionale (per liste file)
+   
+3. IMPORTANTE: Clicca su "Submit" o "Salva" per salvare
+   le modifiche ai permessi
+
+⚠️ ATTENZIONE: Se non salvi i permessi, il token non funzionerà!
+
+═══════════════════════════════════════════════════════
+
+📋 PASSO 4: Genera l'Access Token
+─────────────────────────────────────────
+1. Vai alla scheda "Settings" (o "Impostazioni")
+
+2. Scorri fino alla sezione "OAuth 2"
+
+3. Trova la sezione "Generated access token" e clicca su:
+   "Generate" o "Genera"
+
+4. ⚠️ IMPORTANTE: Copia SUBITO il token generato!
+   → Il token viene mostrato UNA SOLA VOLTA
+   → Se lo perdi, dovrai generarne uno nuovo
+   → Il token è molto lungo (circa 200 caratteri)
+
+5. Incolla il token nel campo "Dropbox Access Token" 
+   qui nella configurazione
+
+═══════════════════════════════════════════════════════
+
+📋 PASSO 5: Configura la Cartella Dropbox
+─────────────────────────────────────────
+1. Nel campo "Cartella Dropbox" inserisci il percorso:
+   → Esempio: /ContabilitaLM1/backup
+   → La cartella verrà creata automaticamente se non esiste
+   → Usa sempre "/" come separatore (anche su Windows)
+
+2. Clicca su "Salva" per salvare la configurazione
+
+═══════════════════════════════════════════════════════
+
+✅ VERIFICA: Test del Token
+─────────────────────────────────────────
+Dopo aver inserito il token, puoi testarlo cliccando su:
+"🔄 Esegui Backup Ora" nella sezione Backup
+
+Se il token è valido, vedrai:
+✓ "Backup eseguito con successo!"
+✓ "Dropbox: /ContabilitaLM1/backup/database_..."
+
+═══════════════════════════════════════════════════════
+
+❌ PROBLEMI COMUNI
+─────────────────────────────────────────
+
+🔴 Errore "expired_access_token":
+   → Il token è scaduto o non valido
+   → Genera un nuovo token e sostituiscilo
+
+🔴 Errore "files.content.write" o "scope":
+   → I permessi non sono stati salvati correttamente
+   → Torna alla scheda "Permissions" e salva di nuovo
+   → Genera un NUOVO token dopo aver salvato i permessi
+
+🔴 Errore "bad_request" o "invalid_token":
+   → Il token è stato copiato in modo incompleto
+   → Genera un nuovo token e copialo per intero
+
+═══════════════════════════════════════════════════════
+
+🔒 SICUREZZA
+─────────────────────────────────────────
+• Il token dà accesso completo al tuo Dropbox
+• Non condividere mai il token con altri
+• Se sospetti che il token sia compromesso, revocalo
+  dalla pagina dell'app e generane uno nuovo
+
+═══════════════════════════════════════════════════════"""
+        
+        text_widget.insert('1.0', info_text)
+        text_widget.config(state='disabled')  # Solo lettura
+        
+        # Bottone chiudi
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(pady=(10, 0))
+        
+        ttk.Button(
+            button_frame,
+            text="Chiudi",
+            command=info_window.destroy
+        ).pack()
+        
+        # Centra la finestra
+        info_window.update_idletasks()
+        x = (info_window.winfo_screenwidth() // 2) - (info_window.winfo_width() // 2)
+        y = (info_window.winfo_screenheight() // 2) - (info_window.winfo_height() // 2)
+        info_window.geometry(f"+{x}+{y}")
+    
+    def test_dropbox_token(self) -> None:
+        """Testa il token Dropbox inserito"""
+        token = self.dropbox_token.get().strip()
+        
+        if not token:
+            messagebox.showwarning(
+                "Token Mancante",
+                "Inserisci prima un token Dropbox nel campo sopra.",
+                parent=self.window
+            )
+            return
+        
+        # Mostra finestra di progresso
+        progress_window = None
+        try:
+            if hasattr(self, 'window') and self.window.winfo_exists():
+                progress_window = tk.Toplevel(self.window)
+                progress_window.title("Test Connessione Dropbox")
+                progress_window.geometry("400x120")
+                progress_window.transient(self.window)
+                progress_label = tk.Label(
+                    progress_window, 
+                    text="Test connessione Dropbox in corso...", 
+                    font=("Arial", 10)
+                )
+                progress_label.pack(pady=20)
+                progress_window.update()
+        except (tk.TclError, AttributeError):
+            progress_window = None
+        
+        try:
+            import sys
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            
+            # Prova a importare dropbox
+            try:
+                import dropbox
+                from dropbox.exceptions import AuthError, ApiError
+            except ImportError:
+                if progress_window and progress_window.winfo_exists():
+                    progress_window.destroy()
+                messagebox.showerror(
+                    "Errore",
+                    "Libreria Dropbox non installata.\n\n"
+                    "Installa con: pip install dropbox",
+                    parent=self.window
+                )
+                return
+            
+            # Test connessione
+            dbx = dropbox.Dropbox(token)
+            account = dbx.users_get_current_account()
+            
+            # Test permessi (prova a listare una cartella)
+            try:
+                # Prova a listare la root per verificare i permessi
+                dbx.files_list_folder('')
+                permissions_ok = True
+            except ApiError as e:
+                error_msg = str(e)
+                if 'files.content.write' in error_msg or 'scope' in error_msg.lower():
+                    permissions_ok = False
+                else:
+                    permissions_ok = True  # Altri errori non sono critici per il test
+            
+            # Chiudi finestra progresso
+            if progress_window and progress_window.winfo_exists():
+                progress_window.destroy()
+            
+            # Mostra risultato
+            if permissions_ok:
+                success_msg = (
+                    f"✅ Token valido!\n\n"
+                    f"Account: {account.name.display_name}\n"
+                    f"Email: {account.email}\n\n"
+                    f"Il token è configurato correttamente e può essere usato per i backup."
+                )
+                messagebox.showinfo("Test Riuscito", success_msg, parent=self.window)
+            else:
+                warning_msg = (
+                    f"⚠️ Token valido ma permessi insufficienti!\n\n"
+                    f"Account: {account.name.display_name}\n"
+                    f"Email: {account.email}\n\n"
+                    f"PROBLEMA: Lo scope 'files.content.write' non è abilitato.\n\n"
+                    f"Per risolvere:\n"
+                    f"1. Vai su https://www.dropbox.com/developers/apps\n"
+                    f"2. Seleziona la tua app\n"
+                    f"3. Vai alla scheda 'Permissions'\n"
+                    f"4. Abilita 'files.content.write'\n"
+                    f"5. Salva le modifiche\n"
+                    f"6. Genera un NUOVO token"
+                )
+                messagebox.showwarning("Permessi Insufficienti", warning_msg, parent=self.window)
+                
+        except AuthError as e:
+            if progress_window and progress_window.winfo_exists():
+                progress_window.destroy()
+            
+            error_msg = str(e)
+            if 'expired_access_token' in error_msg:
+                error_text = (
+                    f"❌ Token scaduto o non valido!\n\n"
+                    f"Genera un nuovo token su:\n"
+                    f"https://www.dropbox.com/developers/apps\n\n"
+                    f"Vedi la guida completa cliccando su '📖 Guida'."
+                )
+            else:
+                error_text = (
+                    f"❌ Errore autenticazione!\n\n"
+                    f"Errore: {error_msg}\n\n"
+                    f"Il token potrebbe essere:\n"
+                    f"• Copiato in modo incompleto\n"
+                    f"• Non valido\n"
+                    f"• Revocato\n\n"
+                    f"Genera un nuovo token dalla pagina dell'app."
+                )
+            messagebox.showerror("Test Fallito", error_text, parent=self.window)
+            
+        except Exception as e:
+            if progress_window and progress_window.winfo_exists():
+                progress_window.destroy()
+            
+            error_text = (
+                f"❌ Errore durante il test!\n\n"
+                f"Errore: {str(e)}\n\n"
+                f"Verifica:\n"
+                f"• Connessione internet attiva\n"
+                f"• Token copiato correttamente\n"
+                f"• Libreria dropbox installata"
+            )
+            messagebox.showerror("Errore", error_text, parent=self.window)
+    
+    def show_dropbox_sharing_info(self) -> None:
+        """Mostra informazioni su come condividere la cartella Dropbox"""
+        info_text = """📁 Come Condividere la Cartella Backup su Dropbox
+
+═══════════════════════════════════════════════════════
+
+📋 METODO 1: Condivisione dalla Web App Dropbox
+─────────────────────────────────────────
+1. Accedi a https://www.dropbox.com nel browser
+2. Naviga fino alla cartella configurata qui sopra
+   (es. /ContabilitaLM1/backup)
+3. Clicca con il tasto destro sulla cartella
+4. Seleziona "Condividi" o "Share"
+5. Inserisci l'email dell'utente con cui vuoi condividere
+6. Scegli i permessi:
+   - "Editor" → può vedere e scaricare i backup
+   - "Viewer" → può solo vedere i backup (raccomandato)
+7. Clicca su "Condividi" o "Share"
+
+═══════════════════════════════════════════════════════
+
+📋 METODO 2: Condivisione dal Client Desktop
+─────────────────────────────────────────
+1. Apri il client Dropbox sul tuo computer
+2. Naviga fino alla cartella backup
+3. Clicca con il tasto destro sulla cartella
+4. Seleziona "Condividi cartella" o "Share folder"
+5. Segui le stesse istruzioni del Metodo 1
+
+═══════════════════════════════════════════════════════
+
+📋 METODO 3: Link di Condivisione
+─────────────────────────────────────────
+1. Accedi a https://www.dropbox.com
+2. Naviga alla cartella backup
+3. Clicca con il tasto destro → "Crea link" o "Create link"
+4. Copia il link generato
+5. Condividi il link con gli utenti
+6. ⚠️ IMPORTANTE: Puoi limitare i permessi del link:
+   - Solo visualizzazione (raccomandato)
+   - Con password
+   - Con scadenza
+
+═══════════════════════════════════════════════════════
+
+🔒 SICUREZZA
+─────────────────────────────────────────
+• I backup contengono dati sensibili del database
+• Condividi SOLO con utenti fidati
+• Usa permessi "Viewer" (solo lettura) quando possibile
+• Non condividere il token di accesso dell'app, solo la cartella
+• Puoi revocare l'accesso in qualsiasi momento
+
+═══════════════════════════════════════════════════════
+
+ℹ️ NOTE IMPORTANTI
+─────────────────────────────────────────
+• La condivisione NON influisce sul backup automatico
+• Solo la cartella specificata viene condivisa, non tutto Dropbox
+• Gli utenti condivisi vedranno solo i file nella cartella backup
+• I backup vengono eliminati automaticamente dopo i giorni configurati
+• Puoi condividere con più utenti contemporaneamente
+
+═══════════════════════════════════════════════════════"""
+        
+        # Crea una finestra personalizzata con scrollbar (come per la guida token)
+        info_window = tk.Toplevel(self.window)
+        info_window.title("Informazioni Condivisione Dropbox")
+        info_window.geometry("700x600")
+        info_window.transient(self.window)
+        info_window.grab_set()
+        
+        # Frame principale
+        main_frame = ttk.Frame(info_window, padding="10")
+        main_frame.pack(fill='both', expand=True)
+        
+        # Titolo
+        title_label = tk.Label(
+            main_frame,
+            text="📁 Come Condividere la Cartella Backup",
+            font=("Arial", 14, "bold"),
+            justify="center"
+        )
+        title_label.pack(pady=(0, 10))
+        
+        # Frame con scrollbar per il testo
+        text_frame = ttk.Frame(main_frame)
+        text_frame.pack(fill='both', expand=True)
+        
+        # Scrollbar
+        scrollbar = ttk.Scrollbar(text_frame)
+        scrollbar.pack(side='right', fill='y')
+        
+        # Text widget con scrollbar
+        text_widget = tk.Text(
+            text_frame,
+            wrap='word',
+            font=("Courier", 10),
+            yscrollcommand=scrollbar.set,
+            padx=10,
+            pady=10,
+            bg='#f5f5f5',
+            relief='flat'
+        )
+        text_widget.pack(side='left', fill='both', expand=True)
+        scrollbar.config(command=text_widget.yview)
+        
+        # Inserisci il testo
+        text_widget.insert('1.0', info_text)
+        text_widget.config(state='disabled')  # Solo lettura
+        
+        # Bottone chiudi
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(pady=(10, 0))
+        
+        ttk.Button(
+            button_frame,
+            text="Chiudi",
+            command=info_window.destroy
+        ).pack()
+        
+        # Centra la finestra
+        info_window.update_idletasks()
+        x = (info_window.winfo_screenwidth() // 2) - (info_window.winfo_width() // 2)
+        y = (info_window.winfo_screenheight() // 2) - (info_window.winfo_height() // 2)
+        info_window.geometry(f"+{x}+{y}")
     
     def show_backup_list(self) -> None:
         """Mostra la lista dei backup disponibili"""

@@ -365,11 +365,24 @@ class MainWindow:
     def open_config_window(self) -> None:
         """Apre la finestra di configurazione"""
         try:
+            # Prova prima import relativo (siamo nella stessa directory gui/)
             from config_window import ConfigWindow
             ConfigWindow(self.root)
         except ImportError as e:
-            logger.error(f"Errore nell'apertura della finestra di configurazione: {e}")
-            self._show_temp_message("Errore nel caricamento della configurazione")
+            logger.debug(f"Import relativo fallito, provo import assoluto: {e}")
+            try:
+                # Fallback: prova import assoluto
+                from gui.config_window import ConfigWindow
+                ConfigWindow(self.root)
+            except ImportError as e2:
+                logger.error(f"Errore nell'apertura della finestra di configurazione: {e2}")
+                self._show_temp_message(f"Errore nel caricamento della configurazione: {e2}")
+            except Exception as e2:
+                logger.error(f"Errore nell'apertura della finestra: {e2}")
+                self._show_temp_message(f"Errore nell'apertura della configurazione: {e2}")
+        except Exception as e:
+            logger.error(f"Errore generico nell'apertura della finestra di configurazione: {e}")
+            self._show_temp_message(f"Errore nell'apertura della configurazione: {e}")
 
     def open_users_window(self) -> None:
         """Apre la finestra di gestione utenti"""

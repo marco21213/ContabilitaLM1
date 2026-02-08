@@ -34,11 +34,20 @@ def get_backup_config_dict(config_path: str = "config.ini") -> Dict[str, Any]:
     Converte gli INTEGER (0/1) in booleani Python.
     """
     row = carica_backup_config(config_path)
+    # Gestisci backup_locale_enabled se la colonna esiste (migrazione retrocompatibile)
+    backup_locale_enabled = True  # Default a True per retrocompatibilità
+    try:
+        if 'backup_locale_enabled' in row.keys():
+            backup_locale_enabled = bool(row['backup_locale_enabled'])
+    except (KeyError, AttributeError):
+        pass
+    
     return {
         'id': row['id'],
         'cartella': row['cartella'],
         'giorni_ritenzione': row['giorni_ritenzione'],
         'automatico': bool(row['automatico']),
+        'backup_locale_enabled': backup_locale_enabled,
         'dropbox_enabled': bool(row['dropbox_enabled']),
         'dropbox_token': row['dropbox_token'] if row['dropbox_token'] else '',
         'dropbox_folder': row['dropbox_folder'] if row['dropbox_folder'] else '',
@@ -53,6 +62,7 @@ def aggiorna_backup_config(
     cartella: Optional[str] = None,
     giorni_ritenzione: Optional[int] = None,
     automatico: Optional[bool] = None,
+    backup_locale_enabled: Optional[bool] = None,
     dropbox_enabled: Optional[bool] = None,
     dropbox_token: Optional[str] = None,
     dropbox_folder: Optional[str] = None,
@@ -74,6 +84,8 @@ def aggiorna_backup_config(
         campi["giorni_ritenzione"] = int(giorni_ritenzione)
     if automatico is not None:
         campi["automatico"] = 1 if automatico else 0
+    if backup_locale_enabled is not None:
+        campi["backup_locale_enabled"] = 1 if backup_locale_enabled else 0
     if dropbox_enabled is not None:
         campi["dropbox_enabled"] = 1 if dropbox_enabled else 0
     if dropbox_token is not None:
@@ -208,3 +220,40 @@ def get_backup_schedule_time(config_path: str = "config.ini") -> Optional[str]:
         return '02:00'
     except Exception:
         return '02:00'
+
+
+def get_backup_locale_enabled(config_path: str = "config.ini") -> bool:
+    """Restituisce se il backup locale è abilitato."""
+    try:
+        row = carica_backup_config(config_path)
+        # Se la colonna non esiste, restituisce True per retrocompatibilità
+        if 'backup_locale_enabled' in row.keys():
+            return bool(row['backup_locale_enabled'])
+        else:
+            # Migrazione: aggiungi la colonna se non esiste
+            _migrate_backup_locale_enabled(config_path)
+            return True  # Default a True
+    except (KeyError, RuntimeError):
+        return True  # Default a True per retrocompatibilità
+    except Exception:
+        return True
+
+
+def _migrate_backup_locale_enabled(config_path: str = "config.ini") -> None:
+    """Aggiunge la colonna backup_locale_enabled se non esiste."""
+    conn = _open_connection(config_path)
+    try:
+        cur = conn.cursor()
+        # Verifica se la colonna esiste
+        cur.execute("PRAGMA table_info(backup_config)")
+        columns = [col[1] for col in cur.fetchall()]
+        
+        if 'backup_locale_enabled' not in columns:
+            # Aggiungi la colonna con default True (1) per retrocompatibilità
+            cur.execute("ALTER TABLE backup_config ADD COLUMN backup_locale_enabled INTEGER DEFAULT 1")
+            conn.commit()
+    except Exception as e:
+        # Se la tabella non esiste o altri errori, ignora
+        pass
+    finally:
+        conn.close()

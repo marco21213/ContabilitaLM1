@@ -17,6 +17,7 @@ try:
     from scripts.backup_config_db import (
         get_backup_cartella,
         get_backup_giorni_ritenzione,
+        get_backup_locale_enabled,
         get_backup_dropbox_enabled,
         get_backup_dropbox_token,
         get_backup_dropbox_folder,
@@ -58,6 +59,7 @@ class BackupManager:
                 if backup_cartella:
                     self.backup_folder = backup_cartella
                 self.keep_days = get_backup_giorni_ritenzione(config_path) or 30
+                self.backup_locale_enabled = get_backup_locale_enabled(config_path)
                 self.dropbox_enabled = get_backup_dropbox_enabled(config_path)
                 self.dropbox_token = get_backup_dropbox_token(config_path) or ''
                 self.dropbox_folder = get_backup_dropbox_folder(config_path) or '/ContabilitaLM1/backup'
@@ -70,6 +72,7 @@ class BackupManager:
             logger.debug(f"Errore nel caricamento configurazione backup dal database, uso config.ini: {e}")
             # Fallback a config.ini
             self.keep_days = int(self.config.get('Backup', 'giorni_ritenzione', fallback='30'))
+            self.backup_locale_enabled = self.config.getboolean('Backup', 'backup_locale_enabled', fallback=True)
             self.dropbox_enabled = self.config.getboolean('Backup', 'dropbox_enabled', fallback=False)
             self.dropbox_token = self.config.get('Backup', 'dropbox_token', fallback='')
             self.dropbox_folder = self.config.get('Backup', 'dropbox_folder', fallback='/ContabilitaLM1/backup')
@@ -144,16 +147,15 @@ class BackupManager:
             return False, "", None
         
         try:
-            # Crea la cartella backup locale se non esiste
-            if self.backup_folder:
-                os.makedirs(self.backup_folder, exist_ok=True)
-            
             # Nome file backup
             backup_filename = self.create_backup_filename()
-            local_backup_path = os.path.join(self.backup_folder, backup_filename) if self.backup_folder else None
+            local_backup_path = None
             
-            # Crea backup locale
-            if local_backup_path:
+            # Crea backup locale solo se abilitato
+            if self.backup_locale_enabled and self.backup_folder:
+                # Crea la cartella backup locale se non esiste
+                os.makedirs(self.backup_folder, exist_ok=True)
+                local_backup_path = os.path.join(self.backup_folder, backup_filename)
                 shutil.copy2(self.db_path, local_backup_path)
                 logger.info(f"Backup locale creato: {local_backup_path}")
             
@@ -163,6 +165,14 @@ class BackupManager:
                 try:
                     dropbox_path = self.upload_to_dropbox(local_backup_path or self.db_path, backup_filename)
                     logger.info(f"Backup caricato su Dropbox: {dropbox_path}")
+                    
+                    # Esegui pulizia automatica dei backup vecchi su Dropbox
+                    try:
+                        dropbox_removed, _ = self.cleanup_old_backups()
+                        if dropbox_removed > 0:
+                            logger.info(f"Pulizia automatica Dropbox: rimossi {dropbox_removed} backup vecchi")
+                    except Exception as cleanup_error:
+                        logger.warning(f"Errore durante pulizia automatica Dropbox: {cleanup_error}")
                 except AuthError as e:
                     # Token scaduto o non valido - non è un errore critico
                     error_msg = str(e)
@@ -258,8 +268,8 @@ class BackupManager:
         local_removed = 0
         dropbox_removed = 0
         
-        # Pulisci backup locali
-        if self.backup_folder and os.path.exists(self.backup_folder):
+        # Pulisci backup locali (solo se abilitato)
+        if self.backup_locale_enabled and self.backup_folder and os.path.exists(self.backup_folder):
             for filename in os.listdir(self.backup_folder):
                 if filename.endswith('.db'):
                     file_path = os.path.join(self.backup_folder, filename)
@@ -280,21 +290,29 @@ class BackupManager:
                 
                 for entry in result.entries:
                     if isinstance(entry, dropbox.files.FileMetadata) and entry.name.endswith('.db'):
-                        # Estrai data dal nome file (formato: database_YYYY-MM-DD_HH-MM-SS.db)
+                        # Usa la data di modifica del file su Dropbox (più affidabile)
                         try:
-                            # Prova a estrarre la data dal nome
-                            parts = entry.name.split('_')
-                            if len(parts) >= 3:
-                                date_str = f"{parts[-3]}_{parts[-2]}_{parts[-1].replace('.db', '')}"
-                                file_date = datetime.strptime(date_str, '%Y-%m-%d_%H-%M-%S')
-                                
-                                if file_date < cutoff_date:
-                                    file_path = f"{dropbox_path}/{entry.name}"
-                                    self.dbx.files_delete_v2(file_path)
-                                    dropbox_removed += 1
-                                    logger.info(f"Rimosso backup Dropbox vecchio: {entry.name}")
+                            file_date = entry.client_modified
+                            if file_date and file_date.replace(tzinfo=None) < cutoff_date:
+                                file_path = f"{dropbox_path}/{entry.name}"
+                                self.dbx.files_delete_v2(file_path)
+                                dropbox_removed += 1
+                                logger.info(f"Rimosso backup Dropbox vecchio: {entry.name} (data: {file_date})")
                         except Exception as e:
-                            logger.warning(f"Impossibile determinare data per {entry.name}: {e}")
+                            # Fallback: prova a estrarre la data dal nome file
+                            try:
+                                parts = entry.name.split('_')
+                                if len(parts) >= 3:
+                                    date_str = f"{parts[-3]}_{parts[-2]}_{parts[-1].replace('.db', '')}"
+                                    file_date = datetime.strptime(date_str, '%Y-%m-%d_%H-%M-%S')
+                                    
+                                    if file_date < cutoff_date:
+                                        file_path = f"{dropbox_path}/{entry.name}"
+                                        self.dbx.files_delete_v2(file_path)
+                                        dropbox_removed += 1
+                                        logger.info(f"Rimosso backup Dropbox vecchio: {entry.name} (dal nome file)")
+                            except Exception as e2:
+                                logger.warning(f"Impossibile determinare data per {entry.name}: {e2}")
                             
             except Exception as e:
                 logger.error(f"Errore pulizia backup Dropbox: {e}")
