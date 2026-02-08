@@ -84,8 +84,20 @@ class BackupManager:
                 # Test connessione
                 self.dbx.users_get_current_account()
                 logger.info("Connessione Dropbox stabilita")
+            except AuthError as e:
+                # Token scaduto o non valido - non è un errore critico
+                error_msg = str(e)
+                if 'expired_access_token' in error_msg:
+                    logger.warning(
+                        f"Token Dropbox scaduto. Il backup locale continuerà a funzionare. "
+                        f"Per riattivare Dropbox, genera un nuovo token su https://www.dropbox.com/developers/apps"
+                    )
+                else:
+                    logger.warning(f"Errore autenticazione Dropbox: {e}. Il backup locale continuerà a funzionare.")
+                self.dbx = None
             except Exception as e:
-                logger.error(f"Errore connessione Dropbox: {e}")
+                # Altri errori di connessione
+                logger.warning(f"Errore connessione Dropbox: {e}. Il backup locale continuerà a funzionare.")
                 self.dbx = None
     
     def _get_db_path(self) -> str:
@@ -151,14 +163,26 @@ class BackupManager:
                 try:
                     dropbox_path = self.upload_to_dropbox(local_backup_path or self.db_path, backup_filename)
                     logger.info(f"Backup caricato su Dropbox: {dropbox_path}")
+                except AuthError as e:
+                    # Token scaduto o non valido - non è un errore critico
+                    error_msg = str(e)
+                    if 'expired_access_token' in error_msg:
+                        logger.warning(
+                            f"Token Dropbox scaduto durante upload. Il backup locale è stato creato con successo. "
+                            f"Per riattivare Dropbox, genera un nuovo token su https://www.dropbox.com/developers/apps"
+                        )
+                    else:
+                        logger.warning(f"Errore autenticazione Dropbox durante upload: {e}. Il backup locale è stato creato con successo.")
+                    # Non fallisce il backup se l'upload Dropbox fallisce
                 except Exception as e:
                     error_msg = str(e)
                     # Verifica se è un errore di permessi/scope
                     if 'files.content.write' in error_msg or 'scope' in error_msg.lower() or 'permitted' in error_msg.lower():
-                        logger.error(f"Errore permessi Dropbox: L'app non ha lo scope 'files.content.write' abilitato. "
-                                   f"Vai su https://www.dropbox.com/developers/apps e abilita lo scope nella sezione Permissions.")
+                        logger.warning(f"Errore permessi Dropbox: L'app non ha lo scope 'files.content.write' abilitato. "
+                                     f"Vai su https://www.dropbox.com/developers/apps e abilita lo scope nella sezione Permissions. "
+                                     f"Il backup locale è stato creato con successo.")
                     else:
-                        logger.error(f"Errore upload Dropbox: {e}")
+                        logger.warning(f"Errore upload Dropbox: {e}. Il backup locale è stato creato con successo.")
                     # Non fallisce il backup se l'upload Dropbox fallisce
             
             return True, local_backup_path or "", dropbox_path

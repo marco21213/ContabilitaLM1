@@ -54,7 +54,7 @@ class VistaScadenzeApp(tk.Frame):
         }
         
         # Impostazioni di ordinamento (carica da config.ini)
-        self.sort_column = self.get_sort_preference('column', 'data')  # 'data' o 'numero'
+        self.sort_column = self.get_sort_preference('column', 'data')  # 'data', 'numero' o 'soggetto'
         self.sort_direction = self.get_sort_preference('direction', 'desc')  # 'asc' o 'desc'
 
         self.configure_style()
@@ -180,12 +180,18 @@ class VistaScadenzeApp(tk.Frame):
         else:
             self.switch_to_documenti_table()
             # Per documenti, imposta ordinamento predefinito
-            if self.sort_column not in ['data', 'numero']:
+            if self.sort_column not in ['data', 'numero', 'soggetto']:
                 self.sort_column = 'data'
                 self.sort_direction = 'desc'
         
         # Aggiorna visibilità bottone dettaglio fatture sospese
         self._update_dettaglio_sospese_button()
+        
+        # Aggiorna visibilità bottoni import
+        self.update_button_visibility()
+        
+        # Aggiorna etichetta ordinamento
+        self.update_sort_label()
         
         # Resetta i filtri quando cambi tab
         self.clear_all_filters(silent=True)
@@ -195,6 +201,47 @@ class VistaScadenzeApp(tk.Frame):
             self.load_data_scaduti()
         else:
             self.load_data()
+    
+    def update_button_visibility(self):
+        """Aggiorna la visibilità dei bottoni in base alla tab attiva"""
+        if not hasattr(self, 'button_frames'):
+            return
+        
+        tab = self.current_tab_filter
+        
+        # Definisci quali bottoni mostrare per ogni tab
+        visibility_rules = {
+            'acquisti': {
+                'import_acquisti': True,   # Mostra Import Acquisti
+                'import_vendite': False,    # Nascondi Import Vendite
+                'import_rapido': False      # Nascondi Import Rapido
+            },
+            'vendite': {
+                'import_acquisti': False,   # Nascondi Import Acquisti
+                'import_vendite': True,     # Mostra Import Vendite
+                'import_rapido': False      # Nascondi Import Rapido
+            },
+            'scaduto_clienti': {
+                'import_acquisti': False,   # Nascondi Import Acquisti
+                'import_vendite': False,    # Nascondi Import Vendite
+                'import_rapido': False      # Nascondi Import Rapido
+            },
+            'scaduto_fornitori': {
+                'import_acquisti': False,   # Nascondi Import Acquisti
+                'import_vendite': False,    # Nascondi Import Vendite
+                'import_rapido': False      # Nascondi Import Rapido
+            }
+        }
+        
+        # Applica le regole
+        if tab in visibility_rules:
+            rules = visibility_rules[tab]
+            for button_key, visible in rules.items():
+                if button_key in self.button_frames:
+                    if visible:
+                        self.button_frames[button_key].pack(side="left", padx=(0, 25))
+                    else:
+                        self.button_frames[button_key].pack_forget()
 
     def create_button_bar(self):
         button_frame = tk.Frame(self.content_frame, bg=Style.BACKGROUND_COLOR)
@@ -202,7 +249,7 @@ class VistaScadenzeApp(tk.Frame):
         icon_size = (32, 32)
         button_size = 40
 
-        def add_button(frame, icon_name, text, command, fallback_color):
+        def add_button(frame, icon_name, text, command, fallback_color, button_key=None):
             try:
                 img = Image.open(f"assets/icon/{icon_name}.png")
                 img = img.resize(icon_size, Image.Resampling.LANCZOS)
@@ -219,21 +266,54 @@ class VistaScadenzeApp(tk.Frame):
                 btn = tk.Button(frame, text=text, command=command, bg=fallback_color,
                                 fg="white", font=("Arial", 11, "bold"), cursor="hand2", width=12, height=2)
                 btn.pack()
+            
+            # Salva il riferimento al frame per poterlo nascondere/mostrare
+            if button_key:
+                if not hasattr(self, 'button_frames'):
+                    self.button_frames = {}
+                self.button_frames[button_key] = frame
+            
+            return frame
 
-        # Pulsanti principali
-        buttons = [
-            ("nuovo", "Nuovo", self.nuovo_documento, "#4CAF50"),
-            ("modifica", "Modifica", self.modifica_documento, "#FF9800"),
-            ("cancella", "Cancella", self.cancella_documento, "#f44336"),
-            ("import_acquisti", "Importa Acquisti", self.importa_acquisti, "#9C27B0"),
-            ("import_vendite", "Importa Vendite", self.importa_vendite, "#9C27B0"),
-            ("import_rapido", "Import Rapido", self.importa_rapido, "#00BCD4"),
-            ("filtri", "Cancella filtri", self.clear_all_filters, "#607D8B")
+        # Pulsanti principali (sempre visibili)
+        buttons_always = [
+            ("nuovo", "Nuovo", self.nuovo_documento, "#4CAF50", None),
+            ("modifica", "Modifica", self.modifica_documento, "#FF9800", None),
+            ("cancella", "Cancella", self.cancella_documento, "#f44336", None),
         ]
-        for icon, text, cmd, color in buttons:
+        
+        # Pulsanti condizionali (visibili solo in alcune tab)
+        buttons_conditional = [
+            ("import_acquisti", "Importa Acquisti", self.importa_acquisti, "#9C27B0", "import_acquisti"),
+            ("import_vendite", "Importa Vendite", self.importa_vendite, "#9C27B0", "import_vendite"),
+            ("import_rapido", "Import Rapido", self.importa_rapido, "#00BCD4", "import_rapido"),
+        ]
+        
+        # Pulsante filtri (sempre visibile)
+        buttons_filtri = [
+            ("filtri", "Cancella filtri", self.clear_all_filters, "#607D8B", None),
+        ]
+        
+        # Crea tutti i bottoni sempre visibili
+        for icon, text, cmd, color, key in buttons_always:
             frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
             frame.pack(side="left", padx=(0, 25))
-            add_button(frame, icon, text, cmd, color)
+            add_button(frame, icon, text, cmd, color, key)
+        
+        # Crea i bottoni condizionali (verranno mostrati/nascosti dinamicamente)
+        for icon, text, cmd, color, key in buttons_conditional:
+            frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
+            # Non fare pack subito, verrà gestito da update_button_visibility
+            add_button(frame, icon, text, cmd, color, key)
+        
+        # Crea il pulsante filtri (sempre visibile)
+        for icon, text, cmd, color, key in buttons_filtri:
+            frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
+            frame.pack(side="left", padx=(0, 25))
+            add_button(frame, icon, text, cmd, color, key)
+        
+        # Aggiorna la visibilità iniziale (mostra/nascondi i bottoni condizionali)
+        self.update_button_visibility()
         
         # Bottone per dettaglio fatture sospese (solo per scaduto clienti)
         self.dettaglio_sospese_frame = tk.Frame(button_frame, bg=Style.BACKGROUND_COLOR)
@@ -258,6 +338,20 @@ class VistaScadenzeApp(tk.Frame):
             pady=10
         )
         self.sort_btn.pack()
+        
+        # Etichetta che mostra l'ordinamento attivo
+        self.sort_label = tk.Label(
+            sort_frame,
+            text="",
+            bg=Style.BACKGROUND_COLOR,
+            fg="#666666",
+            font=("Arial", 9),
+            anchor="center"
+        )
+        self.sort_label.pack(pady=(5, 0))
+        
+        # Aggiorna l'etichetta iniziale
+        self.update_sort_label()
 
     def clear_all_filters(self, silent=False):
         """Cancella tutti i filtri"""
@@ -383,31 +477,48 @@ class VistaScadenzeApp(tk.Frame):
         
         if self.mode_scaduti:
             # Menu per dati scaduti
-            menu.add_command(label="👤 Ragione Sociale", 
+            current_mark_asc = " ✓" if self.sort_column == "ragione_sociale" and self.sort_direction == "asc" else ""
+            current_mark_desc = " ✓" if self.sort_column == "ragione_sociale" and self.sort_direction == "desc" else ""
+            menu.add_command(label=f"👤 Ragione Sociale ↑ Crescente{current_mark_asc}", 
                             command=lambda: self.change_sort("ragione_sociale", "asc"))
-            menu.add_command(label="👤 Ragione Sociale", 
+            menu.add_command(label=f"👤 Ragione Sociale ↓ Decrescente{current_mark_desc}", 
                             command=lambda: self.change_sort("ragione_sociale", "desc"))
             menu.add_separator()
-            menu.add_command(label="💰 Saldo", 
-                            command=lambda: self.change_sort("saldo_scaduto", "desc"))
-            menu.add_command(label="💰 Saldo", 
+            current_mark_asc = " ✓" if self.sort_column == "saldo_scaduto" and self.sort_direction == "asc" else ""
+            current_mark_desc = " ✓" if self.sort_column == "saldo_scaduto" and self.sort_direction == "desc" else ""
+            menu.add_command(label=f"💰 Saldo ↑ Crescente{current_mark_asc}", 
                             command=lambda: self.change_sort("saldo_scaduto", "asc"))
+            menu.add_command(label=f"💰 Saldo ↓ Decrescente{current_mark_desc}", 
+                            command=lambda: self.change_sort("saldo_scaduto", "desc"))
             menu.add_separator()
-            menu.add_command(label="🔢 N° Scadenze", 
-                            command=lambda: self.change_sort("numero_scadenze", "desc"))
-            menu.add_command(label="🔢 N° Scadenze", 
+            current_mark_asc = " ✓" if self.sort_column == "numero_scadenze" and self.sort_direction == "asc" else ""
+            current_mark_desc = " ✓" if self.sort_column == "numero_scadenze" and self.sort_direction == "desc" else ""
+            menu.add_command(label=f"🔢 N° Scadenze ↑ Crescente{current_mark_asc}", 
                             command=lambda: self.change_sort("numero_scadenze", "asc"))
+            menu.add_command(label=f"🔢 N° Scadenze ↓ Decrescente{current_mark_desc}", 
+                            command=lambda: self.change_sort("numero_scadenze", "desc"))
         else:
             # Menu per documenti
-            menu.add_command(label="📅 Data", 
-                            command=lambda: self.change_sort("data", "desc"))
-            menu.add_command(label="📅 Data", 
+            current_mark_asc = " ✓" if self.sort_column == "data" and self.sort_direction == "asc" else ""
+            current_mark_desc = " ✓" if self.sort_column == "data" and self.sort_direction == "desc" else ""
+            menu.add_command(label=f"📅 Data ↑ Crescente (più vecchie){current_mark_asc}", 
                             command=lambda: self.change_sort("data", "asc"))
+            menu.add_command(label=f"📅 Data ↓ Decrescente (più recenti){current_mark_desc}", 
+                            command=lambda: self.change_sort("data", "desc"))
             menu.add_separator()
-            menu.add_command(label="🔢 Numero", 
-                            command=lambda: self.change_sort("numero", "desc"))
-            menu.add_command(label="🔢 Numero", 
+            current_mark_asc = " ✓" if self.sort_column == "numero" and self.sort_direction == "asc" else ""
+            current_mark_desc = " ✓" if self.sort_column == "numero" and self.sort_direction == "desc" else ""
+            menu.add_command(label=f"🔢 Numero ↑ Crescente{current_mark_asc}", 
                             command=lambda: self.change_sort("numero", "asc"))
+            menu.add_command(label=f"🔢 Numero ↓ Decrescente{current_mark_desc}", 
+                            command=lambda: self.change_sort("numero", "desc"))
+            menu.add_separator()
+            current_mark_asc = " ✓" if self.sort_column == "soggetto" and self.sort_direction == "asc" else ""
+            current_mark_desc = " ✓" if self.sort_column == "soggetto" and self.sort_direction == "desc" else ""
+            menu.add_command(label=f"👤 Soggetto ↑ Crescente (A-Z){current_mark_asc}", 
+                            command=lambda: self.change_sort("soggetto", "asc"))
+            menu.add_command(label=f"👤 Soggetto ↓ Decrescente (Z-A){current_mark_desc}", 
+                            command=lambda: self.change_sort("soggetto", "desc"))
         
         # Posiziona il menu sotto il pulsante
         x = self.sort_btn.winfo_rootx()
@@ -422,11 +533,37 @@ class VistaScadenzeApp(tk.Frame):
         # Salva la preferenza
         self.save_sort_preference()
         
+        # Aggiorna l'etichetta
+        self.update_sort_label()
+        
         # Ricarica i dati con il nuovo ordinamento
         if self.mode_scaduti:
             self.load_data_scaduti()
         else:
             self.load_data()
+    
+    def update_sort_label(self):
+        """Aggiorna l'etichetta che mostra l'ordinamento attivo"""
+        if not hasattr(self, 'sort_label'):
+            return
+        
+        # Mappa nomi colonne a etichette
+        column_labels = {
+            'data': 'Data',
+            'numero': 'Numero',
+            'soggetto': 'Soggetto',
+            'ragione_sociale': 'Ragione Sociale',
+            'saldo_scaduto': 'Saldo',
+            'numero_scadenze': 'N° Scadenze'
+        }
+        
+        # Simbolo direzione
+        direction_symbol = "↑" if self.sort_direction == "asc" else "↓"
+        direction_text = "Crescente" if self.sort_direction == "asc" else "Decrescente"
+        
+        # Testo etichetta
+        column_label = column_labels.get(self.sort_column, self.sort_column)
+        self.sort_label.config(text=f"{column_label} {direction_symbol} ({direction_text})")
 
     def show_filter_menu(self, field_name, column_title):
         win = tk.Toplevel(self)
@@ -810,6 +947,8 @@ class VistaScadenzeApp(tk.Frame):
             # Determina l'ordinamento SQL in base alle preferenze
             if self.sort_column == "numero":
                 order_by = f"d.numero_documento {self.sort_direction.upper()}"
+            elif self.sort_column == "soggetto":
+                order_by = f"s.ragione_sociale {self.sort_direction.upper()}"
             else:  # default: data
                 order_by = f"d.data_documento {self.sort_direction.upper()}"
             

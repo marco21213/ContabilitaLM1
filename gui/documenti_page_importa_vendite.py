@@ -290,13 +290,31 @@ class ImportaFattureVenditaXML:
             self.log(f"  ⚠ Errore estrazione imponibile DI: {str(e)}")
             return 0.0
 
-    def verifica_soggetto_esistente(self, partita_iva, codice_fiscale):
-        """Verifica se un soggetto esiste già nel database"""
-        query = """
-            SELECT id, tipo_soggetto FROM soggetti
-            WHERE (partita_iva = ? AND partita_iva IS NOT NULL)
-            OR (codice_fiscale = ? AND codice_fiscale IS NOT NULL)
+    def verifica_soggetto_esistente(self, partita_iva, codice_fiscale, escludi_fornitori=False):
         """
+        Verifica se un soggetto esiste già nel database.
+        
+        Args:
+            partita_iva: Partita IVA da cercare
+            codice_fiscale: Codice fiscale da cercare
+            escludi_fornitori: Se True, esclude i soggetti con tipo_soggetto='FORNITORE'
+                              (utile per importazione vendite, dove vogliamo solo CLIENTI)
+        """
+        if escludi_fornitori:
+            # Per le vendite: cerca solo CLIENTI o ENTRAMBI, escludi FORNITORI puri
+            query = """
+                SELECT id, tipo_soggetto FROM soggetti
+                WHERE ((partita_iva = ? AND partita_iva IS NOT NULL)
+                   OR (codice_fiscale = ? AND codice_fiscale IS NOT NULL))
+                AND tipo_soggetto IN ('CLIENTE', 'ENTRAMBI')
+            """
+        else:
+            # Per gli acquisti: cerca tutti i tipi
+            query = """
+                SELECT id, tipo_soggetto FROM soggetti
+                WHERE (partita_iva = ? AND partita_iva IS NOT NULL)
+                OR (codice_fiscale = ? AND codice_fiscale IS NOT NULL)
+            """
         self.cursor.execute(query, (partita_iva, codice_fiscale))
         result = self.cursor.fetchone()
         return (result[0], result[1]) if result else (None, None)
@@ -340,10 +358,17 @@ class ImportaFattureVenditaXML:
 
     def inserisci_soggetto(self, root):
         """Inserisce un nuovo soggetto o recupera quello esistente (cliente)."""
+        # IMPORTANTE: Per le vendite, il CLIENTE è in CessionarioCommittente
+        # Il FORNITORE (noi) è in CedentePrestatore - NON usare questi dati!
         id_paese = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/IdFiscaleIVA/IdPaese', 'IT')
 
         partita_iva = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/IdFiscaleIVA/IdCodice')
         codice_fiscale = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/CodiceFiscale')
+        
+        # Log per debug
+        self.log(f"  [DEBUG] Estrazione cliente da CessionarioCommittente:")
+        self.log(f"    Partita IVA: {partita_iva}")
+        self.log(f"    Codice Fiscale: {codice_fiscale}")
 
         # Se il paese è estero, impostiamo partita_iva a None per evitare duplicati
         if id_paese and id_paese != 'IT':
@@ -363,7 +388,17 @@ class ImportaFattureVenditaXML:
         # Verifica presenza spese bancarie
         spese_bancarie = self.verifica_spese_bancarie(root)
 
-        soggetto_id, tipo_soggetto_esistente = self.verifica_soggetto_esistente(partita_iva, codice_fiscale)
+        # IMPORTANTE: Per le vendite, escludiamo i FORNITORI puri dalla ricerca
+        # Vogliamo solo CLIENTI o ENTRAMBI
+        soggetto_id, tipo_soggetto_esistente = self.verifica_soggetto_esistente(
+            partita_iva, codice_fiscale, escludi_fornitori=True
+        )
+        
+        # Log per debug
+        if soggetto_id:
+            self.log(f"  [DEBUG] Soggetto esistente trovato: ID={soggetto_id}, tipo={tipo_soggetto_esistente}")
+        else:
+            self.log(f"  [DEBUG] Nessun cliente esistente trovato per P.IVA={partita_iva}, CF={codice_fiscale}")
     
         # Se non trovato con partita IVA/codice fiscale E è un cliente estero (entrambi NULL),
         # verifica anche con ragione_sociale + città
@@ -383,23 +418,30 @@ class ImportaFattureVenditaXML:
         
         if soggetto_id:
             # Se il soggetto esiste già, gestiamo il tipo_soggetto
-            if tipo_soggetto_esistente == 'FORNITORE':
-                # Se era fornitore, aggiorniamo a 'ENTRAMBI'
-                self.aggiorna_tipo_soggetto(soggetto_id, 'ENTRAMBI')
-                self.log(f"  Aggiornato tipo_soggetto a 'ENTRAMBI' per soggetto esistente (ID: {soggetto_id})")
-            elif tipo_soggetto_esistente == 'CLIENTE':
+            # IMPORTANTE: Con escludi_fornitori=True, non dovremmo mai trovare un FORNITORE puro
+            # Ma gestiamo comunque i casi CLIENTE e ENTRAMBI
+            if tipo_soggetto_esistente == 'CLIENTE':
                 # Se era già cliente, non facciamo nulla
-                pass
+                self.log(f"  ✓ Cliente esistente trovato (ID: {soggetto_id})")
             elif tipo_soggetto_esistente == 'ENTRAMBI':
                 # Se era già entrambi, non facciamo nulla
-                pass
+                self.log(f"  ✓ Soggetto ENTRAMBI trovato (ID: {soggetto_id})")
+            elif tipo_soggetto_esistente == 'FORNITORE':
+                # Questo NON dovrebbe mai accadere con escludi_fornitori=True
+                # Ma se succede, creiamo un nuovo cliente invece di riutilizzare il fornitore
+                self.log(f"  ⚠ ATTENZIONE: Trovato FORNITORE (non dovrebbe accadere)!")
+                self.log(f"  ⚠ Creazione nuovo cliente invece di riutilizzare fornitore")
+                soggetto_id = None  # Forza la creazione di un nuovo cliente
             
-            # Aggiorna tipo_fattura, tipo_pagamento e spese_bancarie se disponibili
-            if tipo_fattura or tipo_pagamento_id or spese_bancarie:
-                self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id, spese_bancarie)
-            
-            return soggetto_id, False
+            # Se soggetto_id è ancora valido (non è stato reso None), aggiorna e ritorna
+            if soggetto_id:
+                # Aggiorna tipo_fattura, tipo_pagamento e spese_bancarie se disponibili
+                if tipo_fattura or tipo_pagamento_id or spese_bancarie:
+                    self.aggiorna_tipo_fattura_pagamento(soggetto_id, tipo_fattura, tipo_pagamento_id, spese_bancarie)
+                
+                return soggetto_id, False
 
+        # Estrai i dati del CLIENTE da CessionarioCommittente (NON da CedentePrestatore!)
         denominazione = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/Anagrafica/Denominazione')
         if not denominazione:
             cognome = self.estrai_testo(root, './/CessionarioCommittente/DatiAnagrafici/Anagrafica/Cognome')
@@ -410,6 +452,12 @@ class ImportaFattureVenditaXML:
         cap = self.estrai_testo(root, './/CessionarioCommittente/Sede/CAP')
         provincia = self.estrai_testo(root, './/CessionarioCommittente/Sede/Provincia')
         email = self.estrai_testo(root, './/CessionarioCommittente/Contatti/Email')
+        
+        # Log per debug
+        self.log(f"  [DEBUG] Creazione nuovo cliente:")
+        self.log(f"    Denominazione: {denominazione}")
+        self.log(f"    Città: {citta}")
+        self.log(f"    Partita IVA: {partita_iva}")
 
         # Converti stringhe vuote in None anche per gli altri campi
         citta = citta if citta else None
@@ -783,9 +831,16 @@ class ImportaFattureVenditaXML:
                 data_documento = ''
             
             # Recupera nome cliente dal database
-            self.cursor.execute("SELECT ragione_sociale FROM soggetti WHERE id = ?", (soggetto_id,))
+            self.cursor.execute("SELECT ragione_sociale, tipo_soggetto FROM soggetti WHERE id = ?", (soggetto_id,))
             cliente_row = self.cursor.fetchone()
             cliente = cliente_row[0] if cliente_row else ''
+            tipo_soggetto_finale = cliente_row[1] if cliente_row and len(cliente_row) > 1 else ''
+            
+            # Log per debug finale
+            self.log(f"  [DEBUG] Cliente salvato nel documento:")
+            self.log(f"    Soggetto ID: {soggetto_id}")
+            self.log(f"    Nome: {cliente}")
+            self.log(f"    Tipo: {tipo_soggetto_finale}")
             
             totale = self.estrai_testo(root, './/DatiGeneraliDocumento/ImportoTotaleDocumento')
             try:

@@ -909,6 +909,7 @@ class ConfigWindow:
     
     def execute_backup(self) -> None:
         """Esegue un backup manuale"""
+        progress_window = None
         try:
             import sys
             sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -920,37 +921,87 @@ class ConfigWindow:
             # Crea il manager
             manager = BackupManager(self.config_file)
             
-            # Mostra progresso
-            progress_window = tk.Toplevel(self.window)
-            progress_window.title("Backup in corso...")
-            progress_window.geometry("400x100")
-            progress_label = tk.Label(progress_window, text="Creazione backup in corso...", font=("Arial", 10))
-            progress_label.pack(pady=20)
-            progress_window.update()
+            # Mostra progresso (solo se la finestra principale è ancora valida)
+            try:
+                # Verifica che self.window sia ancora valida
+                if hasattr(self, 'window') and self.window.winfo_exists():
+                    progress_window = tk.Toplevel(self.window)
+                    progress_window.title("Backup in corso...")
+                    progress_window.geometry("400x100")
+                    progress_window.transient(self.window)
+                    progress_label = tk.Label(progress_window, text="Creazione backup in corso...", font=("Arial", 10))
+                    progress_label.pack(pady=20)
+                    progress_window.update()
+                else:
+                    progress_window = None
+                    logger.warning("Finestra principale non più valida, backup senza finestra di progresso")
+            except (tk.TclError, AttributeError) as e:
+                logger.warning(f"Impossibile creare finestra di progresso: {e}")
+                progress_window = None
             
             # Esegui backup
             upload_to_dropbox = hasattr(self, 'dropbox_enabled') and self.dropbox_enabled.get()
             success, local_path, dropbox_path = manager.create_backup(upload_to_dropbox=upload_to_dropbox)
             
-            progress_window.destroy()
-            
-            if success:
-                msg = "Backup eseguito con successo!\n\n"
-                if local_path:
-                    msg += f"Locale: {local_path}\n"
-                if dropbox_path:
-                    msg += f"Dropbox: {dropbox_path}\n"
+            # Mostra messaggio di risultato (solo se la finestra è ancora valida)
+            try:
+                if hasattr(self, 'window') and self.window.winfo_exists():
+                    if success:
+                        msg = "Backup eseguito con successo!\n\n"
+                        if local_path:
+                            msg += f"Locale: {local_path}\n"
+                        if dropbox_path:
+                            msg += f"Dropbox: {dropbox_path}\n"
+                        else:
+                            # Controlla se Dropbox era abilitato ma non è riuscito
+                            if upload_to_dropbox:
+                                msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
+                        messagebox.showinfo("Backup Completato", msg, parent=self.window)
+                    else:
+                        messagebox.showerror("Errore", "Errore durante la creazione del backup", parent=self.window)
                 else:
-                    # Controlla se Dropbox era abilitato ma non è riuscito
-                    if upload_to_dropbox:
-                        msg += "\n⚠️ Backup Dropbox non eseguito - verifica configurazione e permessi"
-                messagebox.showinfo("Backup Completato", msg)
-            else:
-                messagebox.showerror("Errore", "Errore durante la creazione del backup")
+                    # Finestra chiusa, logga solo il risultato
+                    if success:
+                        logger.info(f"Backup completato: {local_path}")
+                    else:
+                        logger.error("Errore durante la creazione del backup")
+            except (tk.TclError, AttributeError) as e:
+                logger.warning(f"Impossibile mostrare messaggio risultato: {e}")
                 
         except Exception as e:
             logger.error(f"Errore nell'esecuzione del backup: {e}")
-            messagebox.showerror("Errore", f"Errore durante il backup: {e}")
+            error_msg = str(e)
+            # Messaggio più chiaro per errori Dropbox comuni (solo se la finestra è ancora valida)
+            try:
+                if hasattr(self, 'window') and self.window.winfo_exists():
+                    if "expired_access_token" in error_msg or "Token non valido" in error_msg:
+                        messagebox.showerror(
+                            "Errore Backup Dropbox", 
+                            f"Token Dropbox scaduto o non valido.\n\n"
+                            f"Per risolvere:\n"
+                            f"1. Vai su https://www.dropbox.com/developers/apps\n"
+                            f"2. Seleziona la tua app\n"
+                            f"3. Genera un nuovo access token\n"
+                            f"4. Inseriscilo nella configurazione backup",
+                            parent=self.window
+                        )
+                    else:
+                        messagebox.showerror("Errore", f"Errore durante il backup: {e}", parent=self.window)
+                else:
+                    # Finestra chiusa, logga solo l'errore
+                    logger.error(f"Errore backup (finestra chiusa): {error_msg}")
+            except (tk.TclError, AttributeError):
+                # Anche il tentativo di mostrare il messaggio è fallito, logga solo
+                logger.error(f"Errore backup: {error_msg}")
+        finally:
+            # Chiudi sempre la finestra di progresso se esiste e è ancora valida
+            if progress_window is not None:
+                try:
+                    if progress_window.winfo_exists():
+                        progress_window.destroy()
+                except tk.TclError:
+                    # La finestra è già stata distrutta o non è più valida
+                    pass
     
     def toggle_dropbox_fields(self) -> None:
         """Abilita/disabilita i campi Dropbox in base al checkbox"""
