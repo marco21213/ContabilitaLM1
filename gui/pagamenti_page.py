@@ -46,7 +46,7 @@ class PagamentiUnificatiApp(tk.Frame):
         self.filtered_data_pagamenti = []  # Dati filtrati per pagamenti (per cancellazione)
         
         # Filtro attivo per la tab corrente
-        self.current_tab_filter = "pagamenti"  # "pagamenti", "riba", "distinte_riba"
+        self.current_tab_filter = "pagamenti"  # "pagamenti", "incassi", "riba", "distinte_riba"
         
         # Filtri per pagamenti
         self.active_filters_pagamenti = {
@@ -91,7 +91,7 @@ class PagamentiUnificatiApp(tk.Frame):
         # Tab buttons
         self.tab_buttons = {}
         
-        # Tab Pagamenti
+        # Tab Pagamenti (uscite)
         self.tab_buttons['pagamenti'] = tk.Button(
             tab_header_frame, 
             text="💳 PAGAMENTI",
@@ -99,6 +99,15 @@ class PagamentiUnificatiApp(tk.Frame):
             **tab_style
         )
         self.tab_buttons['pagamenti'].pack(side="left", padx=(0, 5))
+        
+        # Tab Incassi (entrate)
+        self.tab_buttons['incassi'] = tk.Button(
+            tab_header_frame, 
+            text="💰 INCASSI",
+            command=lambda: self.switch_tab('incassi'),
+            **tab_style
+        )
+        self.tab_buttons['incassi'].pack(side="left", padx=(0, 5))
         
         # Tab RiBa
         self.tab_buttons['riba'] = tk.Button(
@@ -187,7 +196,7 @@ class PagamentiUnificatiApp(tk.Frame):
             self.distinte_riba_tab = DistinteRibaTab(self.content_frame, self.db_path, self.riba_tab)
             self.distinte_riba_tab.pack(fill="both", expand=True)
         else:
-            # Crea la tabella pagamenti
+            # Crea la tabella pagamenti (per pagamenti o incassi)
             # Non distruggere riba_tab e distinte_riba_tab, solo non mostrarli
             self.switch_to_pagamenti_table()
             self.load_data()
@@ -223,7 +232,7 @@ class PagamentiUnificatiApp(tk.Frame):
                 btn.pack()
 
         # Pulsanti in base al tab corrente
-        if self.current_tab_filter == 'pagamenti':
+        if self.current_tab_filter in ('pagamenti', 'incassi'):
             buttons = [
                 ("nuovo", "Nuovo", self.nuovo_pagamento, "#4CAF50"),
                 ("modifica", "Modifica", self.modifica_pagamento, "#FF9800"),
@@ -267,7 +276,7 @@ class PagamentiUnificatiApp(tk.Frame):
 
     def clear_all_filters(self, silent=False):
         """Cancella tutti i filtri"""
-        if self.current_tab_filter == 'pagamenti':
+        if self.current_tab_filter in ('pagamenti', 'incassi'):
             for key in self.active_filters_pagamenti.keys():
                 self.active_filters_pagamenti[key] = ""
             self.apply_filters()
@@ -365,7 +374,7 @@ class PagamentiUnificatiApp(tk.Frame):
     # Metodi placeholder - da implementare
     def load_data(self):
         """Carica i dati in base al tab corrente"""
-        if self.current_tab_filter == 'pagamenti':
+        if self.current_tab_filter in ('pagamenti', 'incassi'):
             self.load_data_pagamenti()
         else:
             # Delega a RibaTab
@@ -626,7 +635,7 @@ class PagamentiUnificatiApp(tk.Frame):
     
     def apply_filters(self):
         """Applica i filtri in base al tab corrente"""
-        if self.current_tab_filter == 'pagamenti':
+        if self.current_tab_filter in ('pagamenti', 'incassi'):
             self.apply_filters_pagamenti()
         else:
             # Delega a RibaTab
@@ -634,9 +643,23 @@ class PagamentiUnificatiApp(tk.Frame):
                 self.riba_tab.apply_filters()
     
     def apply_filters_pagamenti(self):
-        """Applica i filtri per pagamenti"""
+        """Applica i filtri per pagamenti o incassi"""
         filtered_data = []
+        
+        # Determina il tipo di movimento in base alla tab corrente
+        tipo_movimento_richiesto = None
+        if self.current_tab_filter == 'pagamenti':
+            tipo_movimento_richiesto = 'PAGAMENTO'
+        elif self.current_tab_filter == 'incassi':
+            tipo_movimento_richiesto = 'INCASSO'
+        
         for row in self.original_data:
+            # Filtra per tipo_movimento se necessario
+            if tipo_movimento_richiesto:
+                tipo_mov = row.get('tipo_movimento', 'INCASSO')
+                if tipo_mov != tipo_movimento_richiesto:
+                    continue
+            
             match = True
             for field, fval in self.active_filters_pagamenti.items():
                 if not fval:
@@ -720,10 +743,19 @@ class PagamentiUnificatiApp(tk.Frame):
             tag = 'evenrow' if i % 2 == 0 else 'oddrow'
             self.tree.insert("", tk.END, values=values, tags=(tag, f"id_{row['pagamento_id']}"))
         
-        # Aggiorna il contatore
-        self.counter_label.config(
-            text=f"{len(data)} pagamenti visualizzati"
-        )
+        # Aggiorna il contatore in base alla tab corrente
+        if self.current_tab_filter == 'pagamenti':
+            self.counter_label.config(
+                text=f"{len(data)} pagamenti visualizzati"
+            )
+        elif self.current_tab_filter == 'incassi':
+            self.counter_label.config(
+                text=f"{len(data)} incassi visualizzati"
+            )
+        else:
+            self.counter_label.config(
+                text=f"{len(data)} pagamenti visualizzati"
+            )
     
     def show_filter_menu(self, field_name, column_title):
         """Mostra il menu per i filtri"""
@@ -732,6 +764,7 @@ class PagamentiUnificatiApp(tk.Frame):
             if self.riba_tab:
                 self.riba_tab.show_filter_menu(field_name, column_title)
             return
+        # I filtri funzionano allo stesso modo per pagamenti e incassi
         
         win = tk.Toplevel(self)
         win.title(f"Filtro - {column_title}")
@@ -1012,7 +1045,7 @@ class PagamentiUnificatiApp(tk.Frame):
     
     def show_sort_menu(self):
         """Mostra il menu per l'ordinamento"""
-        if self.current_tab_filter != 'pagamenti':
+        if self.current_tab_filter not in ('pagamenti', 'incassi'):
             # TODO: Implementare ordinamento per RiBa
             return
         
@@ -1040,7 +1073,7 @@ class PagamentiUnificatiApp(tk.Frame):
         self.sort_direction = direction
         
         # Applica l'ordinamento ai dati filtrati
-        if self.current_tab_filter == 'pagamenti':
+        if self.current_tab_filter in ('pagamenti', 'incassi'):
             self.apply_filters_pagamenti()
         # RiBa non ha ordinamento per ora (gestito da RibaTab se necessario)
     
@@ -1055,20 +1088,23 @@ class PagamentiUnificatiApp(tk.Frame):
     
     def cancella_pagamento(self):
         """Cancella pagamento selezionato"""
-        # Verifica che siamo nel tab pagamenti
-        if self.current_tab_filter != 'pagamenti':
+        # Verifica che siamo nel tab pagamenti o incassi
+        if self.current_tab_filter not in ('pagamenti', 'incassi'):
             return
         
         selected_items = self.tree.selection()
         if not selected_items:
-            messagebox.showwarning("Attenzione", "Seleziona un pagamento da cancellare dalla tabella")
+            tipo_operazione = "incasso" if self.current_tab_filter == 'incassi' else "pagamento"
+            messagebox.showwarning("Attenzione", f"Seleziona un {tipo_operazione} da cancellare dalla tabella")
             return
         
         # Conferma cancellazione
+        tipo_operazione = "incasso" if self.current_tab_filter == 'incassi' else "pagamento"
+        tipo_operazione_plurale = "incassi" if self.current_tab_filter == 'incassi' else "pagamenti"
         if len(selected_items) == 1:
-            msg = "Sei sicuro di voler cancellare il pagamento selezionato?\n\nQuesta operazione è irreversibile."
+            msg = f"Sei sicuro di voler cancellare il {tipo_operazione} selezionato?\n\nQuesta operazione è irreversibile."
         else:
-            msg = f"Sei sicuro di voler cancellare i {len(selected_items)} pagamenti selezionati?\n\nQuesta operazione è irreversibile."
+            msg = f"Sei sicuro di voler cancellare i {len(selected_items)} {tipo_operazione_plurale} selezionati?\n\nQuesta operazione è irreversibile."
         
         if not messagebox.askyesno("Conferma cancellazione", msg):
             return
@@ -1110,10 +1146,12 @@ class PagamentiUnificatiApp(tk.Frame):
                 conn.close()
                 
                 # Messaggio di successo
+                tipo_operazione = "incasso" if self.current_tab_filter == 'incassi' else "pagamento"
+                tipo_operazione_plurale = "incassi" if self.current_tab_filter == 'incassi' else "pagamenti"
                 if len(pagamenti_ids) == 1:
-                    messagebox.showinfo("Successo", "Pagamento cancellato con successo!")
+                    messagebox.showinfo("Successo", f"{tipo_operazione.capitalize()} cancellato con successo!")
                 else:
-                    messagebox.showinfo("Successo", f"{len(pagamenti_ids)} pagamenti cancellati con successo!")
+                    messagebox.showinfo("Successo", f"{len(pagamenti_ids)} {tipo_operazione_plurale} cancellati con successo!")
                 
                 # Ricarica i dati
                 self.load_data()

@@ -7,6 +7,9 @@ import configparser
 import json
 from pathlib import Path
 from typing import Optional, Callable
+from datetime import datetime
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 # Aggiungi il percorso per importare lo stile
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets', 'style'))
@@ -349,6 +352,9 @@ class FattureMancantiWindow(tk.Toplevel):
     def __init__(self, parent, fatture_mancanti, anno, mese):
         super().__init__(parent)
         self.parent = parent
+        self.fatture_mancanti = fatture_mancanti
+        self.anno = anno
+        self.mese = mese
         
         mesi_nomi = {
             1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
@@ -454,10 +460,27 @@ class FattureMancantiWindow(tk.Toplevel):
         self.tree.tag_configure('evenrow', background='#f0f0f0')
         self.tree.tag_configure('oddrow', background='white')
         
-        # Bottone CHIUDI
+        # Frame per i pulsanti
         btn_frame = tk.Frame(main_frame, bg=Style.BACKGROUND_COLOR)
         btn_frame.pack(pady=(15, 0))
         
+        # Bottone STAMPA
+        btn_stampa = tk.Button(
+            btn_frame,
+            text="STAMPA",
+            font=("Arial", 11, "bold"),
+            bg="#4CAF50",
+            fg="white",
+            activebackground="#45a049",
+            activeforeground="white",
+            cursor="hand2",
+            padx=30,
+            pady=8,
+            command=self.stampa_lista
+        )
+        btn_stampa.pack(side="left", padx=(0, 10))
+        
+        # Bottone CHIUDI
         btn_chiudi = tk.Button(
             btn_frame,
             text="CHIUDI",
@@ -471,7 +494,137 @@ class FattureMancantiWindow(tk.Toplevel):
             pady=8,
             command=self.destroy
         )
-        btn_chiudi.pack()
+        btn_chiudi.pack(side="left")
+    
+    def stampa_lista(self):
+        """Genera un PDF con la lista delle fatture mancanti"""
+        try:
+            # Chiedi all'utente dove salvare il file
+            mesi_nomi = {
+                1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
+                5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
+                9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
+            }
+            mese_nome = mesi_nomi.get(self.mese, f"Mese {self.mese}")
+            
+            # Nome file predefinito
+            nome_file_default = f"Fatture_Mancanti_{mese_nome}_{self.anno}.pdf"
+            
+            # Chiedi all'utente dove salvare
+            file_path = filedialog.asksaveasfilename(
+                title="Salva lista fatture mancanti",
+                defaultextension=".pdf",
+                filetypes=[("File PDF", "*.pdf"), ("Tutti i file", "*.*")],
+                initialfile=nome_file_default
+            )
+            
+            if not file_path:
+                return  # L'utente ha annullato
+            
+            # Crea il PDF
+            self.crea_pdf(file_path)
+            
+            messagebox.showinfo("Successo", f"Lista stampata con successo:\n{file_path}")
+            
+        except Exception as e:
+            messagebox.showerror("Errore", f"Errore durante la stampa:\n{str(e)}")
+            print(f"Errore stampa: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def crea_pdf(self, file_path):
+        """Crea il PDF con la lista delle fatture mancanti"""
+        c = canvas.Canvas(file_path, pagesize=A4)
+        width, height = A4
+        
+        # Margini
+        margin_left = 50
+        margin_top = height - 50
+        margin_bottom = 50
+        line_height = 20
+        spacing = 5
+        
+        # Titolo
+        mesi_nomi = {
+            1: "Gennaio", 2: "Febbraio", 3: "Marzo", 4: "Aprile",
+            5: "Maggio", 6: "Giugno", 7: "Luglio", 8: "Agosto",
+            9: "Settembre", 10: "Ottobre", 11: "Novembre", 12: "Dicembre"
+        }
+        mese_nome = mesi_nomi.get(self.mese, f"Mese {self.mese}")
+        
+        c.setFont("Helvetica-Bold", 16)
+        titolo = f"FATTURE MANCANTI - {mese_nome.upper()} {self.anno}"
+        c.drawString(margin_left, margin_top, titolo)
+        
+        y = margin_top - line_height - spacing
+        
+        # Data di stampa
+        c.setFont("Helvetica", 10)
+        data_stampa = datetime.now().strftime("%d/%m/%Y %H:%M")
+        c.drawString(margin_left, y, f"Data stampa: {data_stampa}")
+        
+        y -= line_height - spacing
+        
+        # Numero fatture mancanti
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(margin_left, y, f"Totale fatture mancanti: {len(self.fatture_mancanti)}")
+        
+        y -= line_height * 2
+        
+        # Intestazione tabella (solo prime 4 colonne)
+        c.setFont("Helvetica-Bold", 9)
+        x_numero = margin_left
+        x_data = x_numero + 100
+        x_fornitore = x_data + 100
+        x_piva = x_fornitore + 250
+        
+        c.drawString(x_numero, y, "NUMERO")
+        c.drawString(x_data, y, "DATA")
+        c.drawString(x_fornitore, y, "FORNITORE")
+        c.drawString(x_piva, y, "P.IVA")
+        
+        # Linea sotto l'intestazione
+        y -= 5
+        c.line(margin_left, y, width - margin_left, y)
+        y -= line_height
+        
+        # Dati delle fatture
+        c.setFont("Helvetica", 8)
+        for fattura in self.fatture_mancanti:
+            # Controlla se c'è spazio per una nuova riga
+            if y < margin_bottom + line_height * 2:
+                # Nuova pagina
+                c.showPage()
+                y = margin_top - line_height
+                # Reintesta la tabella (solo prime 4 colonne)
+                c.setFont("Helvetica-Bold", 9)
+                c.drawString(x_numero, y, "NUMERO")
+                c.drawString(x_data, y, "DATA")
+                c.drawString(x_fornitore, y, "FORNITORE")
+                c.drawString(x_piva, y, "P.IVA")
+                y -= 5
+                c.line(margin_left, y, width - margin_left, y)
+                y -= line_height
+                c.setFont("Helvetica", 8)
+            
+            numero = fattura.get("numero_fattura", "")
+            data = fattura.get("data_emissione", "")
+            fornitore = fattura.get("denominazione_fornitore", "")
+            piva = fattura.get("partita_iva_fornitore", "")
+            
+            # Tronca i testi lunghi per adattarli meglio
+            fornitore = fornitore[:40] if len(fornitore) > 40 else fornitore
+            numero = numero[:18] if len(numero) > 18 else numero
+            
+            c.drawString(x_numero, y, numero)
+            c.drawString(x_data, y, data)
+            c.drawString(x_fornitore, y, fornitore)
+            c.drawString(x_piva, y, piva)
+            
+            y -= line_height
+        
+        # Salva il PDF
+        c.save()
 
 
 class SelezionaVerificaWindow(tk.Toplevel):

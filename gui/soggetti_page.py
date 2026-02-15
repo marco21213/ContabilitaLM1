@@ -34,8 +34,9 @@ class SoggettoDialog(tk.Toplevel):
         if soggetto_data:
             self.populate_fields()
             
-        if hasattr(self, 'entries') and 'codice_soggetto' in self.entries:
-            self.entries['codice_soggetto'].focus()
+        # Focus sul campo ragione sociale per iniziare subito a digitare
+        if hasattr(self, 'entries') and 'ragione_sociale' in self.entries:
+            self.entries['ragione_sociale'].focus()
     
     def center_window(self):
         """Centra la finestra rispetto al parent"""
@@ -63,7 +64,6 @@ class SoggettoDialog(tk.Toplevel):
         main_frame.grid_columnconfigure(0, weight=1)
         
         fields = [
-            ("Codice Soggetto*", "codice_soggetto"),
             ("Ragione Sociale*", "ragione_sociale"),
             ("Tipo Soggetto*", "tipo_soggetto"),
             ("Codice Fiscale", "codice_fiscale"),
@@ -95,7 +95,7 @@ class SoggettoDialog(tk.Toplevel):
                                    values=["CLIENTE", "FORNITORE", "ENTRAMBI"],
                                    state="readonly",
                                    font=("Arial", 10))
-                entry.set("Cliente")
+                entry.set("CLIENTE")
             elif field_name == "cap":
                 entry = tk.Entry(field_frame, font=("Arial", 10))
                 vcmd = (self.register(self.validate_cap), '%P')
@@ -127,6 +127,41 @@ class SoggettoDialog(tk.Toplevel):
         self.bind('<Return>', lambda event: self.salva_soggetto())
         self.bind('<Escape>', lambda event: self.destroy())
     
+    def get_prossimo_codice_soggetto(self, tipo='cliente'):
+        """Ottiene il prossimo codice soggetto disponibile.
+        Usa prefisso 'C' per clienti e 'F' per fornitori.
+        """
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            prefisso = 'C' if tipo.lower() == 'cliente' else 'F'
+            cursor.execute(f"""
+                SELECT codice_soggetto FROM soggetti
+                WHERE codice_soggetto LIKE '{prefisso}%'
+                ORDER BY codice_soggetto DESC LIMIT 1
+            """)
+            
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result:
+                ultimo_codice = result[0]
+                try:
+                    # Estrae il numero dal codice (es. C0001 -> 1)
+                    numero = int(ultimo_codice[1:]) + 1
+                except (ValueError, IndexError):
+                    numero = 1
+            else:
+                numero = 1
+            
+            return f"{prefisso}{numero:04d}"
+        except Exception as e:
+            print(f"Errore nella generazione del codice soggetto: {e}")
+            # Fallback: restituisce un codice di default
+            prefisso = 'C' if tipo.lower() == 'cliente' else 'F'
+            return f"{prefisso}0001"
+    
     def validate_cap(self, value):
         """Valida che il CAP contenga solo numeri e sia lungo al massimo 5 caratteri"""
         if value == "":
@@ -148,12 +183,6 @@ class SoggettoDialog(tk.Toplevel):
     
     def validate_fields(self):
         """Valida i campi obbligatori"""
-        codice = self.entries['codice_soggetto'].get().strip()
-        if not codice:
-            messagebox.showerror("Errore", "Il campo Codice Soggetto è obbligatorio")
-            self.entries['codice_soggetto'].focus()
-            return False
-        
         ragione = self.entries['ragione_sociale'].get().strip()
         if not ragione:
             messagebox.showerror("Errore", "Il campo Ragione Sociale è obbligatorio")
@@ -188,10 +217,38 @@ class SoggettoDialog(tk.Toplevel):
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
+            tipo_soggetto = self.entries['tipo_soggetto'].get().strip() or 'CLIENTE'
+            
+            # Genera il codice automaticamente per i nuovi soggetti
+            if self.soggetto_data is None:
+                # Determina il tipo per la generazione del codice
+                if tipo_soggetto == 'CLIENTE':
+                    codice_soggetto = self.get_prossimo_codice_soggetto('cliente')
+                elif tipo_soggetto == 'FORNITORE':
+                    codice_soggetto = self.get_prossimo_codice_soggetto('fornitore')
+                else:  # ENTRAMBI
+                    # Per "ENTRAMBI" usa 'C' come prefisso predefinito
+                    codice_soggetto = self.get_prossimo_codice_soggetto('cliente')
+                
+                # Verifica che il codice generato non esista già (per sicurezza)
+                cursor.execute("SELECT COUNT(*) FROM soggetti WHERE codice_soggetto = ?", 
+                             (codice_soggetto,))
+                if cursor.fetchone()[0] > 0:
+                    # Se esiste già, genera il successivo
+                    if tipo_soggetto == 'CLIENTE':
+                        codice_soggetto = self.get_prossimo_codice_soggetto('cliente')
+                    elif tipo_soggetto == 'FORNITORE':
+                        codice_soggetto = self.get_prossimo_codice_soggetto('fornitore')
+                    else:
+                        codice_soggetto = self.get_prossimo_codice_soggetto('cliente')
+            else:
+                # Per la modifica, usa il codice esistente
+                codice_soggetto = self.soggetto_data['codice_soggetto']
+            
             data = {
-                'codice_soggetto': self.entries['codice_soggetto'].get().strip(),
+                'codice_soggetto': codice_soggetto,
                 'ragione_sociale': self.entries['ragione_sociale'].get().strip(),
-                'tipo_soggetto': self.entries['tipo_soggetto'].get().strip() or 'Cliente',
+                'tipo_soggetto': tipo_soggetto,
                 'codice_fiscale': self.entries['codice_fiscale'].get().strip(),
                 'partita_iva': self.entries['partita_iva'].get().strip(),
                 'citta': self.entries['citta'].get().strip(),
@@ -202,13 +259,6 @@ class SoggettoDialog(tk.Toplevel):
             }
             
             if self.soggetto_data is None:
-                cursor.execute("SELECT COUNT(*) FROM soggetti WHERE codice_soggetto = ?", 
-                             (data['codice_soggetto'],))
-                if cursor.fetchone()[0] > 0:
-                    messagebox.showerror("Errore", "Codice soggetto già esistente")
-                    self.entries['codice_soggetto'].focus()
-                    conn.close()
-                    return
                 
                 cursor.execute("""
                     INSERT INTO soggetti 
